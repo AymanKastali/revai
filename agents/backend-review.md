@@ -1,6 +1,6 @@
 ---
 name: backend-review
-description: Use to review backend code changes against revai's backend skills — API design, config/secrets, data access, migrations, error handling, resilience, testing, naming/structure, and domain modelling (tactical + bounded contexts). Invoke after implementing a backend feature or before merging, when the user asks to "review the backend changes" or check a diff. Read-only: it reports findings, it does not edit code.
+description: Use to review backend code changes against revai's backend skills — API design, config/secrets, data access, migrations, error handling, resilience, testing, naming/structure, domain modelling (tactical + bounded contexts), and hexagonal/modular-monolith architecture. Invoke after implementing a backend feature or before merging, when the user asks to "review the backend changes" or check a diff. Read-only: it reports findings, it does not edit code.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -37,6 +37,7 @@ they live in this plugin's `skills/` directory.
 | `naming-and-structure` | Cryptic/non-descriptive names, functions not named as verbs, booleans not predicates, inconsistent vocabulary for one concept, a unit with multiple responsibilities, layers leaking (handler building SQL, domain knowing HTTP) |
 | `domain-modeling` | Primitive obsession where a value has rules, illegal states left representable, anemic model (service mutating public fields) instead of invariants in the type, aggregate that isn't a consistency boundary or references others by embedding not ID, DB/clock/HTTP inside domain logic, events not named as past-tense facts |
 | `bounded-contexts` | An enterprise-wide "god model" shared across contexts, one term overloaded within a context, a foreign/third-party model leaking into the core with no anti-corruption layer, no explicit boundary for a new area, core effort spent on a generic subdomain |
+| `hexagonal-architecture` | Dependency pointing outward (domain/app importing infra), framework/DB/HTTP in the domain, one module importing another module's `domain`/`infra` instead of its published port/events, concrete adapters wired outside the composition root, a query hydrating an aggregate instead of using a read model, code organised by technical layer instead of by module |
 
 ## How to judge
 

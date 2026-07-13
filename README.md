@@ -65,6 +65,7 @@ per repo. They complement the other plugins rather than duplicate them, and each
 | `naming-and-structure` | Naming anything, or shaping units/layers (any code, not only backend) |
 | `bounded-contexts` | Drawing a domain boundary, naming a module/service, or integrating two subsystems (strategic DDD) |
 | `domain-modeling` | Modelling a domain type, adding an invariant, or deciding where a rule lives (tactical DDD) |
+| `hexagonal-architecture` | Structuring a module, placing code in a layer, or wiring ports/adapters (modular monolith + logical CQRS) |
 
 ## Review agent & guardrail
 
@@ -76,6 +77,11 @@ Skills are advisory — these make them stick:
 - **Secrets guardrail (hook)** — a `PreToolUse` hook blocks any `git commit` whose staged changes
   add a private key, cloud/API token, or inline credential. Deterministic and unskippable by the
   agent — it runs in every repo that enables revai.
+- **Verify-on-Stop (hook)** — a `Stop` hook runs the project's recorded verify commands (from
+  `.revai/verify.json`, written by `/revai:attach`) when the agent tries to finish, and **blocks
+  completion if a blocking check fails** — turning "evidence before assertions" into enforcement.
+  Tiered (test/lint block; build/format advisory), scoped to turns that changed code, and it relents
+  after a few attempts so a stuck build can't loop forever.
 
 ## Extending revai
 
