@@ -1,0 +1,8 @@
+{
+  "name": "revai",
+  "owner": { "name": "Ayman Kastali", "email": "ayman@kptac.com" },
+  "description": "Ayman's personal AI agent harness.",
+  "plugins": [
+    { "name": "revai", "source": ".", "description": "Personal AI agent harness." }
+  ]
+}

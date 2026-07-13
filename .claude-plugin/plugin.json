@@ -1,0 +1,10 @@
+{
+  "name": "revai",
+  "description": "Personal AI agent harness: attach reusable skills, commands, and conventions to any codebase.",
+  "version": "0.1.0",
+  "author": { "name": "Ayman Kastali", "email": "ayman@kptac.com" },
+  "homepage": "https://github.com/AymanKastali/revai",
+  "repository": "https://github.com/AymanKastali/revai",
+  "license": "MIT",
+  "keywords": ["harness", "skills", "workflows", "ai-driven-development"]
+}
