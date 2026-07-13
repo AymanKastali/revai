@@ -1,6 +1,6 @@
 ---
 name: bounded-contexts
-description: Use when drawing a domain boundary — naming a module/service/package, starting a new area of the system, or integrating two subsystems that use the same words differently. Applies strategic DDD: ubiquitous language, one model per bounded context, subdomain classification (core/supporting/generic), and context-mapping patterns (partnership, customer–supplier, conformist, anti-corruption layer, open-host/published language). Do this before tactical modelling — reach for domain-modeling once the boundary and language are set.
+description: Use when drawing a domain boundary — naming a module/service/package, starting a new area of the system, or integrating two subsystems that use the same words differently. Applies strategic DDD: ubiquitous language, one model per bounded context, subdomain classification (core/supporting/generic), context-mapping patterns (partnership, customer–supplier, conformist, anti-corruption layer, open-host/published language), and integration events vs domain events across the seam. Do this before tactical modelling — reach for domain-modeling once the boundary and language are set.
 ---
 
 # Bounded contexts (strategic DDD)
@@ -39,6 +39,14 @@ services, and teams to these boundaries.
     `api-design`) for many consumers, so you don't build a bespoke integration per consumer.
 - **Protect the core from foreign models.** Upstream concepts cross the boundary only through a
   translation layer, never raw into your aggregates.
+- **Integration events cross the boundary; domain events stay inside it.** A *domain* event
+  (`domain-modeling`) is an in-process fact within one context. To tell *another* context something
+  happened, publish an *integration* event: a **versioned, documented message in your published
+  language** — not your internal domain event serialized raw. Leaking the raw domain event couples
+  every subscriber to your internal model and breaks them on each rename. The receiver translates the
+  integration event through its **ACL** into its own model. This is the usual carrier for
+  customer–supplier and open-host/published-language integrations, and it makes cross-context
+  consistency eventual by design.
 
 ## Checklist
 
@@ -48,6 +56,8 @@ services, and teams to these boundaries.
 - [ ] Each subdomain is classified core/supporting/generic and effort matches
 - [ ] The integration pattern with each neighbour is a deliberate choice, named
 - [ ] Foreign/legacy models enter only through an anti-corruption layer
+- [ ] Cross-context notifications are versioned integration events in the published language, not raw
+      internal domain events
 - [ ] One team owns each context
 
 ## Examples
@@ -87,5 +97,48 @@ func toQuote(v vendorPriceResponse) (Quote, error) {
     tax, err := NewMoney(v.TxnTaxF, USD)
     if err != nil { return Quote{}, err }
     return Quote{Total: total, Tax: tax}, nil // your language crosses the boundary, not theirs
+}
+```
+
+### Domain event vs integration event
+
+**Bad** — Billing subscribes to Ordering's internal domain event and reads its fields directly. The
+two contexts are now welded together; renaming a field in Ordering breaks Billing:
+```python
+# in Billing — imports Ordering's internal event type across the seam
+def on_order_placed(evt: ordering.OrderPlaced) -> None:
+    invoice.total = evt.total                 # coupled to Ordering's internal shape & vocabulary
+```
+
+**Good** — Ordering publishes a *versioned integration event* in its published language; Billing
+translates it through its ACL into its own model. Neither context sees the other's internals:
+```python
+# published language — a stable contract, NOT Ordering's internal domain event
+@dataclass(frozen=True)
+class OrderPlacedV1:
+    order_id: str
+    amount_cents: int
+    currency: str
+
+# in Billing — the ACL turns the contract into Billing's own model
+def on_order_placed(evt: OrderPlacedV1) -> None:
+    invoice = Invoice.for_order(
+        OrderId(evt.order_id),
+        Money(cents=evt.amount_cents, currency=Currency(evt.currency)),
+    )
+```
+```go
+// published language: a versioned contract other contexts may depend on.
+type OrderPlacedV1 struct {
+    OrderID     string `json:"order_id"`
+    AmountCents int64  `json:"amount_cents"`
+    Currency    string `json:"currency"`
+}
+
+// in Billing — translate the integration event into Billing's model at the boundary.
+func (b *Billing) OnOrderPlaced(e OrderPlacedV1) error {
+    amount, err := NewMoney(e.AmountCents, Currency(e.Currency))
+    if err != nil { return err }
+    return b.OpenInvoice(OrderID(e.OrderID), amount)
 }
 ```

@@ -31,6 +31,9 @@ if a blocking check (test/lint) fails.
   separation of concerns** — one responsibility per unit, IO at the edges, layers that don't leak.
 - **Model the domain, pragmatically** — align modules to bounded contexts, model values/invariants
   in types (make illegal states unrepresentable), and keep a pure domain core with IO at the edges.
+  Modify **one aggregate per transaction**; consistency between aggregates is **eventual**, reconciled
+  by **domain events** (in-context) and **integration events** (across contexts) — not by widening a
+  transaction to span aggregates.
 - **Modular-monolith + hexagonal** — one module per bounded context, each with `domain`/`app`/`infra`
   layers and dependencies pointing inward; app layer split into command/query (logical CQRS, one
   datastore). Modules touch only through published ports or events, never each other's internals.
