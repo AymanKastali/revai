@@ -41,7 +41,9 @@ kills a pod mid-request. These rules stop one slow dependency from taking down t
 - [ ] Downstream deadlines derive from the handler's budget, not fresh unbounded ones
 - [ ] `SIGTERM` triggers a bounded graceful drain, not an abrupt exit
 
-## Example
+## Examples
+
+### Go
 
 **Bad** — no timeout, default client, blind unbounded retry that hammers a down dependency:
 ```go
@@ -79,4 +81,32 @@ func fetch(ctx context.Context, url string) (*Resp, error) {
     }
     return nil, fmt.Errorf("fetch %s: retries exhausted", url)
 }
+```
+
+### Python
+
+**Bad** — no timeout, unbounded retry loop with no backoff:
+```python
+def fetch(url):
+    while True:                              # retries forever
+        try:
+            return parse(requests.get(url))  # default: no timeout, can hang indefinitely
+        except Exception:
+            pass                             # blind retry, no backoff
+```
+
+**Good** — explicit client timeout; propagate a monotonic deadline (Python's stand-in for a context):
+```python
+_client = httpx.Client(timeout=3.0)  # explicit timeout, not the unbounded default
+
+def fetch(url: str, deadline: float) -> Resp:
+    for attempt in range(3):
+        try:
+            return parse(_client.get(url))
+        except httpx.HTTPError as e:
+            backoff = 0.1 * 2 ** attempt + jitter()
+            if not is_retryable(e) or time.monotonic() + backoff >= deadline:
+                raise  # don't retry a fatal error or past the caller's deadline
+            time.sleep(backoff)
+    raise RuntimeError(f"fetch {url}: retries exhausted")
 ```

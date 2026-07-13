@@ -51,7 +51,7 @@ One central brain, synced with one command.
 
 Once revai is installed, these skills surface automatically when their subject comes up — no setup
 per repo. They complement the other plugins rather than duplicate them, and each is a tight rule set
-+ checklist + a concrete example (Go where code is shown; SQL/HTTP where that's clearer).
++ checklist + a concrete example (Go and Python where code is shown; SQL/HTTP where that's clearer).
 
 | Skill | Fires when you're… |
 |---|---|
@@ -62,13 +62,16 @@ per repo. They complement the other plugins rather than duplicate them, and each
 | `error-handling-and-logging` | Writing error paths, `try`/`catch`, or logging |
 | `resilience-and-timeouts` | Calling a network dependency, retrying, or handling startup/shutdown |
 | `backend-testing` | Writing tests for APIs, services, or data access |
+| `naming-and-structure` | Naming anything, or shaping units/layers (any code, not only backend) |
+| `bounded-contexts` | Drawing a domain boundary, naming a module/service, or integrating two subsystems (strategic DDD) |
+| `domain-modeling` | Modelling a domain type, adding an invariant, or deciding where a rule lives (tactical DDD) |
 
 ## Review agent & guardrail
 
 Skills are advisory — these make them stick:
 
 - **`backend-review` agent** — dispatch it (e.g. "review the backend changes") to audit the current
-  diff against all seven skills at once and report findings by severity. Read-only; it reports, it
+  diff against all the skills at once and report findings by severity. Read-only; it reports, it
   doesn't edit.
 - **Secrets guardrail (hook)** — a `PreToolUse` hook blocks any `git commit` whose staged changes
   add a private key, cloud/API token, or inline credential. Deterministic and unskippable by the

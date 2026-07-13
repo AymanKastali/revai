@@ -37,7 +37,9 @@ first request, and never fall back to an insecure default. These rules cover boo
 - [ ] Secret fields never logged or included in error messages
 - [ ] Values parsed into real types; env-specific values injected, not branched
 
-## Example
+## Examples
+
+### Go
 
 **Bad** — reads env at the use site, hardcoded fallback creds, never validated:
 ```go
@@ -77,4 +79,30 @@ func main() {
     }
     // cfg passed explicitly from here; never re-read os.Getenv elsewhere
 }
+```
+
+### Python
+
+**Bad** — reads env at the use site, hardcoded fallback creds, never validated:
+```python
+def connect():
+    dsn = os.environ.get("DATABASE_URL")
+    if not dsn:
+        dsn = "postgres://admin:admin@localhost/app"  # hardcoded creds; silent insecure fallback
+    return open_db(dsn)                               # fails at first query, not at boot
+```
+
+**Good** — a frozen (immutable) config validated once at startup, no default for the secret:
+```python
+@dataclass(frozen=True)
+class Config:
+    database_url: str
+    port: int = 8080  # safe, non-secret default
+
+    @classmethod
+    def load(cls) -> "Config":
+        database_url = os.environ.get("DATABASE_URL")  # secret: no default
+        if not database_url:
+            raise SystemExit("config: DATABASE_URL is required")  # fail fast, non-zero exit at boot
+        return cls(database_url=database_url, port=int(os.environ.get("PORT", "8080")))
 ```

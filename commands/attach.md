@@ -64,7 +64,7 @@ Tell the user what you set up:
 - detected stack + verify commands recorded in `CLAUDE.md`
 - for backend projects: revai's backend skills (`api-design`, `config-and-secrets`,
   `data-access-patterns`, `safe-schema-changes`, `error-handling-and-logging`,
-  `resilience-and-timeouts`, `backend-testing`) are now available and surface automatically when
-  relevant
+  `resilience-and-timeouts`, `backend-testing`, `naming-and-structure`, `bounded-contexts`,
+  `domain-modeling`) are now available and surface automatically when relevant
 - reminder: pull future harness improvements with `/plugin update revai@revai`, and start a fresh
   session (or `/reload-plugins`) to pick up newly enabled components.

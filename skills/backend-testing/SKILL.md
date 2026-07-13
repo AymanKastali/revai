@@ -54,7 +54,9 @@ that actually happen in production instead of passing against a fantasy.
 - [ ] Assertions check observable behavior, not call counts
 - [ ] Error paths and edge/boundary inputs are covered, not just the happy path
 
-## Example
+## Examples
+
+### Go
 
 **Bad** — mocks the DB, so it tests the mock and would pass even if the query or schema were wrong:
 ```go
@@ -77,4 +79,25 @@ func TestGetUser(t *testing.T) {
     require.Equal(t, 200, res.StatusCode)
     require.Equal(t, "A", res.Body.Data.Name)
 }
+```
+
+### Python
+
+**Bad** — mocks the DB, so the test only exercises the mock:
+```python
+def test_get_user(mocker):
+    db = mocker.Mock()
+    db.find_user.return_value = User(id=1, name="A")  # mocked DB → tests the mock
+    assert Service(db).get_user(1).name == "A"        # proves nothing about real SQL/migrations
+```
+
+**Good** — real ephemeral DB via fixture, factory data, asserts the persisted effect:
+```python
+def test_get_user(db, client):             # db fixture: real ephemeral instance, migrated, torn down
+    user = UserFactory(db, name="A")        # factory: valid row, one field set
+
+    res = client.get(f"/users/{user.id}")   # through the real endpoint
+
+    assert res.status_code == 200
+    assert res.json()["data"]["name"] == "A"
 ```

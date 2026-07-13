@@ -50,7 +50,9 @@ Don't blur the two — catching a genuine bug and returning `200`, or turning a 
 - [ ] Log level matches severity (domain outcome ≠ `error`)
 - [ ] No secrets or PII in any log line or error message
 
-## Example
+## Examples
+
+### Go
 
 **Bad** — swallows the fault, logs prose, leaks a secret, wrong outcome:
 ```go
@@ -71,4 +73,26 @@ if err := charge(order, apiKey); err != nil {
     }
     return fmt.Errorf("charging order %s: %w", order.ID, err) // fault → top handler → 500
 }
+```
+
+### Python
+
+**Bad** — same failure: swallow, prose log, leaked secret, wrong outcome:
+```python
+try:
+    charge(order, api_key)
+except Exception:
+    logging.info("charge failed for " + api_key)  # secret in logs; fault hidden as info
+    return {"ok": True}                           # lies to the caller
+```
+
+**Good:**
+```python
+try:
+    charge(order, api_key)
+except CardDeclined as e:  # expected domain error
+    log.warning("charge declined", order_id=order.id, reason=e.code, request_id=request_id)
+    return api_error(422, "card_declined", str(e))
+except Exception as e:
+    raise ChargeError(f"charging order {order.id}") from e  # preserve cause; fault → top handler → 500
 ```

@@ -41,7 +41,9 @@ live here.
 - [ ] "No rows" mapped to a not-found domain error
 - [ ] Queries live in a data-access layer, not inline in handlers
 
-## Example
+## Examples
+
+### Go
 
 **Bad** — string-built SQL (injection), no context, one query per user (N+1):
 ```go
@@ -67,4 +69,26 @@ func (r *OrderRepo) ByUsers(ctx context.Context, userIDs []string) ([]Order, err
     defer rows.Close()
     return scanOrders(rows)
 }
+```
+
+### Python
+
+**Bad** — string-built SQL (injection), one query per user (N+1):
+```python
+def orders_for(user_ids):
+    out = []
+    for uid in user_ids:  # N+1: a round-trip per user
+        rows = db.execute("SELECT * FROM orders WHERE user_id = '" + uid + "'")  # injection
+        out += scan(rows)
+    return out
+```
+
+**Good** — one parameterized query behind a data-access function:
+```python
+def orders_by_users(conn, user_ids: list[str]) -> list[Order]:
+    rows = conn.execute(                                          # single, parameterized query
+        "SELECT id, user_id, total FROM orders WHERE user_id = ANY(%s)",
+        (user_ids,),
+    )
+    return [Order(**row) for row in rows]
 ```

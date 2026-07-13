@@ -25,6 +25,10 @@ never say something works without running the relevant command and reading its o
 ## Conventions
 
 - Match the style, naming, and structure of the surrounding code.
+- **Descriptive, intention-revealing names** (functions as verbs, booleans as predicates); **strict
+  separation of concerns** — one responsibility per unit, IO at the edges, layers that don't leak.
+- **Model the domain, pragmatically** — align modules to bounded contexts, model values/invariants
+  in types (make illegal states unrepresentable), and keep a pure domain core with IO at the edges.
 - Keep units small and single-purpose; a file that's grown large is doing too much.
 - Prefer reusing existing functions/utilities over adding new ones.
 - Verify before completion (see above); if a step was skipped or a test failed, say so plainly.
@@ -33,8 +37,9 @@ never say something works without running the relevant command and reading its o
 
 If this is a backend project, revai bundles skills that surface automatically when relevant —
 `api-design`, `config-and-secrets`, `data-access-patterns`, `safe-schema-changes`,
-`error-handling-and-logging`, `resilience-and-timeouts`, and `backend-testing`. Follow them when the
-work touches those areas.
+`error-handling-and-logging`, `resilience-and-timeouts`, `backend-testing`,
+`naming-and-structure`, `bounded-contexts`, and `domain-modeling`. Follow them when the work
+touches those areas.
 
 ## Do not touch
 

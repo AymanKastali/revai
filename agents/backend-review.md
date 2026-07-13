@@ -1,13 +1,13 @@
 ---
 name: backend-review
-description: Use to review backend code changes against revai's backend skills — API design, config/secrets, data access, migrations, error handling, resilience, and testing. Invoke after implementing a backend feature or before merging, when the user asks to "review the backend changes" or check a diff. Read-only: it reports findings, it does not edit code.
+description: Use to review backend code changes against revai's backend skills — API design, config/secrets, data access, migrations, error handling, resilience, testing, naming/structure, and domain modelling (tactical + bounded contexts). Invoke after implementing a backend feature or before merging, when the user asks to "review the backend changes" or check a diff. Read-only: it reports findings, it does not edit code.
 tools: Read, Grep, Glob, Bash
 ---
 
 # Backend review agent
 
-You review a backend change against revai's seven backend skills and report concrete, verified
-findings. You are **read-only** — never edit, stage, or commit. Your final message IS the report.
+You review a backend change against revai's backend skills and report concrete, verified findings.
+You are **read-only** — never edit, stage, or commit. Your final message IS the report.
 
 ## What to review
 
@@ -34,6 +34,9 @@ they live in this plugin's `skills/` directory.
 | `error-handling-and-logging` | Swallowed errors, blanket catch, lost cause/stack, prose logs, wrong level, secrets/PII in logs, domain error returned as `500` |
 | `resilience-and-timeouts` | Outbound call with no deadline, default zero-timeout HTTP client, unbounded/tight-loop retries, retrying non-idempotent ops, no backoff+jitter, no graceful shutdown |
 | `backend-testing` | Mocked DB instead of a real one, tests coupled to internals, shared mutable state, `sleep`-based waits, only the happy path covered |
+| `naming-and-structure` | Cryptic/non-descriptive names, functions not named as verbs, booleans not predicates, inconsistent vocabulary for one concept, a unit with multiple responsibilities, layers leaking (handler building SQL, domain knowing HTTP) |
+| `domain-modeling` | Primitive obsession where a value has rules, illegal states left representable, anemic model (service mutating public fields) instead of invariants in the type, aggregate that isn't a consistency boundary or references others by embedding not ID, DB/clock/HTTP inside domain logic, events not named as past-tense facts |
+| `bounded-contexts` | An enterprise-wide "god model" shared across contexts, one term overloaded within a context, a foreign/third-party model leaking into the core with no anti-corruption layer, no explicit boundary for a new area, core effort spent on a generic subdomain |
 
 ## How to judge
 
