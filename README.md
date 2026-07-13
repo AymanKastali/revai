@@ -67,6 +67,31 @@ per repo. They complement the other plugins rather than duplicate them, and each
 | `domain-modeling` | Modelling a domain type, adding an invariant, or deciding where a rule lives (tactical DDD) |
 | `hexagonal-architecture` | Structuring a module, placing code in a layer, or wiring ports/adapters (modular monolith + logical CQRS) |
 
+## Feature workflow (`/revai:feature`)
+
+One gated pipeline that takes a feature from a description to an open PR:
+**plan → implement → verify → review → PR**. Invoke it in a repo that has revai attached:
+
+```bash
+/revai:feature "add idempotent refund endpoint to the billing module"
+```
+
+It **orchestrates** — it doesn't reinvent. The heavy lifting is done by the `superpowers` skills
+(`brainstorming`, `writing-plans`, `executing-plans`, `test-driven-development`,
+`verification-before-completion`, `finishing-a-development-branch`); the command sequences them and
+injects revai's own layer — your project `CLAUDE.md` rules, the backend skills, the `backend-review`
+agent, and the verify-on-Stop hook.
+
+It stops for your approval at **two gates** and runs automatically between them:
+
+1. **Gate 1 — plan.** Produces a written plan that names the module/bounded context, the layers
+   touched, the skills in scope, and the tests to write first — then waits for your OK before any
+   code is written.
+2. Implement (TDD by default) → verify (`.revai/verify.json`) → review (`backend-review` agent,
+   looping fix→verify→review until clean) all run on their own.
+3. **Gate 2 — PR.** Presents a completion summary and proposed PR title/body, then waits for your OK
+   before it branches-safe, pushes, and opens the PR with `gh`.
+
 ## Review agent & guardrail
 
 Skills are advisory — these make them stick:
@@ -105,7 +130,7 @@ revai/
 ├── .claude-plugin/
 │   ├── plugin.json          # declares the "revai" plugin
 │   └── marketplace.json     # lists revai as installable (source ".")
-├── commands/attach.md       # the /revai:attach command
+├── commands/                # /revai:attach (setup) and /revai:feature (workflow)
 ├── templates/               # files /revai:attach instantiates into a project
 ├── skills/                  # reusable skills (api-design, safe-schema-changes, …)
 ├── CLAUDE.md                # conventions for developing revai itself

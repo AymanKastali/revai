@@ -95,5 +95,7 @@ Tell the user what you set up:
   `resilience-and-timeouts`, `backend-testing`, `naming-and-structure`, `bounded-contexts`,
   `domain-modeling`, `hexagonal-architecture`) are now available and surface automatically when
   relevant
+- next step: drive a feature end to end with **`/revai:feature "<description>"`** — a gated pipeline
+  (plan → implement → verify → review → PR) that follows the rules you just recorded
 - reminder: pull future harness improvements with `/plugin update revai@revai`, and start a fresh
   session (or `/reload-plugins`) to pick up newly enabled components.
