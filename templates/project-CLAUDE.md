@@ -29,6 +29,13 @@ never say something works without running the relevant command and reading its o
 - Prefer reusing existing functions/utilities over adding new ones.
 - Verify before completion (see above); if a step was skipped or a test failed, say so plainly.
 
+## Backend skills (via revai)
+
+If this is a backend project, revai bundles skills that surface automatically when relevant —
+`api-design`, `config-and-secrets`, `data-access-patterns`, `safe-schema-changes`,
+`error-handling-and-logging`, `resilience-and-timeouts`, and `backend-testing`. Follow them when the
+work touches those areas.
+
 ## Do not touch
 
 <!-- Generated, vendored, or sensitive paths the AI should leave alone. -->
