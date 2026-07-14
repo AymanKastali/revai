@@ -44,15 +44,13 @@ Strategy comes first — if you haven't named the concept and its boundary, do t
   *after* the aggregate change commits, they carry IDs and values (never live object references) and
   let other aggregates, read models, and side effects catch up — the mechanism that *makes* eventual
   consistency work.
-- **Domain events stay in this context; integration events cross out of it.** A domain event is an
-  in-process fact handled *within* the same bounded context. To notify *another* context, publish a
-  versioned **integration event** in your published language at the boundary — never leak the raw
-  domain event across the seam (that couples the other context to your internals). See
-  `bounded-contexts` for the cross-context side.
+- **Domain events stay in this context.** A domain event is an in-process fact handled *within* the
+  same bounded context. Notifying *another* context is a separate concern — that's a versioned
+  integration event at the seam, which `bounded-contexts` owns.
 - **Functional core, imperative shell.** Domain decisions are pure functions/methods — no DB, no
   clock, no HTTP inside them. The shell (handlers, repositories) gathers inputs, calls the core, and
-  performs the IO the core decided on. This is separation of concerns applied to the domain and
-  makes the core trivial to test (see `backend-testing`).
+  performs the IO the core decided on. That keeps the core trivial to test (see `backend-testing`);
+  `hexagonal-architecture` makes the same principle concrete as the layer/import rule.
 - **Invalid domain input is a domain error, not a panic/500.** Return a typed domain error so the
   edge can map it correctly (see `error-handling-and-logging`).
 - **Speak the ubiquitous language.** Types, methods, and events use the domain's exact words —

@@ -11,9 +11,9 @@ live here.
 
 ## Rules
 
-- **Context on every query.** Pass the request's `context.Context` to every DB call so timeouts and
-  cancellation propagate (see `resilience-and-timeouts`). A query with no deadline can pin a
-  connection indefinitely.
+- **Context on every query.** Every DB call takes the caller's `context.Context` so its deadline and
+  cancellation propagate — a query with no deadline can pin a connection indefinitely.
+  `resilience-and-timeouts` owns the deadline/propagation policy.
 - **Parameterized queries only.** Never concatenate or interpolate client input into SQL — use bound
   placeholders. Any dynamic column or sort name must be allow-listed, not passed through (see
   `api-design`).

@@ -64,7 +64,7 @@ there is no precedent.
 - [ ] `POST` creates accept an idempotency key
 - [ ] No stack traces / internal details in responses
 
-## Example
+## Examples
 
 **Bad** — verb URL, blanket 200, ad-hoc error, unbounded list:
 ```

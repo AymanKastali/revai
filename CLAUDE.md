@@ -21,6 +21,8 @@ gets attached to other codebases. See `README.md` for the user-facing overview.
 - Bump `version` in `.claude-plugin/plugin.json` for stable releases.
 - After changing components, remember consumers pull updates via `/plugin update revai@revai`
   (they don't auto-sync).
+- Design docs from brainstorming/planning live under `docs/` and are **gitignored** — local only,
+  never shipped with the plugin. `docs/` is deliberately not a plugin component dir.
 
 ## How to verify your work
 
@@ -30,3 +32,4 @@ There's no build/test suite. Verification for changes here means:
 |---|---|
 | Manifests parse | `jq . .claude-plugin/plugin.json .claude-plugin/marketplace.json` |
 | Component loads  | `/reload-plugins`, then confirm the skill/command appears |
+| Full self-audit  | `/revai:doctor` — structure, dead refs, README/skill-table drift, skill quality |

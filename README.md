@@ -47,11 +47,12 @@ push an improvement, pull it into a project with:
 
 One central brain, synced with one command.
 
-## Bundled backend skills
+## Bundled skills
 
 Once revai is installed, these skills surface automatically when their subject comes up — no setup
-per repo. They complement the other plugins rather than duplicate them, and each is a tight rule set
-+ checklist + a concrete example (Go and Python where code is shown; SQL/HTTP where that's clearer).
+per repo. They complement the other plugins rather than duplicate them — each a focused set of
+rules, a checklist, and concrete examples (Go and Python where code is shown; SQL/HTTP where that's
+clearer).
 
 | Skill | Fires when you're… |
 |---|---|
@@ -61,36 +62,45 @@ per repo. They complement the other plugins rather than duplicate them, and each
 | `safe-schema-changes` | Writing a migration or altering a schema |
 | `error-handling-and-logging` | Writing error paths, `try`/`catch`, or logging |
 | `resilience-and-timeouts` | Calling a network dependency, retrying, or handling startup/shutdown |
+| `tdd` | Implementing a feature or bugfix — how to drive it with TDD and what to test per layer |
 | `backend-testing` | Writing tests for APIs, services, or data access |
 | `naming-and-structure` | Naming anything, or shaping units/layers (any code, not only backend) |
 | `bounded-contexts` | Drawing a domain boundary, naming a module/service, or integrating two subsystems (strategic DDD) |
 | `domain-modeling` | Modelling a domain type, adding an invariant, or deciding where a rule lives (tactical DDD) |
 | `hexagonal-architecture` | Structuring a module, placing code in a layer, or wiring ports/adapters (modular monolith + logical CQRS) |
+| `shipping-a-change` | Running a change workflow — the shared spine (branch → consistency bar → verify → review → PR) behind `feature`/`bugfix`/`refactor` |
 
-## Feature workflow (`/revai:feature`)
+## Change workflows (`feature` · `bugfix` · `refactor`)
 
-One gated pipeline that takes a feature from a description to an open PR:
-**plan → implement → verify → review → PR**. Invoke it in a repo that has revai attached:
+Three gated pipelines — one for each way you change code — that take a change from a description to
+an open PR. Invoke any of them in a repo that has revai attached:
 
 ```bash
-/revai:feature "add idempotent refund endpoint to the billing module"
+/revai:feature  "add idempotent refund endpoint to the billing module"
+/revai:bugfix   "refunds over the daily cap are silently accepted"
+/revai:refactor "extract the payout fee calc out of the order handler"
 ```
 
-It **orchestrates** — it doesn't reinvent. The heavy lifting is done by the `superpowers` skills
-(`brainstorming`, `writing-plans`, `executing-plans`, `test-driven-development`,
-`verification-before-completion`, `finishing-a-development-branch`); the command sequences them and
-injects revai's own layer — your project `CLAUDE.md` rules, the backend skills, the `backend-review`
-agent, and the verify-on-Stop hook.
+They **orchestrate** — they don't reinvent. The heavy lifting is done by the `superpowers` skills
+(`brainstorming`, `writing-plans`, `executing-plans`, `systematic-debugging`,
+`test-driven-development`, `verification-before-completion`, `finishing-a-development-branch`) plus
+the `code-simplifier` plugin; each
+command sequences them and injects revai's own layer — your project `CLAUDE.md` rules, the backend
+skills, the `backend-review` agent, and the verify-on-Stop hook.
 
-It stops for your approval at **two gates** and runs automatically between them:
+Each stops for your approval at **two gates** and runs automatically between them. They differ only
+in the **middle** — how the change is arrived at — and share the same spine everywhere else:
 
-1. **Gate 1 — plan.** Produces a written plan that names the module/bounded context, the layers
-   touched, the skills in scope, and the tests to write first — then waits for your OK before any
-   code is written.
-2. Implement (TDD by default) → verify (`.revai/verify.json`) → review (`backend-review` agent,
-   looping fix→verify→review until clean) all run on their own.
-3. **Gate 2 — PR.** Presents a completion summary and proposed PR title/body, then waits for your OK
-   before it branches-safe, pushes, and opens the PR with `gh`.
+| | Gate 1 (before any code) | Middle | Gate 2 |
+|---|---|---|---|
+| **`feature`** | approved written plan | implement, TDD by default | PR |
+| **`bugfix`** | reproduction + failing test + root cause | minimal fix, no scope creep | PR |
+| **`refactor`** | bounded scope + characterization safety net | behaviour-preserving transform, tests stay green | PR |
+
+**The shared spine** — preconditions, getting onto a safe branch, the consistency bar, and the whole
+**verify → review → open-PR** finish (`.revai/verify.json`; `backend-review` looping
+fix→verify→review until clean; Gate 2 summary → push → `gh` PR) — lives once in the
+**`shipping-a-change`** skill, so all three stay identical where they should and can't drift.
 
 ## Review agent & guardrail
 
@@ -107,6 +117,12 @@ Skills are advisory — these make them stick:
   completion if a blocking check fails** — turning "evidence before assertions" into enforcement.
   Tiered (test/lint block; build/format advisory), scoped to turns that changed code, and it relents
   after a few attempts so a stuck build can't loop forever.
+
+## Maintaining the plugin (`/revai:doctor`)
+
+`/revai:doctor` audits the plugin repo itself — manifest integrity, malformed skills, dead
+`${CLAUDE_PLUGIN_ROOT}` references, README/skill-table drift, and skill content quality — then
+offers to fix the safe, mechanical issues behind a single gate. Run it after changing components.
 
 ## Extending revai
 
@@ -130,7 +146,9 @@ revai/
 ├── .claude-plugin/
 │   ├── plugin.json          # declares the "revai" plugin
 │   └── marketplace.json     # lists revai as installable (source ".")
-├── commands/                # /revai:attach (setup) and /revai:feature (workflow)
+├── commands/                # /revai:attach (setup); feature·bugfix·refactor (workflows); /revai:doctor (self-audit)
+├── agents/                  # backend-review subagent
+├── hooks/                   # secrets guardrail + verify-on-Stop
 ├── templates/               # files /revai:attach instantiates into a project
 ├── skills/                  # reusable skills (api-design, safe-schema-changes, …)
 ├── CLAUDE.md                # conventions for developing revai itself

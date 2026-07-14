@@ -49,7 +49,7 @@ column that no longer exists.
 - [ ] No rename/drop in the same deploy as the code that stops using it
 - [ ] Destructive statements are called out explicitly for review
 
-## Example
+## Examples
 
 **Bad** — one migration renames and the old code breaks the instant it deploys:
 ```sql

@@ -3,6 +3,6 @@
   "owner": { "name": "Ayman Kastali", "email": "aymankastali@gmail.com" },
   "description": "Ayman's personal AI agent harness.",
   "plugins": [
-    { "name": "revai", "source": ".", "description": "Personal AI agent harness." }
+    { "name": "revai", "source": ".", "description": "Personal AI agent harness: attach reusable skills, commands, and conventions to any codebase." }
   ]
 }

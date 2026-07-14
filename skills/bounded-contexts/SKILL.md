@@ -39,14 +39,13 @@ services, and teams to these boundaries.
     `api-design`) for many consumers, so you don't build a bespoke integration per consumer.
 - **Protect the core from foreign models.** Upstream concepts cross the boundary only through a
   translation layer, never raw into your aggregates.
-- **Integration events cross the boundary; domain events stay inside it.** A *domain* event
-  (`domain-modeling`) is an in-process fact within one context. To tell *another* context something
-  happened, publish an *integration* event: a **versioned, documented message in your published
-  language** — not your internal domain event serialized raw. Leaking the raw domain event couples
-  every subscriber to your internal model and breaks them on each rename. The receiver translates the
-  integration event through its **ACL** into its own model. This is the usual carrier for
-  customer–supplier and open-host/published-language integrations, and it makes cross-context
-  consistency eventual by design.
+- **Cross the boundary with a versioned integration event, not a raw domain event.** A domain event
+  (see `domain-modeling`) is internal to one context. To tell *another* context something happened,
+  publish an *integration* event: a **versioned, documented message in your published language**.
+  Serializing your internal domain event raw couples every subscriber to your model and breaks them
+  on each rename. The receiver translates it through its **ACL** into its own model. This is the usual
+  carrier for customer–supplier and open-host/published-language integrations, and it makes
+  cross-context consistency eventual by design.
 
 ## Checklist
 
