@@ -1,0 +1,80 @@
+name: ci
+
+# The repo IS the marketplace: merging to main publishes instantly (consumers
+# pull via git). So CI's job is to GUARD what gets published, not to publish it.
+# Deep semantic audits stay in `/revai:doctor`; this covers the deterministic
+# subset that must never break.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Manifests are valid JSON
+        run: |
+          jq . .claude-plugin/plugin.json > /dev/null
+          jq . .claude-plugin/marketplace.json > /dev/null
+          echo "✓ plugin.json and marketplace.json parse"
+
+      - name: Plugin structure rules
+        run: |
+          set -euo pipefail
+          fail=0
+
+          # .claude-plugin holds ONLY the two manifests
+          extra=$(find .claude-plugin -mindepth 1 -maxdepth 1 \
+            ! -name plugin.json ! -name marketplace.json)
+          if [ -n "$extra" ]; then
+            echo "::error::.claude-plugin must contain only plugin.json and marketplace.json. Found:"
+            echo "$extra"
+            fail=1
+          fi
+
+          # every skill folder has a SKILL.md
+          for d in skills/*/; do
+            [ -e "$d" ] || continue
+            if [ ! -f "${d}SKILL.md" ]; then
+              echo "::error::Missing SKILL.md in ${d}"
+              fail=1
+            fi
+          done
+
+          # every marketplace source path resolves
+          while read -r src; do
+            if [ ! -e "$src" ]; then
+              echo "::error::marketplace.json source path does not exist: ${src}"
+              fail=1
+            fi
+          done < <(jq -r '.plugins[].source' .claude-plugin/marketplace.json)
+
+          [ "$fail" -eq 0 ] && echo "✓ structure OK"
+          exit $fail
+
+      - name: README skill-table drift (informational)
+        run: |
+          for d in skills/*/; do
+            [ -e "$d" ] || continue
+            name=$(basename "$d")
+            if ! grep -q "$name" README.md; then
+              echo "::warning::Skill '${name}' is not mentioned in README.md — possible skill-table drift"
+            fi
+          done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: claude plugin validate
+        run: claude plugin validate .
