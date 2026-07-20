@@ -69,6 +69,7 @@ clearer).
 | `domain-modeling` | Modelling a domain type, adding an invariant, or deciding where a rule lives (tactical DDD) |
 | `hexagonal-architecture` | Structuring a module, placing code in a layer, or wiring ports/adapters (modular monolith + logical CQRS) |
 | `shipping-a-change` | Running a change workflow — the shared spine (branch → consistency bar → verify → review → PR) behind `feature`/`bugfix`/`refactor` |
+| `writing-learning-docs` | Generating a canonical, self-contained learning doc on a topic (drives `/revai:learn`) |
 
 ## Change workflows (`feature` · `bugfix` · `refactor`)
 
@@ -101,6 +102,15 @@ in the **middle** — how the change is arrived at — and share the same spine 
 **verify → review → open-PR** finish (`.revai/verify.json`; `backend-review` looping
 fix→verify→review until clean; Gate 2 summary → push → `gh` PR) — lives once in the
 **`shipping-a-change`** skill, so all three stay identical where they should and can't drift.
+
+## Everyday commands (`learn` · `review`)
+
+Two commands outside the change-workflow spine, for day-to-day work.
+
+| Command | What it does |
+|---|---|
+| `/revai:learn <topic>` | Generates a canonical, self-contained learning doc to `docs/learning/<topic>.md` — drafted from knowledge, then fact-checked with `deep-research` — and offers to keep tutoring. Your source of truth for a topic. |
+| `/revai:review [target]` | Broadly reviews the code you generated (bugs, security, backend design, quality), reports ranked findings, **auto-fixes** what it's confident about, re-verifies, and shows the diff. Defaults to your uncommitted changes. |
 
 ## Review agent & guardrail
 
