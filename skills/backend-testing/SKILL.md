@@ -35,6 +35,33 @@ that actually happen in production instead of passing against a fantasy.
 - **Assert on behavior and observable effects** (response, persisted row, emitted event), not on how
   many times an internal method was called.
 
+## Where tests live
+
+Mirror the source structure so a test is findable from the code it covers, and **split fast unit
+tests from slow integration/e2e** so each runs on its own cadence. Follow the language grain for
+where the file physically sits.
+
+- **Go — co-locate.** Tests live in the **same directory** as the code, in `_test.go` files
+  (compiled only for tests). Default to the **external test package** `package foo_test` (same dir)
+  so you exercise the public API as a caller does; drop to internal `package foo` only when a unit
+  test genuinely needs unexported access. A separate `tests/` tree fights the toolchain — don't.
+- **Python — a separate `tests/` tree mirroring the package** (with `src/` layout):
+  `src/orders/domain/order.py` → `tests/orders/domain/test_order.py`. It keeps test-only
+  deps/helpers out of the shipped package and forces imports through the public path, exactly as
+  callers use it. Co-locating inside the package is fine for a small app; the separate tree is the
+  modern default for anything distributed.
+- **Depends on the test *type* — split by speed/dependency, regardless of language.** Pure unit
+  tests (domain/app) run on every save; slow tests (real DB, network, e2e) run separately in CI or
+  on demand — keep them selectable:
+  - Go: a build tag `//go:build integration` (or a dedicated `test/`/`e2e/` package) so
+    `go test ./...` stays fast.
+  - Python: a `tests/integration/` dir and/or markers (`@pytest.mark.integration`), so
+    `pytest -m "not integration"` is the fast inner loop.
+- **The file name mirrors the source file** — `order.go` → `order_test.go`, `order.py` → `test_order.py`.
+
+This lines up with the per-layer table in `tdd`: domain/app tests (pure, fast) live in the unit
+path; infra/interface tests (real ephemeral deps, slow) live in the integration suite.
+
 ## What to cover
 
 - The happy path through the real stack.
@@ -53,6 +80,7 @@ that actually happen in production instead of passing against a fantasy.
 - [ ] Time/randomness injected; no `sleep`-based waits
 - [ ] Assertions check observable behavior, not call counts
 - [ ] Error paths and edge/boundary inputs are covered, not just the happy path
+- [ ] Test files mirror the source layout (Go: co-located `_test.go`; Python: `tests/` tree); slow integration tests are separated from fast unit tests
 
 ## Examples
 

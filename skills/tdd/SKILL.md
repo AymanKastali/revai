@@ -10,7 +10,8 @@ Three skills, three jobs. Don't restate the others:
 - **The method** — red → green → refactor, the iron law (no production code without a failing test
   first), why order matters → `superpowers:test-driven-development`. Follow that loop; this skill
   only tells you *where to point it*.
-- **What a test runs against** — real DB over mocks, ephemeral infra, factories, determinism →
+- **What a test runs against** — real DB over mocks, ephemeral infra, factories, determinism, and
+  **where test files live** (Go co-located, Python `tests/` tree, unit split from integration) →
   `backend-testing`.
 - **This skill** — how to *sequence* TDD across a feature, and *what behavior to assert at each
   layer*.
