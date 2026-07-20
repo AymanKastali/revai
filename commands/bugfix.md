@@ -45,6 +45,9 @@ Follow **`shipping-a-change` → Before you begin**. Branch prefix: **`fix/`**.
   second latent bug — gets noted as follow-up in the summary, not fixed in this run.
 - Follow the project `CLAUDE.md` and the relevant revai skills, and **hold the consistency bar** from
   `shipping-a-change` throughout. **Never modify a "Do not touch" path.**
+- **Model policy** — with the root cause diagnosed, the fix is a clear, small change: implement it
+  with a **simple, cheap model**, escalating only if it turns out not to be clear-cut. See
+  `shipping-a-change → Model policy`.
 
 ## 3. Finish
 

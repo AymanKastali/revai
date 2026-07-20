@@ -50,6 +50,9 @@ Follow **`shipping-a-change` → Before you begin**. Branch prefix: **`refactor/
 - Hold the public contract identical unless the approved scope explicitly said otherwise.
 - Follow the project `CLAUDE.md` and the relevant revai skills, and **hold the consistency bar** from
   `shipping-a-change` throughout. **Never modify a "Do not touch" path.**
+- **Model policy** — the scope and seam are approved, so run the transformation with a **simple,
+  cheap model**; reserve capable models for scoping and for anything the plan left ambiguous. See
+  `shipping-a-change → Model policy`.
 
 ## 3. Finish
 

@@ -51,6 +51,9 @@ Follow **`shipping-a-change` → Before you begin**. Branch prefix: **`feat/`**.
 - Follow the project `CLAUDE.md` conventions and the relevant revai skills — they surface
   automatically when the work touches their area, and **hold the consistency bar** from
   `shipping-a-change` throughout. **Never modify a "Do not touch" path.**
+- **Model policy** — the plan is approved and clear, so dispatch the build with a **simple, cheap
+  model**; reserve capable models for planning and for any step the plan left ambiguous. See
+  `shipping-a-change → Model policy`.
 
 ## 3. Finish
 

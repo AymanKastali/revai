@@ -35,6 +35,18 @@ rest of the repo, and like the rest of itself:
 - When the existing code is itself inconsistent, follow the dominant convention and note the
   exception in the summary rather than adding a third variant.
 
+## Model policy (plan vs implement)
+
+Spend the expensive reasoning where the ambiguity lives — planning — and keep execution cheap.
+
+- **Work out *what* to do in the most capable model** (Opus): writing the plan, diagnosing a root
+  cause, scoping a refactor. This is where hard reasoning earns its cost.
+- **Once that's clear, carry it out with a simple, cheap model.** A well-specified plan makes the
+  build mostly mechanical, and running it on a heavy model wastes time and money. When you dispatch
+  implementation subagents, pick the cheapest tier that can execute the step.
+- **Escalate execution back to a capable model only when the plan is unclear** or an implementer
+  gets stuck — that's a signal the plan needs more thought, not more horsepower.
+
 ## Finish
 
 ### Verify
