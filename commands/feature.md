@@ -21,11 +21,11 @@ automatically. Never skip a gate.
 The argument (`$ARGUMENTS`) is the feature: inline text, or a path to a spec file — read the file
 if it's a path.
 
-## 0. Set up
+## 1. Set up
 
 Follow **`shipping-a-change` → Before you begin**. Branch prefix: **`feat/`**.
 
-## 1. Plan  ⏸ GATE 1
+## 2. Plan  ⏸ GATE
 
 - If the feature has genuine open design questions, invoke the `superpowers` **`brainstorming`**
   skill and resolve them one question at a time. If it's already well-specified, skip to plans.
@@ -41,7 +41,7 @@ Follow **`shipping-a-change` → Before you begin**. Branch prefix: **`feat/`**.
 - **Present the plan and STOP.** Wait for the user's explicit approval. **Write no code before it.**
   If they ask for changes, revise and re-present. Only continue once they approve.
 
-## 2. Implement  (auto, after Gate 1)
+## 3. Implement  (auto, after the gate)
 
 - Execute the approved plan with the `superpowers` **`executing-plans`** skill (use
   **`subagent-driven-development`** when the plan's tasks are independent).
@@ -55,7 +55,7 @@ Follow **`shipping-a-change` → Before you begin**. Branch prefix: **`feat/`**.
   model**; reserve capable models for planning and for any step the plan left ambiguous. See
   `shipping-a-change → Model policy`.
 
-## 3. Finish
+## 4. Finish
 
 Follow **`shipping-a-change` → Finish** (verify → review → open PR). At verify, `test`/`lint` are
 blocking; in review, dispatch `backend-review` and loop fix→verify→review until clean.

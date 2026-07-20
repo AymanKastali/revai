@@ -30,11 +30,10 @@ the proactive standard, distinct from `code-simplifier`, which cleans reactively
 
 - **One reason to change per unit** (function, type, file, module). If you need "and" to describe
   what it does, split it.
-- **IO at the edges, pure logic in the core.** Keep side effects at the boundary and business rules
-  in pure functions that are trivial to test. `hexagonal-architecture` makes this concrete as the
-  layer/import rule.
-- **Don't leak layers.** Each layer talks to the next through a narrow interface and never reaches
-  past it. `hexagonal-architecture` makes this concrete as the dependency/import rule.
+- **Keep IO at the edges and don't leak layers.** Side effects belong at the boundary, business rules
+  in a pure core that's trivial to test, and each layer talks to the next only through a narrow
+  interface it never reaches past. `hexagonal-architecture` makes this concrete as the
+  dependency/import rule.
 - **One level of abstraction per function.** Don't mix high-level orchestration with low-level byte
   fiddling in the same body.
 - **A large file or function is a symptom** — it's doing too much. Split by responsibility, never

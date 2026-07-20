@@ -27,17 +27,10 @@ if a blocking check (test/lint) fails.
 ## Conventions
 
 - Match the style, naming, and structure of the surrounding code.
-- **Descriptive, intention-revealing names** (functions as verbs, booleans as predicates); **strict
-  separation of concerns** — one responsibility per unit, IO at the edges, layers that don't leak.
-- **Model the domain, pragmatically** — align modules to bounded contexts, model values/invariants
-  in types (make illegal states unrepresentable), and keep a pure domain core with IO at the edges.
-  Modify **one aggregate per transaction**; consistency between aggregates is **eventual**, reconciled
-  by **domain events** (in-context) and **integration events** (across contexts) — not by widening a
-  transaction to span aggregates.
-- **Modular-monolith + hexagonal** — one module per bounded context, each with `domain`/`app`/`infra`
-  layers and dependencies pointing inward; app layer split into command/query (logical CQRS, one
-  datastore). Modules touch only through published ports or events, never each other's internals.
-- Keep units small and single-purpose; a file that's grown large is doing too much.
+- Naming, separation of concerns, domain modelling, and module/layer architecture aren't restated
+  here — they're defined by revai's `naming-and-structure`, `domain-modeling`, and
+  `hexagonal-architecture` skills (see Backend skills below). Follow them, and expect them enforced
+  in `/revai:review` and by the `backend-review` agent.
 - Prefer reusing existing functions/utilities over adding new ones.
 - Verify before completion (see above); if a step was skipped or a test failed, say so plainly.
 

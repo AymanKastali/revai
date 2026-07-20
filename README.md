@@ -4,15 +4,17 @@
 slash commands, workflows, subagents, and conventions — authored *once* and attached to *any*
 codebase to make AI-driven development more reliable.
 
-The **agent** is Claude Code doing the work. The **harness** is everything built around it —
-context, capabilities, guardrails, and feedback loops — so it produces work that actually holds up
-instead of just looking right. revai is that harness, delivered as a Claude Code **plugin** so one
-central source of truth can be strapped onto every project you work in.
+The **agent** is Claude Code doing the work; the **harness** is the context, capabilities,
+guardrails, and feedback loops built around it so the work actually holds up instead of just
+looking right. revai packages that harness as a Claude Code **plugin** — see "How it's delivered"
+below.
 
 ## How it's delivered
 
-revai is a Claude Code plugin that also acts as its own marketplace. You author here; each codebase
-enables the plugin. Improvements live in one place and propagate on demand.
+revai is a Claude Code plugin that also acts as its own marketplace: you author skills, commands,
+and conventions once, here, and every attached codebase enables the plugin and pulls from that
+single source of truth. Improvements live in one place and propagate on demand — see "Keeping
+projects in sync".
 
 ## Attaching revai to a codebase
 
@@ -45,7 +47,7 @@ push an improvement, pull it into a project with:
 /plugin update revai@revai      # then start a fresh session, or /reload-plugins
 ```
 
-One central brain, synced with one command.
+This is how every project stays on the single source of truth described above.
 
 ## Bundled skills
 
@@ -69,7 +71,7 @@ clearer).
 | `domain-modeling` | Modelling a domain type, adding an invariant, or deciding where a rule lives (tactical DDD) |
 | `hexagonal-architecture` | Structuring a module, placing code in a layer, or wiring ports/adapters (modular monolith + logical CQRS) |
 | `shipping-a-change` | Running a change workflow — the shared spine (branch → consistency bar → verify → review → PR) behind `feature`/`bugfix`/`refactor` |
-| `writing-learning-docs` | Generating a canonical, self-contained learning doc on a topic (drives `/revai:learn`) |
+| `writing-learning-docs` | Drives `/revai:learn` — produces the canonical, self-contained learning doc that becomes your source of truth on a topic |
 
 ## Change workflows (`feature` · `bugfix` · `refactor`)
 
@@ -156,7 +158,7 @@ revai/
 ├── .claude-plugin/
 │   ├── plugin.json          # declares the "revai" plugin
 │   └── marketplace.json     # lists revai as installable (source ".")
-├── commands/                # /revai:attach (setup); feature·bugfix·refactor (workflows); /revai:doctor (self-audit)
+├── commands/                # /revai:attach (setup); feature·bugfix·refactor (workflows); learn·review (everyday); /revai:doctor (self-audit)
 ├── agents/                  # backend-review subagent
 ├── hooks/                   # secrets guardrail + verify-on-Stop
 ├── templates/               # files /revai:attach instantiates into a project

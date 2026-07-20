@@ -26,12 +26,11 @@ Dispatch a broad-review subagent over the target so the findings are gathered of
 It reviews across all of these, using only the ones the diff actually touches:
 
 - **`superpowers:systematic-debugging`** — real bugs and correctness defects.
-- The **revai backend skills** — `api-design`, `data-access-patterns`, `error-handling-and-logging`,
-  `resilience-and-timeouts`, `config-and-secrets`, `safe-schema-changes`, `naming-and-structure`,
-  `domain-modeling`, `hexagonal-architecture`. (For a backend-heavy diff, the `revai:backend-review`
-  agent already encodes these — use it for that pass.)
+- The **revai backend skills** — the `revai:backend-review` agent encodes the full set (API design,
+  data access, migrations, error handling, resilience, config/secrets, testing, naming/structure,
+  domain modelling, bounded contexts, hexagonal architecture). Use it for the backend pass.
 - **`security-review`** — security issues.
-- **`simplify`** — clarity and quality cleanups.
+- The **`code-simplifier`** plugin — clarity and quality cleanups.
 
 Require the report back as **ranked findings**, most severe first, each as:
 `severity · file:line · what's wrong · the fix`.

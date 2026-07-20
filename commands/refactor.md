@@ -24,11 +24,11 @@ touching code) and **before opening the PR**. Never skip a gate.
 The argument (`$ARGUMENTS`) is the refactor: the smell to remove, the target shape, or a path — read
 the file if it's a path.
 
-## 0. Set up
+## 1. Set up
 
 Follow **`shipping-a-change` → Before you begin**. Branch prefix: **`refactor/`**.
 
-## 1. Scope & safety net  ⏸ GATE 1
+## 2. Scope & safety net  ⏸ GATE
 
 - **Bound the scope.** State exactly what will change and — just as important — what must **not**:
   the public API, the observable behaviour, the contracts. A refactor with a fuzzy boundary becomes
@@ -41,7 +41,7 @@ Follow **`shipping-a-change` → Before you begin**. Branch prefix: **`refactor/
   and the seam you'll work along. Wait for the user's explicit approval. **Transform nothing before
   it.**
 
-## 2. Transform  (auto, after Gate 1)
+## 3. Transform  (auto, after the gate)
 
 - Apply **behaviour-preserving transformations** — lean on the **`code-simplifier`** plugin's skills
   (or dispatch the `code-simplifier` agent) for the actual reshaping.
@@ -54,7 +54,7 @@ Follow **`shipping-a-change` → Before you begin**. Branch prefix: **`refactor/
   cheap model**; reserve capable models for scoping and for anything the plan left ambiguous. See
   `shipping-a-change → Model policy`.
 
-## 3. Finish
+## 4. Finish
 
 Follow **`shipping-a-change` → Finish** (verify → review → open PR). At verify, the **same** tests
 that were green before must be green after — that is the proof behaviour didn't change. In review,

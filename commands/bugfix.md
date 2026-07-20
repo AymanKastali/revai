@@ -19,11 +19,11 @@ writing the fix) and **before opening the PR**. Never skip a gate.
 The argument (`$ARGUMENTS`) is the bug: a description, the observed wrong behaviour, or a path/issue
 reference — read the file if it's a path.
 
-## 0. Set up
+## 1. Set up
 
 Follow **`shipping-a-change` → Before you begin**. Branch prefix: **`fix/`**.
 
-## 1. Reproduce & diagnose  ⏸ GATE 1
+## 2. Reproduce & diagnose  ⏸ GATE
 
 - Invoke the `superpowers` **`systematic-debugging`** skill — don't guess at a fix. Work from the
   symptom to the cause methodically.
@@ -37,7 +37,7 @@ Follow **`shipping-a-change` → Before you begin**. Branch prefix: **`fix/`**.
   user's explicit approval. **Write no fix before it.** If they disagree with the diagnosis, dig
   again and re-present.
 
-## 2. Fix  (auto, after Gate 1)
+## 3. Fix  (auto, after the gate)
 
 - Make the **minimal** change that turns the red test green — invoke the `superpowers`
   **`test-driven-development`** skill (green, then refactor). Fix the **root cause**, not the symptom.
@@ -49,7 +49,7 @@ Follow **`shipping-a-change` → Before you begin**. Branch prefix: **`fix/`**.
   with a **simple, cheap model**, escalating only if it turns out not to be clear-cut. See
   `shipping-a-change → Model policy`.
 
-## 3. Finish
+## 4. Finish
 
 Follow **`shipping-a-change` → Finish** (verify → review → open PR). At verify, confirm the new
 regression test now passes and the rest of the suite is still green. In review, the emphasis is that

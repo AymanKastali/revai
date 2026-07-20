@@ -40,8 +40,8 @@ This skill owns *the layout and the dependency direction*. It sits under the oth
 ## The three layers
 
 - **`domain/`** — the write model: aggregates, value objects, domain services, domain events, and
-  the **write-repository ports** (interfaces) it needs. Pure and framework-free (see
-  `domain-modeling`).
+  the **write-repository ports** (interfaces) it needs. Pure and framework-free — no DB, clock, or
+  HTTP inside it (this is the layer rule that keeps the domain a functional core).
 - **`app/`** — use cases, split by CQRS:
   - **command side** — a command handler loads an aggregate through a write-repository port, invokes
     the domain to enforce invariants, persists, and emits events.
