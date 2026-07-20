@@ -32,8 +32,7 @@ does not apply, and say nothing rather than pad.
 
 - **Self-contained.** No "see the docs" gaps. If the reader needs a prerequisite, explain it inline
   briefly rather than sending them away.
-- **Straightforward prose.** Short sentences, plain words, no filler. If the
-  `elements-of-style:writing-clearly-and-concisely` skill is available, apply it.
+- **Straightforward prose.** Short sentences, plain words, no filler — cut anything that doesn't help the reader understand.
 - **Runnable, correct examples.** Prefer Python. Every example must run as written and demonstrate
   exactly the point being made — no pseudo-code passed off as code.
 - **Correct over comprehensive.** Omit what you cannot verify rather than guess. A shorter true doc

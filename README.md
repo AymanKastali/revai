@@ -109,7 +109,7 @@ Two commands outside the change-workflow spine, for day-to-day work.
 
 | Command | What it does |
 |---|---|
-| `/revai:learn <topic>` | Generates a canonical, self-contained learning doc to `docs/learning/<topic>.md` — drafted from knowledge, then fact-checked with `deep-research` — and offers to keep tutoring. Your source of truth for a topic. |
+| `/revai:learn <topic>` | Generates a canonical, self-contained learning doc to `docs/learning/<topic>.md` (topic kebab-cased) — drafted from knowledge, then fact-checked with `deep-research` — and offers to keep tutoring. Your source of truth for a topic. |
 | `/revai:review [target]` | Broadly reviews the code you generated (bugs, security, backend design, quality), reports ranked findings, **auto-fixes** what it's confident about, re-verifies, and shows the diff. Defaults to your uncommitted changes. |
 
 ## Review agent & guardrail
