@@ -52,6 +52,10 @@ middle, applied *as you write*, not as a cleanup pass:
   functions, predicates for booleans, no cryptic abbreviations, one term per concept), one
   responsibility per unit, IO at the edges, one level of abstraction per function. This skill surfaces
   automatically — treat it as a hard requirement on every line, not a suggestion.
+- **`best-practices`** is the second always-on standard: before building something bespoke, check
+  whether a standard library, an established package, a recognized protocol, or a documented
+  pattern already solves it. Bespoke needs a stated reason, not just unfamiliarity with the
+  standard option.
 - **Architecture skills apply by area** — `hexagonal-architecture` (layering / ports / adapters),
   `domain-modeling` (invariants, where a rule lives), `bounded-contexts` (module boundaries), plus the
   concrete backend skills (`api-design`, `data-access-patterns`, `error-handling-and-logging`, …) as
@@ -138,7 +142,8 @@ This is what keeps external review focused on real issues instead of mess you co
   - `git push -u origin <branch>`;
   - open the PR with `gh pr create`.
 - Footers:
-  - commit message ends with
-    `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`;
+  - commit message ends with `Co-Authored-By: Claude <model in use> <noreply@anthropic.com>` —
+    name whichever model actually did the work, never a fixed one (it goes stale the moment a
+    different tier runs Ship);
   - PR body ends with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 - Report the PR URL to the user.

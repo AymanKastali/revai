@@ -34,8 +34,17 @@ the survey finds instead of planning blind.
 
 ## 3. Plan  ⏸ GATE
 
+- If the user already has an approved plan from **`/revai:prepare`** for this exact scope, confirm
+  it still matches the Understand survey above and use it directly — skip straight to presenting
+  it. Otherwise:
 - If the feature has genuine open design questions, invoke the **`superpowers:brainstorming`**
-  skill and resolve them one question at a time. If it's already well-specified, skip to plans.
+  skill and resolve them one question at a time — weigh candidate approaches through
+  **`best-practices`**, leading with the standard/established option and requiring a stated reason
+  for a bespoke one to win. If it's already well-specified, skip to plans.
+- If the Understand survey shows the feature is too big for one PR (see the **`divide-and-conquer`**
+  signal check — spans multiple bounded contexts, would take multiple sessions, bundles
+  independently-valuable capabilities), invoke it first to decide the slice sequence, then scope
+  this plan to slice 1 only.
 - Invoke the **`superpowers:writing-plans`** skill to produce a written, step-by-step
   implementation plan, built on the Understand survey.
 - The plan **must** make revai's concerns explicit:
@@ -60,7 +69,8 @@ the survey finds instead of planning blind.
   end. Catch drift early.
 - Follow the project `CLAUDE.md` conventions and **hold the clean-code standard + consistency bar**
   from `shipping-a-change` throughout — `naming-and-structure` (intention-revealing names, one
-  responsibility per unit, IO at the edges) is always-on, and the area skills (`hexagonal-architecture`,
+  responsibility per unit, IO at the edges) and `best-practices` (prefer the standard/established
+  solution over inventing one) are always-on, and the area skills (`hexagonal-architecture`,
   `domain-modeling`, `api-design`, `data-access-patterns`, …) surface automatically as the work touches
   them. **Never modify a "Do not touch" path.**
 - **Model policy** — the plan is approved and clear, so dispatch the build with a **simple, cheap

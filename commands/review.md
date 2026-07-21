@@ -30,7 +30,7 @@ It reviews across all of these, using only the ones the diff actually touches:
   data access, migrations, error handling, resilience, config/secrets, testing, naming/structure,
   domain modelling, bounded contexts, hexagonal architecture). Use it for the backend pass.
 - **`security-review`** — security issues.
-- The **`code-simplifier`** plugin — clarity and quality cleanups.
+- The **`code-simplifier`** agent — clarity and quality cleanups.
 
 Require the report back as **ranked findings**, most severe first, each as:
 `severity · file:line · what's wrong · the fix`.

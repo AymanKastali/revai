@@ -41,7 +41,8 @@ expected scale, existing stack) — they are part of the reasoning, not noise.
 ## Sequence the skills by concern
 
 Once the weight is chosen, bring the atomic skills to bear in this order — and **stop early at lighter
-weights**, skipping the layers a thin design doesn't need. `naming-and-structure` applies throughout.
+weights**, skipping the layers a thin design doesn't need. `naming-and-structure` and
+`best-practices` apply throughout.
 
 1. **Strategic — `bounded-contexts`** (rich/moderate): draw the boundaries, fix the ubiquitous
    language inside each, classify subdomains, and choose the integration pattern with each neighbour.
@@ -82,7 +83,8 @@ short sections; a rich one uses them all.
 9. **Cross-cutting** — API contract, persistence, config/secrets, resilience, and the testing
    approach, each in a line or two, pointing at the skill that governs it.
 10. **Build order (the slices)** — the sequence of vertical slices to implement, smallest useful first,
-    each one a candidate for `/revai:feature`. This is what turns the design into work.
+    each one a candidate for `/revai:feature`. This is what turns the design into work. Use
+    `divide-and-conquer` for how to slice and order them.
 11. **Open questions & risks** — what's still undecided, what could invalidate the design, and what to
     revisit once real usage arrives.
 

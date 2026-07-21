@@ -92,7 +92,9 @@ Tell the user what you set up:
   automatically and blocks completion when a blocking check (test/lint) fails
 - for backend projects: revai's backend skills (listed in the project `CLAUDE.md` you just wrote) are
   now available and surface automatically when relevant
-- next step: drive a feature end to end with **`/revai:feature "<description>"`** — a gated pipeline
-  (plan → implement → verify → review → PR) that follows the rules you just recorded
+- next step: for a new architecture or a new area of the repo, start with **`/revai:design`** (then
+  **`/revai:prepare`** to turn a slice into steps); for an already-scoped change, go straight to
+  **`/revai:feature`**, **`/revai:bugfix`**, or **`/revai:refactor`** — gated pipelines (plan →
+  implement → verify → review → PR) that follow the rules you just recorded
 - reminder: pull future harness improvements with `/plugin update revai@revai`, and start a fresh
   session (or `/reload-plugins`) to pick up newly enabled components.

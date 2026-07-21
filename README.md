@@ -67,10 +67,12 @@ clearer).
 | `tdd` | Implementing a feature or bugfix — how to drive it with TDD and what to test per layer |
 | `backend-testing` | Writing tests for APIs, services, or data access |
 | `naming-and-structure` | Naming anything, or shaping units/layers (any code, not only backend) |
+| `best-practices` | Writing any code, or weighing an implementation approach — prefer the standard/established solution over inventing one |
 | `bounded-contexts` | Drawing a domain boundary, naming a module/service, or integrating two subsystems (strategic DDD) |
 | `domain-modeling` | Modelling a domain type, adding an invariant, or deciding where a rule lives (tactical DDD) |
 | `hexagonal-architecture` | Structuring a module, placing code in a layer, or wiring ports/adapters (modular monolith + logical CQRS) |
 | `designing-architecture` | Designing a project's (or a new area's) architecture before code — choosing the fitting weight (DDD+hex vs. layered vs. script) and shaping it; drives `/revai:design` |
+| `divide-and-conquer` | Deciding a plan/diff is too big for one PR — inside `feature`/`bugfix`/`refactor`'s Decide gate, or `designing-architecture`'s build order |
 | `shipping-a-change` | Running a change workflow — the shared spine (set up → understand → refine → verify → review → ship) behind `feature`/`bugfix`/`refactor` |
 | `writing-learning-docs` | Drives `/revai:learn` — owns the progressive learning-doc template (TL;DR + mental model first, then depth) and its authoring rules, so the doc becomes your source of truth on a topic |
 | `explaining-code` | Drives `/revai:explain` — turns a survey of the codebase into a clean mental-model map a newcomer can grasp fast |
@@ -91,7 +93,23 @@ It **orchestrates** — `superpowers:brainstorming` runs the question-asking, th
 `designing-architecture` skill owns the fit judgment and the doc shape, and revai's architecture skills
 (`bounded-contexts`, `domain-modeling`, `hexagonal-architecture`, …) fill it in. It is **read-only plus
 one doc** — no code, no branch, no PR — and ends by handing the design's build order to
-`/revai:feature`, slice by slice.
+`/revai:prepare` (or straight to `/revai:feature` if the slice is simple enough to plan inline),
+slice by slice.
+
+## Preparing an implementation plan (`prepare`)
+
+Between a design and a PR sits one more step: turning already-decided intent — a design doc, a
+rough spec, or several plan files — into a concrete, step-by-step implementation plan.
+
+```bash
+/revai:prepare docs/design/url-shortener.md
+```
+
+It **orchestrates** — `superpowers:writing-plans` drafts the actual task/step breakdown,
+`divide-and-conquer` decides if the input is too big for one PR-sized plan and slices it down to
+one, and `best-practices` biases any remaining option-picking toward the standard/established
+choice. It is **read-only plus one plan doc** — no code, no branch, no PR — and ends by handing
+the prepared plan to `/revai:feature` to execute.
 
 ## Change workflows (`feature` · `bugfix` · `refactor`)
 
@@ -120,6 +138,10 @@ Set up → Understand → Decide ⏸ → Build → Refine → Verify → Review 
 └──────── spine ────┘ └──── command ───┘ └─────────── spine ───────────┘
 ```
 
+Each Decide gate also reaches for `divide-and-conquer` when the plan, diagnosis, or scope turns out
+too big for one PR — splitting it into a sequence of small, independently shippable PRs instead of
+one sprawling change.
+
 | | Decide ⏸ (Gate 1, before any code) | Build | 
 |---|---|---|
 | **`feature`** | approved written plan | implement, TDD by default |
@@ -135,9 +157,9 @@ commands used to skip:
 - **Refine** *(before review)* — self-review your own diff and run the `code-simplifier` agent over
   it, so external review spends its budget on real issues, not mess you could have caught.
 - plus **Set up** (attach check → safe branch), the **clean-code + consistency bar** held throughout
-  (`naming-and-structure` as an always-on absolute standard *and* consistency with the surrounding
-  code), and the **Verify → Review → Ship** finish (`.revai/verify.json`; `backend-review` looping
-  fix→verify→review until clean; Gate 2 summary → push → `gh` PR).
+  (`naming-and-structure` and `best-practices` as always-on absolute standards *and* consistency
+  with the surrounding code), and the **Verify → Review → Ship** finish (`.revai/verify.json`;
+  `backend-review` looping fix→verify→review until clean; Gate 2 summary → push → `gh` PR).
 
 ## Everyday commands (`explain` · `learn` · `review`)
 

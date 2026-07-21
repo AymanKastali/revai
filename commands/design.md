@@ -1,5 +1,5 @@
 ---
-description: Turn an idea (or a new area of an existing repo) into a right-sized architecture design — interrogates you until it understands, neutrally recommends the fitting architecture, and writes it to docs/design/<slug>.md. Read-only + one doc; hands off to /revai:feature.
+description: Turn an idea (or a new area of an existing repo) into a right-sized architecture design — interrogates you until it understands, neutrally recommends the fitting architecture, and writes it to docs/design/<slug>.md. Read-only + one doc; hands off to /revai:prepare (or /revai:feature directly for a simple slice).
 argument-hint: <the idea to design, a path to a brief, or an area of an existing repo>
 ---
 
@@ -84,7 +84,7 @@ path. If it's empty, ask what to design and stop.
 
 ## 6. Hand off  ↺
 
-- Point to **`/revai:feature`** for the first slice in the build order (`superpowers:writing-plans` is
-  also available if the user wants a step-by-step plan first).
+- Point to **`/revai:prepare`** to turn the first slice into a step-by-step implementation plan (or
+  straight to **`/revai:feature`** if the slice is simple enough to plan inline).
 - Offer to refine the design or drill into a single context — apply every edit to the **same file** so
   it stays the one source of truth. **No code, no PR** — the design ends here.

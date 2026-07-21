@@ -8,13 +8,15 @@ argument-hint: <bug description, the wrong behaviour, or an issue reference>
 Take a bug from a report all the way to an open pull request, through eight explicit stages:
 **Set up → Understand → Reproduce & diagnose ⏸ → Fix → Refine → Verify → Review → Ship ⏸**. You
 **orchestrate**; the real work is done by the `superpowers` skills, the `code-simplifier` agent, and
-revai's guardrails.
+revai's guardrails. Do **not** reimplement exploration, debugging, TDD, code review, or PR creation —
+invoke the existing skills for those.
 
 This command owns only the **diagnose + fix middle** (stages 3–4). Every other stage is the shared
 spine and lives in the **`shipping-a-change`** skill — follow it where pointed.
 
 **Two hard stops.** You STOP and wait for the user's explicit approval **after diagnosis** (before
-writing the fix) and **before opening the PR**. Never skip a gate.
+writing the fix) and **before opening the PR**. Everything between those two gates runs
+automatically. Never skip a gate.
 
 The argument (`$ARGUMENTS`) is the bug: a description, the observed wrong behaviour, or a path/issue
 reference — read the file if it's a path.
@@ -39,6 +41,10 @@ the diagnosis so you debug the real code, not a guess about it.
   what to assert — the test asserts the *correct* behaviour, so it fails against the buggy code.
   **This test is the regression guard** that ships with the fix.
 - **Identify the root cause** — the actual defect, not the surface symptom. Name it.
+- If fixing the root cause properly is itself large (spans several modules, needs a schema
+  migration), invoke **`divide-and-conquer`** to decide the safe sequencing — e.g. a minimal fix +
+  regression test now, broader hardening as a separate follow-up — instead of letting scope grow
+  inside this PR.
 - **Present and STOP.** Show the reproduction, the failing test, and the root cause. Wait for the
   user's explicit approval. **Write no fix before it.** If they disagree with the diagnosis, dig
   again and re-present.
@@ -51,7 +57,8 @@ the diagnosis so you debug the real code, not a guess about it.
 - **No scope creep.** Fix only the diagnosed bug. Anything else you notice — a nearby smell, a
   second latent bug — gets noted as follow-up in the summary, not fixed in this run.
 - Follow the project `CLAUDE.md` and **hold the clean-code standard + consistency bar** from
-  `shipping-a-change` throughout — `naming-and-structure` is always-on even for a one-line fix, and the
+  `shipping-a-change` throughout — `naming-and-structure` and `best-practices` (prefer the
+  standard/established solution over inventing one) are always-on even for a one-line fix, and the
   area skills surface automatically as the fix touches them. **Never modify a "Do not touch" path.**
 - **Model policy** — with the root cause diagnosed, the fix is a clear, small change: implement it
   with a **simple, cheap model**, escalating only if it turns out not to be clear-cut. See

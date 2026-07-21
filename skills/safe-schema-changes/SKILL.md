@@ -61,5 +61,5 @@ ALTER TABLE users RENAME COLUMN full_name TO name;   -- old pods still SELECT fu
 -- deploy 1 (expand)
 ALTER TABLE users ADD COLUMN name text;               -- nullable, backward-compatible
 -- deploy 1 background job: UPDATE ... SET name = full_name WHERE name IS NULL  (batched)
--- deploy 2 (after code reads `name`): ALTER TABLE users DROP COLUMN full_name;
+-- deploy 2 (after code reads the name column): ALTER TABLE users DROP COLUMN full_name;
 ```
