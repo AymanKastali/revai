@@ -28,14 +28,15 @@ Strategy comes first — if you haven't named the concept and its boundary, do t
   The type should make the illegal transition impossible, not merely discouraged.
 - **An aggregate is a consistency boundary, and a transaction touches exactly one.** It's the unit
   that must stay valid as a whole, kept small, saved in **one transaction**, referencing *other*
-  aggregates by ID only — never by embedding (see `data-access-patterns`). If a command must affect
-  several aggregates, commit the one it owns, then drive the rest through a domain event in their own
-  transaction — don't widen the transaction to span them (lock contention, deadlocks), and don't reach
-  for a distributed/two-phase transaction to fake immediate consistency across them. This is the
-  design decision the boundary encodes: an invariant that must *always* hold belongs *inside* one
-  aggregate (immediate); one that may lag briefly belongs *between* separate aggregates, reconciled by
-  an event (eventual). Choose deliberately, and design the reconciliation — and what a reader sees in
-  the gap — on purpose.
+  aggregates by ID only — never by embedding (see `data-access-patterns`).
+- **Across aggregates, reconcile through an event — never a wider transaction.** If a command must
+  affect several aggregates, commit the one it owns, then drive the rest through a domain event in
+  their own transaction. Don't widen the transaction to span them (lock contention, deadlocks), and
+  don't reach for a distributed/two-phase transaction to fake immediate consistency across them.
+- **Immediate inside, eventual between — choose deliberately.** This is the design decision the
+  boundary encodes: an invariant that must *always* hold belongs *inside* one aggregate (immediate);
+  one that may lag briefly belongs *between* separate aggregates, reconciled by an event (eventual).
+  Design the reconciliation — and what a reader sees in the gap — on purpose.
 - **Domain events name facts in the past tense** — `OrderPlaced`, `PaymentCaptured`. Published
   *after* the aggregate change commits, they carry IDs and values (never live object references) and
   let other aggregates, read models, and side effects catch up — the mechanism that *makes* eventual

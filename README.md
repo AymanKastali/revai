@@ -70,8 +70,28 @@ clearer).
 | `bounded-contexts` | Drawing a domain boundary, naming a module/service, or integrating two subsystems (strategic DDD) |
 | `domain-modeling` | Modelling a domain type, adding an invariant, or deciding where a rule lives (tactical DDD) |
 | `hexagonal-architecture` | Structuring a module, placing code in a layer, or wiring ports/adapters (modular monolith + logical CQRS) |
-| `shipping-a-change` | Running a change workflow — the shared spine (branch → consistency bar → verify → review → PR) behind `feature`/`bugfix`/`refactor` |
-| `writing-learning-docs` | Drives `/revai:learn` — produces the canonical, self-contained learning doc that becomes your source of truth on a topic |
+| `designing-architecture` | Designing a project's (or a new area's) architecture before code — choosing the fitting weight (DDD+hex vs. layered vs. script) and shaping it; drives `/revai:design` |
+| `shipping-a-change` | Running a change workflow — the shared spine (set up → understand → refine → verify → review → ship) behind `feature`/`bugfix`/`refactor` |
+| `writing-learning-docs` | Drives `/revai:learn` — owns the progressive learning-doc template (TL;DR + mental model first, then depth) and its authoring rules, so the doc becomes your source of truth on a topic |
+| `explaining-code` | Drives `/revai:explain` — turns a survey of the codebase into a clean mental-model map a newcomer can grasp fast |
+
+## Designing the architecture (`design`)
+
+Before you change code, `design` lays the grounds. Give it an idea — or point it at a new area of an
+existing repo — and it interrogates you one question at a time until it understands the problem, then
+**neutrally recommends the architecture that fits** (a modular-monolith DDD + hexagonal design, a
+simple layered app, or a plain script/library — whichever the problem warrants, never forced) and
+writes it to `docs/design/<slug>.md`.
+
+```bash
+/revai:design "a URL shortener with per-user quotas and analytics"
+```
+
+It **orchestrates** — `superpowers:brainstorming` runs the question-asking, the
+`designing-architecture` skill owns the fit judgment and the doc shape, and revai's architecture skills
+(`bounded-contexts`, `domain-modeling`, `hexagonal-architecture`, …) fill it in. It is **read-only plus
+one doc** — no code, no branch, no PR — and ends by handing the design's build order to
+`/revai:feature`, slice by slice.
 
 ## Change workflows (`feature` · `bugfix` · `refactor`)
 
@@ -86,32 +106,47 @@ an open PR. Invoke any of them in a repo that has revai attached:
 
 They **orchestrate** — they don't reinvent. The heavy lifting is done by the `superpowers` skills
 (`brainstorming`, `writing-plans`, `executing-plans`, `systematic-debugging`,
-`test-driven-development`, `verification-before-completion`, `finishing-a-development-branch`) plus
-the `code-simplifier` plugin; each
-command sequences them and injects revai's own layer — your project `CLAUDE.md` rules, the backend
-skills, the `backend-review` agent, and the verify-on-Stop hook.
+`test-driven-development`, `verification-before-completion`, `receiving-code-review`,
+`finishing-a-development-branch`) plus the `code-simplifier` agent; each command sequences them and
+injects revai's own layer — your project `CLAUDE.md` rules, the backend skills, the `explaining-code`
+survey, the `backend-review` agent, and the verify-on-Stop hook.
 
-Each stops for your approval at **two gates** and runs automatically between them. They differ only
-in the **middle** — how the change is arrived at — and share the same spine everywhere else:
+Each runs the same **eight explicit stages** and stops for your approval at **two gates**, running
+automatically between them. They differ only in the **middle** (stages 3–4) — how the change is
+Decided and Built — and share the same spine everywhere else:
 
-| | Gate 1 (before any code) | Middle | Gate 2 |
-|---|---|---|---|
-| **`feature`** | approved written plan | implement, TDD by default | PR |
-| **`bugfix`** | reproduction + failing test + root cause | minimal fix, no scope creep | PR |
-| **`refactor`** | bounded scope + characterization safety net | behaviour-preserving transform, tests stay green | PR |
+```
+Set up → Understand → Decide ⏸ → Build → Refine → Verify → Review → Ship ⏸
+└──────── spine ────┘ └──── command ───┘ └─────────── spine ───────────┘
+```
 
-**The shared spine** — preconditions, getting onto a safe branch, the consistency bar, and the whole
-**verify → review → open-PR** finish (`.revai/verify.json`; `backend-review` looping
-fix→verify→review until clean; Gate 2 summary → push → `gh` PR) — lives once in the
-**`shipping-a-change`** skill, so all three stay identical where they should and can't drift.
+| | Decide ⏸ (Gate 1, before any code) | Build | 
+|---|---|---|
+| **`feature`** | approved written plan | implement, TDD by default |
+| **`bugfix`** | reproduction + failing test + root cause | minimal fix, no scope creep |
+| **`refactor`** | bounded scope + characterization safety net | behaviour-preserving transform, tests stay green |
 
-## Everyday commands (`learn` · `review`)
+**The shared spine** lives once in the **`shipping-a-change`** skill, so all three stay identical
+where they should and can't drift. It owns six of the eight stages — including two quality levers the
+commands used to skip:
 
-Two commands outside the change-workflow spine, for day-to-day work.
+- **Understand** *(before deciding)* — actively survey the code the change will touch (via the
+  `explaining-code` move, off your main context) so the change fits the repo instead of fighting it.
+- **Refine** *(before review)* — self-review your own diff and run the `code-simplifier` agent over
+  it, so external review spends its budget on real issues, not mess you could have caught.
+- plus **Set up** (attach check → safe branch), the **clean-code + consistency bar** held throughout
+  (`naming-and-structure` as an always-on absolute standard *and* consistency with the surrounding
+  code), and the **Verify → Review → Ship** finish (`.revai/verify.json`; `backend-review` looping
+  fix→verify→review until clean; Gate 2 summary → push → `gh` PR).
+
+## Everyday commands (`explain` · `learn` · `review`)
+
+Three commands outside the change-workflow spine, for day-to-day work.
 
 | Command | What it does |
 |---|---|
-| `/revai:learn <topic>` | Generates a canonical, self-contained learning doc to `docs/learning/<topic>.md` (topic kebab-cased) — drafted from knowledge, then fact-checked with `deep-research` — and offers to keep tutoring. Your source of truth for a topic. |
+| `/revai:explain [area]` | **Read-only.** Surveys the codebase and prints a clean, human-friendly mental-model map — what it does, its architecture, one real flow end-to-end, how to run it — then offers to save it. Whole repo by default; give it an area (e.g. `"the domain layer"`) to scope it. |
+| `/revai:learn <topic>` | Generates a learning doc to `docs/learning/<topic>.md` (topic kebab-cased), **calibrated to you** (level · goal · depth), progressively structured (grasp it in 60s or study it in depth), grounded by **real web research**, and self-reviewed as the learner — then offers to keep tutoring. Your source of truth for a topic. |
 | `/revai:review [target]` | Broadly reviews the code you generated (bugs, security, backend design, quality), reports ranked findings, **auto-fixes** what it's confident about, re-verifies, and shows the diff. Defaults to your uncommitted changes. |
 
 ## Review agent & guardrail
@@ -158,7 +193,7 @@ revai/
 ├── .claude-plugin/
 │   ├── plugin.json          # declares the "revai" plugin
 │   └── marketplace.json     # lists revai as installable (source ".")
-├── commands/                # /revai:attach (setup); feature·bugfix·refactor (workflows); learn·review (everyday); /revai:doctor (self-audit)
+├── commands/                # /revai:attach (setup); design (architecture); feature·bugfix·refactor (workflows); explain·learn·review (everyday); /revai:doctor (self-audit)
 ├── agents/                  # backend-review subagent
 ├── hooks/                   # secrets guardrail + verify-on-Stop
 ├── templates/               # files /revai:attach instantiates into a project
