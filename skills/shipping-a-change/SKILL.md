@@ -23,16 +23,46 @@ guardrails — don't reimplement exploration, verification, review, or PR creati
   and you derive `<slug>` from the change. If already on a non-default branch, stay on it.
   **Never work directly on the default branch.**
 
+## Size the change
+
+Before Understand, classify the change so later stages spend effort proportional to risk — this
+gates *cost*, never the guarantees themselves.
+
+- **Micro** — all of these hold, with no exceptions:
+  - the exact lines to touch are already known, right now, without exploring further;
+  - touches at most 2 files with a small diff (rough guide: under ~20 changed lines total) — pure
+    wiring, config, comments/docs/annotations, or a one-line logic fix;
+  - introduces no new type, exported function/method signature, endpoint, public contract, or
+    dependency;
+  - touches no schema/migration, no auth/payments/security-sensitive path, and crosses no
+    bounded-context boundary — these are **never** Micro, regardless of file/line count;
+  - no open design question, no real doubt about correctness.
+  - Examples: adding OpenAPI/doc comments to an existing endpoint handler, fixing a typo, adding a
+    log line, bumping a constant.
+  - Counter-examples (Standard, even though they look small): adding a field to a request/response
+    type or a new query parameter (contract changes), touching a migration of any size.
+- **Standard/Large** — anything failing a Micro bullet, or that you're not fully sure about.
+  **Default here when in doubt** — over-classifying costs minutes; under-classifying quietly skips
+  a guarantee.
+
+Gates cost in this shared spine at **Understand** and **Refine**; calling commands may use the same
+classification further (see `/revai:feature`'s Plan gate). Never gates Verify, Review, or either
+approval gate — those run in full regardless of size. (Orthogonal to `divide-and-conquer`, which
+handles the opposite end — work too big for one PR.)
+
 ## Understand (before you decide)
 
 Before the command's Decide stage, **actively ground yourself in the code the change will touch** —
 don't plan, diagnose, or scope blind. This is the load-bearing first move for producing code that
 fits the repo instead of fighting it.
 
-- **Survey off your main context.** Dispatch Explore / `explaining-code` subagent(s) to read the
-  relevant area and return **structured notes** — not raw file dumps — so the detail stays off your
-  main context (the move `/revai:explain` uses). The calling command scopes this to its area (the
-  feature's target, the buggy code path, or the code in refactor scope).
+- **For a Micro change, skip the subagent.** Read the 1–2 known files yourself, inline, and note
+  what you confirmed — a dispatch round-trip costs more than the read it replaces. Everything else
+  in this section still applies; only *how* you ground yourself changes.
+- **For anything else, survey off your main context.** Dispatch Explore / `explaining-code`
+  subagent(s) to read the relevant area and return **structured notes** — not raw file dumps — so
+  the detail stays off your main context (the move `/revai:explain` uses). The calling command
+  scopes this to its area (the feature's target, the buggy code path, or the code in refactor scope).
 - **Ask for what shapes the change:** the neighbouring units and the patterns/naming they use, the
   public contracts and existing tests in the area, the dependencies between the pieces, and any
   relevant **"Do not touch"** path. **Correct over comprehensive** — report only what's verified in
@@ -102,7 +132,8 @@ This is what keeps external review focused on real issues instead of mess you co
   dead code, unclear names, a leaked abstraction, an untested branch, drift from the surrounding
   style.
 - **Simplify.** Dispatch the **`code-simplifier`** agent over the diff to remove accidental
-  complexity, then re-run the tests so simplification changed nothing.
+  complexity, then re-run the tests so simplification changed nothing. **For a Micro change**, do
+  this pass yourself inline as part of self-review instead of dispatching the agent.
 - **Refactor variant:** for `/revai:refactor`, restructuring *is* the Build, so Refine is the
   behaviour-preserved self-check — confirm zero behaviour change and that the existing tests are
   still green — plus the same critical clarity read, not a second round of reshaping.
@@ -121,16 +152,25 @@ This is what keeps external review focused on real issues instead of mess you co
 
 ### Review
 
-- Dispatch revai's **`backend-review`** agent on the change set to audit it against all the skills.
-  For a change with no backend surface, use the **`superpowers:requesting-code-review`** skill
-  instead.
-- Work the findings with the **`superpowers:receiving-code-review`** skill: fix every 🔴 High and
-  🟡 Medium, then **re-verify and re-review**, looping until the review is clean or only accepted
-  Low/Questions remain.
-- Treat any **consistency** finding (inconsistent naming/vocabulary, a duplicate way to do something
-  the repo already does, or drift between the files you touched) as worth fixing regardless of its
-  severity label — consistency is a hard requirement here, not a nicety.
-- If a High finding can't be resolved, **STOP and surface it** rather than shipping around it.
+- Dispatch revai's **`backend-review`** agent on the change set — tell it, from the Understand
+  survey, which modules/layers/skills the diff actually touches, so it can spend depth there instead
+  of speculatively ruling out irrelevant domains. For a change with no backend surface, use
+  **`superpowers:requesting-code-review`** instead.
+- Work the findings with **`superpowers:receiving-code-review`**: fix every 🔴 High, 🟡 Medium, and
+  any **consistency** finding (inconsistent naming/vocabulary, a duplicate way to do something the
+  repo already does, or drift between the files you touched) regardless of severity label —
+  consistency is a hard requirement here.
+- **Re-verify after every fix round, always.** Re-dispatching the full `backend-review` agent is
+  capped at **one repeat** (two dispatches total):
+  - **Skip the re-dispatch** — do a targeted self-check of just the changed lines against the
+    outstanding findings, confirm verify is still green, and proceed — whenever nothing but 🔵
+    Low/Questions remains once fixes are applied: either none were found, or every 🔴/🟡 fix was a
+    same-file, same-function, mechanical edit.
+  - **Re-dispatch the full agent once** if any 🔴/🟡 fix was *not* mechanical in that sense — it
+    added a branch/condition, changed a signature, touched a file the first review didn't cover, or
+    touched schema/auth/security-sensitive code.
+  - If a second full review still leaves a High/Medium unresolved, or a third round would otherwise
+    be needed, **STOP and surface it** rather than looping again.
 
 ### Ship  ⏸ GATE
 

@@ -34,6 +34,9 @@ the survey finds instead of planning blind.
 
 ## 3. Plan  ⏸ GATE
 
+- If the change is classified **Micro** (`shipping-a-change` → **Size the change**), skip straight
+  to the Micro plan bullet below — brainstorming/divide-and-conquer/writing-plans exist for
+  ambiguity and scope this change doesn't have.
 - If the user already has an approved plan from **`/revai:prepare`** for this exact scope, confirm
   it still matches the Understand survey above and use it directly — skip straight to presenting
   it. Otherwise:
@@ -54,13 +57,17 @@ the survey finds instead of planning blind.
   - which **skills** are in scope (`domain-modeling`, `api-design`, `data-access-patterns`,
     `safe-schema-changes`, …);
   - the **tests** to write first (TDD), and anything that genuinely can't be TDD'd, called out.
+- **Micro plan (only for a Micro-classified change):** state, inline, in place of the full plan
+  document — the exact file and change, why it's safe (what Understand confirmed), and whether a
+  test is needed and why/why not. Still a plan — same gate below, not a lighter one.
 - **Present the plan and STOP.** Wait for the user's explicit approval. **Write no code before it.**
   If they ask for changes, revise and re-present. Only continue once they approve.
 
 ## 4. Build  (auto, after the gate)
 
 - Execute the approved plan with the **`superpowers:executing-plans`** skill (use
-  **`superpowers:subagent-driven-development`** when the plan's tasks are independent).
+  **`superpowers:subagent-driven-development`** when the plan's tasks are independent). A Micro
+  change is a single task by definition — execute it directly; don't dispatch subagents for it.
 - **TDD by default** — invoke the **`superpowers:test-driven-development`** skill: failing test →
   implement → pass → refactor, per behavior. (Only skip for the pieces the plan flagged as
   un-TDD-able.)
@@ -90,7 +97,8 @@ Follow **`shipping-a-change` → Finish/Verify**.
 ## 7. Review
 
 Follow **`shipping-a-change` → Finish/Review**: dispatch `backend-review`, work the findings with
-**`superpowers:receiving-code-review`**, and loop until clean.
+**`superpowers:receiving-code-review`**, following its capped re-dispatch rule (at most one repeat,
+then STOP and surface).
 
 ## 8. Ship  ⏸ GATE
 

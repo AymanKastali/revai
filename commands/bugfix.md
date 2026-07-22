@@ -39,7 +39,9 @@ the diagnosis so you debug the real code, not a guess about it.
   you can't prove is a guess.
 - **Write a failing test that captures the bug** (RED). Use the `tdd` skill for the right layer and
   what to assert — the test asserts the *correct* behaviour, so it fails against the buggy code.
-  **This test is the regression guard** that ships with the fix.
+  **This test is the regression guard** that ships with the fix — never skipped or shortened for a
+  Micro-sized bug (`shipping-a-change` → **Size the change**); Micro only ever shrinks Understand and
+  Refine, never this step.
 - **Identify the root cause** — the actual defect, not the surface symptom. Name it.
 - If fixing the root cause properly is itself large (spans several modules, needs a schema
   migration), invoke **`divide-and-conquer`** to decide the safe sequencing — e.g. a minimal fix +
@@ -78,8 +80,9 @@ of the suite is still green.
 ## 7. Review
 
 Follow **`shipping-a-change` → Finish/Review**: dispatch `backend-review`, work the findings with
-**`superpowers:receiving-code-review`**, and loop until clean — the emphasis is that the fix addresses the **root
-cause** and the regression guard is in place.
+**`superpowers:receiving-code-review`**, following its capped re-dispatch rule (at most one repeat,
+then STOP and surface) — the emphasis is that the fix addresses the **root cause** and the regression
+guard is in place.
 
 ## 8. Ship  ⏸ GATE
 
