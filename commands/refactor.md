@@ -85,8 +85,9 @@ green after — that is the proof behaviour didn't change.
 ## 7. Review
 
 Follow **`shipping-a-change` → Finish/Review**: dispatch `backend-review`, work the findings with
-**`superpowers:receiving-code-review`**, and loop until clean — the emphasis is **zero behaviour change** and an
-**identical public contract**.
+**`superpowers:receiving-code-review`**, following its capped re-dispatch rule (at most one repeat,
+then STOP and surface) — the emphasis is **zero behaviour change** and an **identical public
+contract**.
 
 ## 8. Ship  ⏸ GATE
 
