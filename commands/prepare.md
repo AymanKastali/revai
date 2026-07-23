@@ -38,8 +38,7 @@ what to build — read each file that's a path.
 ## 3. Plan  ⏸ GATE
 
 - If open design questions remain within the chosen scope, invoke **`superpowers:brainstorming`**
-  and resolve them — weigh candidate approaches through **`best-practices`**, leading with the
-  standard/established option and requiring a stated reason for a bespoke one to win.
+  and resolve them — weigh candidate approaches through **`best-practices`**' standard-first bias.
 - Check the **`divide-and-conquer`** signal: if the combined input is too big for one PR-sized
   plan (spans bounded contexts, reads as independently-shippable pieces, would span multiple
   sessions), invoke it — reusing the input's own Build-order slice sequence where one already

@@ -125,12 +125,10 @@ After Build, before Verify, **critique and clean your own diff** — don't hand 
 This is what keeps external review focused on real issues instead of mess you could have caught.
 
 - **Self-review.** Read your own diff critically against the approved plan/diagnosis/scope, the
-  project `CLAUDE.md`, the in-scope revai skills, the clean-code standard, and the consistency bar
-  above. Run the **`naming-and-structure` checklist** over the diff explicitly — every name reveals
-  intent, functions are verbs and booleans predicates, one term per concept, each unit has a single
-  responsibility, IO at the edges, layers don't leak. Fix what you'd flag in someone else's code —
-  dead code, unclear names, a leaked abstraction, an untested branch, drift from the surrounding
-  style.
+  project `CLAUDE.md`, the in-scope revai skills, and the clean-code standard + consistency bar
+  above — re-run the same `naming-and-structure` checklist from **Write clean code** over the diff
+  explicitly, not just from memory. Fix what you'd flag in someone else's code — dead code, unclear
+  names, a leaked abstraction, an untested branch, drift from the surrounding style.
 - **Simplify.** Dispatch the **`code-simplifier`** agent over the diff to remove accidental
   complexity, then re-run the tests so simplification changed nothing. **For a Micro change**, do
   this pass yourself inline as part of self-review instead of dispatching the agent.

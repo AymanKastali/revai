@@ -5,18 +5,16 @@ argument-hint: <bug description, the wrong behaviour, or an issue reference>
 
 # /revai:bugfix
 
-Take a bug from a report all the way to an open pull request, through eight explicit stages:
-**Set up → Understand → Reproduce & diagnose ⏸ → Fix → Refine → Verify → Review → Ship ⏸**. You
-**orchestrate**; the real work is done by the `superpowers` skills, the `code-simplifier` agent, and
-revai's guardrails. Do **not** reimplement exploration, debugging, TDD, code review, or PR creation —
-invoke the existing skills for those.
+Take a bug from a report to an open pull request through eight stages: **Set up → Understand →
+Reproduce & diagnose ⏸ → Fix → Refine → Verify → Review → Ship ⏸**. You **orchestrate** — the
+`superpowers` skills, `code-simplifier`, and revai's guardrails do the actual debugging, TDD, review,
+and PR work; don't reimplement any of it.
 
-This command owns only the **diagnose + fix middle** (stages 3–4). Every other stage is the shared
-spine and lives in the **`shipping-a-change`** skill — follow it where pointed.
+This command owns only **diagnose + fix** (stages 3–4); every other stage lives in the shared
+**`shipping-a-change`** skill — follow it where pointed.
 
-**Two hard stops.** You STOP and wait for the user's explicit approval **after diagnosis** (before
-writing the fix) and **before opening the PR**. Everything between those two gates runs
-automatically. Never skip a gate.
+**Two hard stops:** after diagnosis (before any fix) and before opening the PR. Everything between
+runs automatically — never skip a gate.
 
 The argument (`$ARGUMENTS`) is the bug: a description, the observed wrong behaviour, or a path/issue
 reference — read the file if it's a path.
@@ -59,9 +57,9 @@ the diagnosis so you debug the real code, not a guess about it.
 - **No scope creep.** Fix only the diagnosed bug. Anything else you notice — a nearby smell, a
   second latent bug — gets noted as follow-up in the summary, not fixed in this run.
 - Follow the project `CLAUDE.md` and **hold the clean-code standard + consistency bar** from
-  `shipping-a-change` throughout — `naming-and-structure` and `best-practices` (prefer the
-  standard/established solution over inventing one) are always-on even for a one-line fix, and the
-  area skills surface automatically as the fix touches them. **Never modify a "Do not touch" path.**
+  `shipping-a-change` → **Write clean code** throughout — `naming-and-structure` and `best-practices`
+  stay always-on even for a one-line fix, and the area skills surface automatically as the fix
+  touches them. **Never modify a "Do not touch" path.**
 - **Model policy** — with the root cause diagnosed, the fix is a clear, small change: implement it
   with a **simple, cheap model**, escalating only if it turns out not to be clear-cut. See
   `shipping-a-change → Model policy`.
@@ -79,12 +77,9 @@ of the suite is still green.
 
 ## 7. Review
 
-Follow **`shipping-a-change` → Finish/Review**: dispatch `backend-review`, work the findings with
-**`superpowers:receiving-code-review`**, following its capped re-dispatch rule (at most one repeat,
-then STOP and surface) — the emphasis is that the fix addresses the **root cause** and the regression
-guard is in place.
+Follow **`shipping-a-change` → Finish/Review** — the emphasis is that the fix addresses the **root
+cause** and the regression guard is in place.
 
 ## 8. Ship  ⏸ GATE
 
-Follow **`shipping-a-change` → Finish/Ship**: present the completion summary and proposed PR, STOP
-for approval, then open the PR.
+Follow **`shipping-a-change` → Finish/Ship**.

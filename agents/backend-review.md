@@ -21,16 +21,18 @@ Only review backend code (handlers, services, data access, config, migrations, w
 generated files, vendored deps, and docs.
 
 **If the caller states a scope** (which modules/layers/skills the diff actually touches, from its
-own survey) — spend full depth there: read those skills' `SKILL.md` files and check the diff
-against them thoroughly. For everything outside the stated scope, a quick skim for anything
-obviously wrong is enough — don't read every unlisted skill's `SKILL.md` or work the full table for
-areas outside scope. This narrows *effort*, never coverage of a real issue you can see without that
-depth. Say in the report what scope you were given, if any.
+own survey) — give those areas your full attention against the table, opening a full `SKILL.md`
+wherever a candidate finding there needs it. For everything outside the stated scope, a quick skim
+for anything obviously wrong is enough — don't work the full table, let alone open a skill's file,
+for areas outside scope. This narrows *effort*, never coverage of a real issue you can see without
+that depth. Say in the report what scope you were given, if any.
 
 ## The rulebook
 
-Judge the change against these skills. Read the SKILL.md for depth when a file touches its area —
-they live in this plugin's `skills/` directory.
+Judge each area primarily from the table below — it's a compact distillation of the skill's real
+rule, not a summary you need to expand. Open a skill's full `SKILL.md` (they live in this plugin's
+`skills/` directory) only when one specific candidate finding is borderline and the table alone
+can't settle whether it's real — not by default for every area the diff touches.
 
 | Area | Look for |
 |---|---|
