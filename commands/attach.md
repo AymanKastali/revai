@@ -92,9 +92,10 @@ Tell the user what you set up:
   automatically and blocks completion when a blocking check (test/lint) fails
 - for backend projects: revai's backend skills (listed in the project `CLAUDE.md` you just wrote) are
   now available and surface automatically when relevant
-- next step: for a new architecture or a new area of the repo, start with **`/revai:design`** (then
-  **`/revai:prepare`** to turn a slice into steps); for an already-scoped change, go straight to
-  **`/revai:feature`**, **`/revai:bugfix`**, or **`/revai:refactor`** — gated pipelines (plan →
-  implement → verify → review → PR) that follow the rules you just recorded
+- next step: for anything that needs a judgment call first — a new architecture, a feature's plan,
+  a bug's root cause, a refactor's scope — start with **`/revai:decide`**, which ends in one written,
+  approved decision doc with zero repo changes; once you have one (or the change is trivial enough
+  not to need one), **`/revai:implement`** drives it to an open PR — build/fix/reshape → verify →
+  review → PR — following the rules you just recorded
 - reminder: pull future harness improvements with `/plugin update revai@revai`, and start a fresh
   session (or `/reload-plugins`) to pick up newly enabled components.

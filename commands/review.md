@@ -26,9 +26,12 @@ Dispatch a broad-review subagent over the target so the findings are gathered of
 It reviews across all of these, using only the ones the diff actually touches:
 
 - **`superpowers:systematic-debugging`** — real bugs and correctness defects.
-- The **revai backend skills** — the `revai:backend-review` agent encodes the full set (API design,
-  data access, migrations, error handling, resilience, config/secrets, testing, naming/structure,
-  domain modelling, bounded contexts, hexagonal architecture). Use it for the backend pass.
+- The **revai skills** — the `revai:backend-review` agent encodes all 3: `best-practices` (API
+  design, data access, migrations, config/secrets, error handling, resilience, concurrency,
+  testing, messaging, auth, observability, caching), `clean-code` (naming, functions,
+  comments/formatting, objects/data structures, error handling, class cohesion, code smells), and
+  `domain-driven-design` (domain modelling, bounded contexts, hexagonal architecture). Use it for
+  the backend pass.
 - **`security-review`** — security issues.
 - The **`code-simplifier`** agent — clarity and quality cleanups.
 

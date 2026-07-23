@@ -28,19 +28,20 @@ if a blocking check (test/lint) fails.
 
 - Match the style, naming, and structure of the surrounding code.
 - Naming, separation of concerns, domain modelling, and module/layer architecture aren't restated
-  here — they're defined by revai's `naming-and-structure`, `domain-modeling`, and
-  `hexagonal-architecture` skills (see Backend skills below). Follow them, and expect them enforced
-  in `/revai:review` and by the `backend-review` agent.
+  here — they're defined by revai's `clean-code` and `domain-driven-design` skills (see Backend
+  skills below). Follow them, and expect them enforced in `/revai:review` and by the
+  `backend-review` agent.
 - Prefer reusing existing functions/utilities over adding new ones.
 - Verify before completion (see above); if a step was skipped or a test failed, say so plainly.
 
 ## Backend skills (via revai)
 
-If this is a backend project, revai bundles skills that surface automatically when relevant —
-`api-design`, `config-and-secrets`, `data-access-patterns`, `safe-schema-changes`,
-`error-handling-and-logging`, `resilience-and-timeouts`, `backend-testing`,
-`naming-and-structure`, `bounded-contexts`, `domain-modeling`, and `hexagonal-architecture`.
-Follow them when the work touches those areas.
+If this is a backend project, revai bundles 3 skills that surface automatically when relevant —
+`best-practices` (API design, data access, migrations, config/secrets, error handling, resilience,
+concurrency, testing, messaging, auth, observability, caching), `clean-code` (naming, functions,
+comments/formatting, objects/data structures, error handling, class cohesion, code smells), and
+`domain-driven-design` (bounded contexts, domain modelling, hexagonal architecture). Follow them
+when the work touches those areas.
 
 ## Do not touch
 
