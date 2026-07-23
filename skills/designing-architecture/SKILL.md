@@ -93,10 +93,9 @@ short sections; a rich one uses them all.
 - **Ground every decision in the interrogation and the survey.** A recommendation the answers don't
   support is a guess. If a needed answer never came, say what's assumed and flag it as an open
   question — don't invent a requirement to justify a shape.
-- **Correct over comprehensive.** A shorter design you can defend beats a longer one padded with
-  patterns nobody asked for. Cut every section that doesn't earn its place.
-- **Right-size, don't showcase.** The goal is the design that fits, not a demonstration of DDD. The
-  simplest structure that protects the real invariants wins.
+- **Correct over comprehensive, right-sized not showcased.** A shorter design you can defend beats a
+  longer one padded with patterns nobody asked for — the goal is the design that fits, not a
+  demonstration of DDD. Cut every section that doesn't earn its place.
 - **Straightforward prose.** Short sentences, plain words, no filler. Diagrams as simple ASCII/indented
   structure (terminal markdown) — no renderer-only diagrams.
 - **Speak the ubiquitous language** throughout, and name everything per `naming-and-structure` — the

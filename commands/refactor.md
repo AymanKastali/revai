@@ -5,23 +5,21 @@ argument-hint: <what to refactor and why — the smell, the target shape>
 
 # /revai:refactor
 
-Take a refactor from intent all the way to an open pull request, through eight explicit stages:
-**Set up → Understand → Scope & safety net ⏸ → Transform → Refine → Verify → Review → Ship ⏸**. You
-**orchestrate**; the transformation itself leans on the `code-simplifier` agent and revai's
-guardrails. Do **not** reimplement exploration, safety-net construction, transformation mechanics,
-code review, or PR creation — invoke the existing skills for those.
+Take a refactor from intent to an open pull request through eight stages: **Set up → Understand →
+Scope & safety net ⏸ → Transform → Refine → Verify → Review → Ship ⏸**. You **orchestrate** — the
+transformation itself leans on `code-simplifier` and revai's guardrails; don't reimplement
+exploration, safety-net construction, transformation mechanics, review, or PR creation.
 
-This command owns only the **scope + transform middle** (stages 3–4). Every other stage is the
-shared spine and lives in the **`shipping-a-change`** skill — follow it where pointed.
+This command owns only **scope + transform** (stages 3–4); every other stage lives in the shared
+**`shipping-a-change`** skill — follow it where pointed.
 
 **The iron rule of this workflow: no behaviour change.** A refactor changes the shape of the code,
 never what it does. The existing tests do **not** change and must stay green the entire time; you add
 no test that asserts *new* behaviour. If a change would alter behaviour, it isn't a refactor — stop
 and route it through `/revai:feature` or `/revai:bugfix` instead.
 
-**Two hard stops.** You STOP and wait for the user's explicit approval **after scoping** (before
-touching code) and **before opening the PR**. Everything between those two gates runs
-automatically. Never skip a gate.
+**Two hard stops:** after scoping (before touching code) and before opening the PR. Everything
+between runs automatically — never skip a gate.
 
 The argument (`$ARGUMENTS`) is the refactor: the smell to remove, the target shape, or a path — read
 the file if it's a path.
@@ -62,10 +60,9 @@ you where the seam is and what the public contract to preserve actually is.
   and rethink. The existing tests are not edited to "make them pass".
 - Hold the public contract identical unless the approved scope explicitly said otherwise.
 - Follow the project `CLAUDE.md` and **hold the clean-code standard + consistency bar** from
-  `shipping-a-change` throughout — reshaping toward `naming-and-structure` (clear names, single
-  responsibility, IO at the edges, layers that don't leak) is the point of most refactors, so treat it
-  as the target, not a side note. Where the smell is bespoke logic duplicating a standard solution,
-  prefer reshaping toward that standard shape (see `best-practices`) — behaviour held fixed
+  `shipping-a-change` → **Write clean code** throughout — reshaping toward `naming-and-structure` is
+  the point of most refactors, so treat it as the target, not a side note, and prefer reshaping
+  bespoke logic toward the `best-practices` standard shape where one exists — behaviour held fixed
   throughout. **Never modify a "Do not touch" path.**
 - **Model policy** — the scope and seam are approved, so run the transformation with a **simple,
   cheap model**; reserve capable models for scoping and for anything left ambiguous. See
@@ -84,12 +81,9 @@ green after — that is the proof behaviour didn't change.
 
 ## 7. Review
 
-Follow **`shipping-a-change` → Finish/Review**: dispatch `backend-review`, work the findings with
-**`superpowers:receiving-code-review`**, following its capped re-dispatch rule (at most one repeat,
-then STOP and surface) — the emphasis is **zero behaviour change** and an **identical public
-contract**.
+Follow **`shipping-a-change` → Finish/Review** — the emphasis is **zero behaviour change** and an
+**identical public contract**.
 
 ## 8. Ship  ⏸ GATE
 
-Follow **`shipping-a-change` → Finish/Ship**: present the completion summary and proposed PR, STOP
-for approval, then open the PR.
+Follow **`shipping-a-change` → Finish/Ship**.

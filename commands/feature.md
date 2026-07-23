@@ -5,19 +5,17 @@ argument-hint: <feature description, or path to a spec file>
 
 # /revai:feature
 
-Take a feature from a description all the way to an open pull request, through eight explicit stages:
-**Set up → Understand → Plan ⏸ → Build → Refine → Verify → Review → Ship ⏸**. You **orchestrate**;
-the real work is done by the `superpowers` skills, the `code-simplifier` agent, and revai's
-guardrails. Do **not** reimplement exploration, planning, plan execution, TDD, code review, or PR
-creation — invoke the existing skills for those.
+Take a feature from a description to an open pull request through eight stages: **Set up →
+Understand → Plan ⏸ → Build → Refine → Verify → Review → Ship ⏸**. You **orchestrate** — the
+`superpowers` skills, `code-simplifier`, and revai's guardrails do the actual planning, execution,
+TDD, review, and PR work; don't reimplement any of it.
 
-This command owns only the **Plan + Build middle** (stages 3–4). Every other stage is the shared
-spine and lives in the **`shipping-a-change`** skill — follow it where pointed so all three workflows
-stay identical outside their middle.
+This command owns only **Plan + Build** (stages 3–4); every other stage lives in the shared
+**`shipping-a-change`** skill — follow it where pointed so all three change workflows stay identical
+outside their middle.
 
-**Two hard stops.** You STOP and wait for the user's explicit approval **after planning** (before
-writing any code) and **before opening the PR**. Everything between those two gates runs
-automatically. Never skip a gate.
+**Two hard stops:** after planning (before any code) and before opening the PR. Everything between
+runs automatically — never skip a gate.
 
 The argument (`$ARGUMENTS`) is the feature: inline text, or a path to a spec file — read the file
 if it's a path.
@@ -42,8 +40,7 @@ the survey finds instead of planning blind.
   it. Otherwise:
 - If the feature has genuine open design questions, invoke the **`superpowers:brainstorming`**
   skill and resolve them one question at a time — weigh candidate approaches through
-  **`best-practices`**, leading with the standard/established option and requiring a stated reason
-  for a bespoke one to win. If it's already well-specified, skip to plans.
+  **`best-practices`**' standard-first bias. If it's already well-specified, skip to plans.
 - If the Understand survey shows the feature is too big for one PR (see the **`divide-and-conquer`**
   signal check — spans multiple bounded contexts, would take multiple sessions, bundles
   independently-valuable capabilities), invoke it first to decide the slice sequence, then scope
@@ -75,11 +72,10 @@ the survey finds instead of planning blind.
   (**`superpowers:verification-before-completion`**) rather than saving all verification for the
   end. Catch drift early.
 - Follow the project `CLAUDE.md` conventions and **hold the clean-code standard + consistency bar**
-  from `shipping-a-change` throughout — `naming-and-structure` (intention-revealing names, one
-  responsibility per unit, IO at the edges) and `best-practices` (prefer the standard/established
-  solution over inventing one) are always-on, and the area skills (`hexagonal-architecture`,
-  `domain-modeling`, `api-design`, `data-access-patterns`, …) surface automatically as the work touches
-  them. **Never modify a "Do not touch" path.**
+  from `shipping-a-change` → **Write clean code** throughout — `naming-and-structure` and
+  `best-practices` stay always-on, and the area skills (`hexagonal-architecture`, `domain-modeling`,
+  `api-design`, `data-access-patterns`, …) surface automatically as the work touches them. **Never
+  modify a "Do not touch" path.**
 - **Model policy** — the plan is approved and clear, so dispatch the build with a **simple, cheap
   model**; reserve capable models for planning and for any step the plan left ambiguous. See
   `shipping-a-change → Model policy`.
@@ -96,11 +92,8 @@ Follow **`shipping-a-change` → Finish/Verify**.
 
 ## 7. Review
 
-Follow **`shipping-a-change` → Finish/Review**: dispatch `backend-review`, work the findings with
-**`superpowers:receiving-code-review`**, following its capped re-dispatch rule (at most one repeat,
-then STOP and surface).
+Follow **`shipping-a-change` → Finish/Review**.
 
 ## 8. Ship  ⏸ GATE
 
-Follow **`shipping-a-change` → Finish/Ship**: present the completion summary and proposed PR, STOP
-for approval, then open the PR.
+Follow **`shipping-a-change` → Finish/Ship**.
