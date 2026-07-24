@@ -88,9 +88,10 @@ Execute per the loaded classification:
   resilience-and-timeouts, concurrency-and-context-safety, backend-testing, error-handling-and-logging,
   event-driven-messaging, authn-and-authorization, observability, caching) surfaces automatically as
   the work touches each concern; `domain-driven-design` (its tactical-patterns and
-  architecture-and-layering references) surfaces for aggregates/invariants and layering/bounded
-  contexts. Match the surrounding repo's existing patterns — don't introduce a second way to do
-  something it already does one way.
+  architecture-and-layering references, plus event-sourcing and process-managers-and-integration
+  where the diff actually touches an event-sourced aggregate or a multi-step/cross-context workflow)
+  surfaces for aggregates/invariants and layering/bounded contexts. Match the surrounding repo's
+  existing patterns — don't introduce a second way to do something it already does one way.
 - **Model policy** — the decision is approved and clear, so build with a **simple, cheap model**;
   escalate back to a capable model only if execution turns out not to be mechanical after all.
 

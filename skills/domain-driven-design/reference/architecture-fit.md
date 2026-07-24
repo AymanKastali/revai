@@ -1,102 +1,88 @@
-# Architecture fit (matching weight to the problem)
+# Architecture fit (sequencing the full DDD toolkit into a design)
 
 ## Contents
-The fit judgment (rich/moderate/thin) · sequencing the other references · the design-doc template ·
-the rules for writing it. This reference is consulted by `/revai:decide`'s Architecture
-classification path.
+Sequencing the other six references · the design-doc template · the rules for writing it. This
+reference is consulted by `/revai:decide`'s Architecture classification path.
 
-The job is to choose the architecture that **fits the problem** and write it down as a design the
-build can follow. The hard part is not applying a pattern — it's picking the *right weight*. A rich
-domain-driven, hexagonal design is powerful and expensive; a thin CRUD app drowns in it. This
-reference owns the judgment (which weight), the sequencing (which reference to bring in, in what
-order), and the deliverable (the design doc). The other references in this skill own the *how* of
-each tactic; `superpowers:brainstorming` owns the question-asking that feeds this — bring them in
-where pointed.
+There is no weight judgment left to make here — full strategic + tactical DDD, hexagonal/
+modular-monolith architecture is the mandatory baseline for any Architecture decision this skill
+applies to (see `SKILL.md`). What this reference still owns: the **order** in which the other
+references get applied, and the **deliverable** — the design doc. The other references in this skill
+own the *how* of each tactic; `superpowers:brainstorming` owns the question-asking that feeds this —
+bring them in where pointed.
 
-## Match the weight to the problem (the fit judgment)
+## Sequence the references
 
-Judge **neutrally** from what the interrogation and any code survey actually surfaced — not from a
-default. The deciding signal is **where the real complexity lives**: in the *domain rules*, in the
-*integration surface*, or nowhere in particular. Classify the subdomains first (core / supporting /
-generic — see `reference/strategic-design.md`), then pick the lightest structure that still protects
-what matters.
+Bring these to bear in this order. `clean-code` and `best-practices` apply throughout.
 
-- **Rich domain → modular monolith, internally hexagonal, strategic + tactical DDD.** Choose it when
-  there are genuine invariants and business rules that must always hold, more than one subdomain, a
-  real **core** worth protecting from the rest, or non-trivial workflows/state transitions. The cost
-  (ports, adapters, aggregates, layered modules) buys isolation the domain will actually use.
-- **Moderate → a simple layered app or a light service; DDD tactics only where they pay.** Choose it
-  when there are some rules but mostly straightforward flows, one dominant subdomain, and CRUD with a
-  handful of validations. Reach for a value object or a rich model **only** on the pieces that have
-  real invariants; leave the rest plain. Don't stand up the full hexagon for this.
-- **Thin → a plain CRUD app, a script, or a library; no ceremony.** Choose it when there is no
-  persistent domain to protect: data in and out, a one-shot tool, a wrapper over someone else's
-  service. Layers, ports, and aggregates here are pure overhead — a clear module with good names is
-  the whole design.
-
-**Never force the hexagon on a thin domain.** `reference/tactical-patterns.md`'s rule holds at the
-architecture level too: pragmatic, not dogmatic — apply the pattern that earns its place and leave
-the rest simple. When it's a genuine toss-up, name the tie and recommend the lighter option; it's
-cheaper to add structure later than to unwind it. State the constraints that moved the decision
-(team size, deadline, expected scale, existing stack) — they are part of the reasoning, not noise.
-
-## Sequence the skills by concern
-
-Once the weight is chosen, bring the relevant references to bear in this order — and **stop early at
-lighter weights**, skipping the layers a thin design doesn't need. `clean-code` and `best-practices`
-apply throughout.
-
-1. **Strategic — `reference/strategic-design.md`** (rich/moderate): draw the boundaries, fix the
-   ubiquitous language inside each, classify subdomains, and choose the integration pattern with each
+1. **Discovery — `reference/discovery-and-modeling-techniques.md`.** Run EventStorming/domain
+   storytelling/example mapping with whoever knows the process before drawing anything. Skip this
+   stage only when the boundaries, events, and rules are already this well established from prior
+   discovery — not because it feels unnecessary this time.
+2. **Strategic — `reference/strategic-design.md`.** Draw the boundaries, fix the ubiquitous language
+   inside each, classify subdomains, distil the core, and choose the integration pattern with each
    neighbour. This is the map; do it before any tactical modelling.
-2. **Tactical — `reference/tactical-patterns.md`** (rich; moderate only on the pieces with real
-   rules): sketch the aggregates, value objects, invariants, and domain events for the core — model
-   what has rules, leave the rest.
-3. **Structural — `reference/architecture-and-layering.md`** (rich): lay out the modules (one per
-   context), the three layers per module, the dependency direction, and the command/query split.
-4. **Edges — `best-practices`** as the design touches them: the API contract, persistence and
+3. **Tactical — `reference/tactical-patterns.md`.** Model the aggregates, value objects, domain
+   services, invariants, and domain events for every context in scope — not just the core, though
+   the core gets the most attention.
+4. **Tactical extensions, where their own trigger holds:**
+   - `reference/event-sourcing.md` — an aggregate whose history is itself a business requirement.
+   - `reference/process-managers-and-integration.md` — a workflow spanning more than one aggregate or
+     context, or one needing compensation.
+   Naming these explicitly and stating whether each one's trigger holds is part of the design — don't
+   silently skip them, and don't apply either without its trigger.
+5. **Structural — `reference/architecture-and-layering.md`.** Lay out the modules (one per context),
+   the three layers per module, the dependency direction, and the command/query split.
+6. **Edges — `best-practices`** as the design touches them: the API contract, persistence and
    one-aggregate-per-transaction, migrations, startup/config, resilience for external calls, and what
    to test per layer.
 
 ## The design-doc template
 
-Write these sections to `docs/design/<slug>.md`, in this order. **Right-size ruthlessly** — omit any
-section a lighter architecture doesn't need and say nothing rather than pad. A thin design may be four
-short sections; a rich one uses them all.
+Write these sections to `docs/design/<slug>.md`, in this order. Every section is always in scope —
+there is no lighter architecture to trim it for. A section with nothing new to say for this design
+still gets a line stating that, so its absence reads as "considered, not applicable" rather than
+"forgotten."
 
 1. **Problem & context** — what's being built and why, in a few sentences. The need it serves, who
    uses it, and the constraints that bound the design (scale, deadline, team, existing stack).
-2. **Domain & ubiquitous language** — the core concepts and the exact words for them. The vocabulary
-   the code will speak. *(Trim to a glossary line for a thin design.)*
-3. **Subdomain map** — each subdomain classified **core / supporting / generic**, so effort is spent
-   where it differentiates. *(Rich/moderate only.)*
-4. **Recommended architecture — and why** — the chosen weight and shape, the reasoning tied to the
-   evidence above, and the **alternatives considered** with the trade-off that ruled each out. This is
-   the load-bearing section; make the decision defensible.
-5. **Module / bounded-context breakdown** — the top-level partition and what each module owns
+2. **Discovery summary** — what EventStorming/domain storytelling/example mapping surfaced: the event
+   timeline, hotspots, and open questions that came out of it (see
+   `reference/discovery-and-modeling-techniques.md`).
+3. **Domain & ubiquitous language** — the core concepts and the exact words for them, plus the domain
+   vision statement for the core.
+4. **Subdomain map** — each subdomain classified **core / supporting / generic**, so effort is spent
+   where it differentiates.
+5. **Recommended architecture** — the shape, the reasoning tied to the evidence above, and the
+   **alternatives considered** with the trade-off that ruled each out. This is the load-bearing
+   section; make the decision defensible.
+6. **Module / bounded-context breakdown** — the top-level partition and what each module owns
    (including its data). How they contact each other (published interface or event).
-6. **Layers & CQRS per module** — the `domain`/`app`/`infra` split and the command/query sides.
-   *(Hexagonal designs only — omit for lighter ones and describe the simpler layering instead.)*
-7. **Domain-model sketch** — the key aggregates, value objects, invariants, and events. Types and
-   rules, not full code. *(Rich/moderate only.)*
-8. **Integration / context map** — external systems and the pattern for each seam (ACL, open-host,
-   integration events). *(Only if there are real integrations.)*
-9. **Cross-cutting** — API contract, persistence, config/secrets, resilience, and the testing
-   approach, each in a line or two, pointing at the skill that governs it.
-10. **Build order (the slices)** — the sequence of vertical slices to implement, smallest useful first,
-    each one a candidate for its own `/revai:decide` → `/revai:implement` run. This is what turns the
-    design into work. Use `best-practices`' pr-sizing reference for how to slice and order them.
-11. **Open questions & risks** — what's still undecided, what could invalidate the design, and what to
-    revisit once real usage arrives.
+7. **Layers & CQRS per module** — the `domain`/`app`/`infra` split and the command/query sides; note
+   explicitly whether any module needs physical CQRS/event sourcing and why.
+8. **Domain-model sketch** — the key aggregates, value objects, domain services, and events. Types
+   and rules, not full code.
+9. **Process managers / sagas** — any multi-step or cross-context workflow, its steps, and its
+   compensating actions. State explicitly if none apply to this design.
+10. **Integration / context map** — external systems and the pattern for each seam (ACL, open-host,
+    Shared Kernel, Separate Ways, integration events).
+11. **Cross-cutting** — API contract, persistence, config/secrets, resilience, and the testing
+    approach, each in a line or two, pointing at the skill that governs it.
+12. **Build order (the slices)** — the sequence of vertical slices to implement, smallest useful
+    first, each one a candidate for its own `/revai:decide` → `/revai:implement` run. This is what
+    turns the design into work. Use `best-practices`' pr-sizing reference for how to slice and order
+    them.
+13. **Open questions & risks** — what's still undecided, what could invalidate the design, and what
+    to revisit once real usage arrives.
 
 ## The rules
 
-- **Ground every decision in the interrogation and the survey.** A recommendation the answers don't
-  support is a guess. If a needed answer never came, say what's assumed and flag it as an open
+- **Ground every decision in discovery and the survey.** A recommendation the sessions and answers
+  don't support is a guess. If a needed answer never came, say what's assumed and flag it as an open
   question — don't invent a requirement to justify a shape.
-- **Correct over comprehensive, right-sized not showcased.** A shorter design you can defend beats a
-  longer one padded with patterns nobody asked for — the goal is the design that fits, not a
-  demonstration of DDD. Cut every section that doesn't earn its place.
+- **Complete, not padded.** Every reference and every template section is in scope — that's the
+  mandate — but "in scope" means stating the decision (including "not needed here, because...") for a
+  tactical extension whose trigger doesn't hold, not inventing a use for it to look thorough.
 - **Straightforward prose.** Short sentences, plain words, no filler. Diagrams as simple ASCII/indented
   structure (terminal markdown) — no renderer-only diagrams.
 - **Speak the ubiquitous language** throughout, and name everything per `clean-code` — the design sets

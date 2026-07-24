@@ -85,11 +85,11 @@ more ceremony than the decision warrants, never less rigor than it requires:
 
 - **Architecture:** invoke `superpowers:brainstorming` and keep asking, one question at a time,
   against the **full dimension checklist above**, until every architecture-determining dimension is
-  resolved. Then invoke `domain-driven-design`'s **architecture-fit reference** for the neutral fit
-  judgment — **rich** (modular monolith, hexagonal, strategic + tactical DDD), **moderate** (simple
-  layered app, DDD tactics only where they pay), or **thin** (script/CRUD, no ceremony). Present the
-  recommendation, the module/context boundaries, the subdomain map, and **2–3 alternatives with the
-  trade-off that ruled each out**.
+  resolved. Then invoke `domain-driven-design`'s **architecture-fit reference** to sequence the
+  skill's full toolkit into the design — strategic + tactical DDD and hexagonal/modular-monolith
+  architecture are the mandatory baseline for any Architecture decision, not a weight to choose.
+  Present the recommendation, the module/context boundaries, the subdomain map, and **2–3
+  alternatives with the trade-off that ruled each out**.
 - **Plan:** walk the **same dimension checklist**, scaled to this feature — resolve with
   `superpowers:brainstorming` whatever it actually touches (new data model, new API surface, a new
   failure mode, caching behaviour, and so on), weighing candidate approaches through
@@ -125,11 +125,10 @@ more ceremony than the decision warrants, never less rigor than it requires:
 
 Write **exactly one** artifact, after the gate is approved:
 
-- **Architecture** → `docs/design/<slug>.md` — the chosen architecture at its agreed weight
-  (sequence `domain-driven-design`'s strategic-design → tactical-patterns →
-  architecture-and-layering references for a rich design; only proportionate structure for lighter
-  ones), named per `clean-code`'s naming reference, plus the **build-order (the slices)** and open
-  questions/risks.
+- **Architecture** → `docs/design/<slug>.md` — always via `domain-driven-design`'s full sequence
+  (discovery → strategic-design → tactical-patterns, plus event-sourcing/process-managers where
+  their trigger holds → architecture-and-layering), named per `clean-code`'s naming reference, plus
+  the **build-order (the slices)** and open questions/risks.
 - **Plan** → wherever `superpowers:writing-plans` writes it (its own convention,
   `docs/superpowers/plans/YYYY-MM-DD-<name>.md`) — report that path, don't relocate it.
 - **Defect / Reshape** → `docs/decisions/<slug>.md` — a `type: defect` or `type: reshape` header,

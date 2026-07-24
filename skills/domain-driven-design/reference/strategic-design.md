@@ -1,13 +1,15 @@
 # Strategic design (bounded contexts)
 
 ## Contents
-Ubiquitous language & one-model-per-context · subdomain classification · context-mapping patterns ·
-domain vs integration events · examples (ACL, event translation).
+Ubiquitous language & one-model-per-context · subdomain classification · distillation (core domain
+chart, domain vision statement) · context-mapping patterns (including Shared Kernel, Separate Ways,
+Big Ball of Mud) · team alignment · domain vs integration events · examples (ACL, event translation).
 
 Strategy comes before tactics. Before modelling types, decide **where the boundary is** and **what
 the words mean inside it**. Teams that jump straight to aggregates and value objects are "building
 without a map." This reference is the map; `reference/tactical-patterns.md` is what you build once
-it's drawn.
+it's drawn. If the boundaries and language aren't known yet, run
+`reference/discovery-and-modeling-techniques.md` first — its output is this reference's input.
 
 The central idea: there is no single correct model of the whole business. A model is only valid
 *within a boundary*. "Modern" DDD treats this as the primary decision — align modules, packages,
@@ -22,14 +24,28 @@ services, and teams to these boundaries.
   class to serve every context. A shared "god model" couples everything and pleases no one. Let each
   context keep the model it needs.
 - **A bounded context is where one model and one language hold.** Make the boundary explicit — a
-  package, module, or service. One team should own a context; one context shouldn't be split across
-  teams that must coordinate on every change (Conway's law).
+  package, module, or service.
+- **One stream-aligned team owns each context (Conway's law, applied deliberately).** A context
+  shouldn't be split across teams that must coordinate on every change, and one team shouldn't own
+  so many contexts that it can't keep their languages distinct. Team boundaries and context
+  boundaries are drawn together, not independently — a team topology that ignores this fights the
+  architecture it's supposed to deliver.
 - **Classify subdomains, then spend effort accordingly:**
   - **Core** — your differentiator. Invest the best modelling here.
   - **Supporting** — needed but not special. Model it simply.
   - **Generic** — solved elsewhere (auth, payments, email). Buy/adopt; don't lovingly hand-model it.
+- **Distil the core so it stays visible as the system grows:**
+  - **Domain vision statement** — a short paragraph naming what the core domain does and why it
+    matters, so new work is checked against it instead of drifting.
+  - **Core domain chart** — a one-page map plotting each subdomain by how core it is against how
+    well the current model actually serves it, so investment gaps are visible at a glance and effort
+    doesn't quietly leak into supporting/generic work.
 - **Choose the integration (context map) deliberately** when two contexts meet:
   - **Partnership** — two teams succeed or fail together; coordinate closely.
+  - **Shared Kernel** — a small, explicitly agreed subset of model/code is shared between two
+    contexts; any change to it needs both teams' sign-off. Keep the shared surface as small as
+    possible — it's the one place where "one model per context" is deliberately relaxed, and every
+    extra field in it is a standing coordination cost.
   - **Customer–Supplier** — downstream's needs are on the upstream's backlog.
   - **Conformist** — you adopt the upstream's model as-is (no leverage to change it).
   - **Anti-corruption layer (ACL)** — you translate the other model into *your* language at the
@@ -37,6 +53,13 @@ services, and teams to these boundaries.
     third-party system you don't want to conform to.
   - **Open-host service / published language** — a stable, documented contract (often the API from
     `best-practices`) for many consumers, so you don't build a bespoke integration per consumer.
+  - **Separate ways** — decide deliberately *not* to integrate. Duplicate the small amount of
+    logic/data on each side rather than build and maintain a seam for a relationship that isn't
+    worth the coupling. A legitimate choice, not a failure to integrate.
+  - **Big ball of mud** — the diagnosis, not a pattern to adopt: a system with no real boundaries,
+    where everything can reach everything. Name it explicitly when you see it rather than describing
+    it vaguely, and remediate by carving out one bounded context at a time behind an anti-corruption
+    layer — never attempt a big-bang rewrite of the whole mud at once.
 - **Protect the core from foreign models.** Upstream concepts cross the boundary only through a
   translation layer, never raw into your aggregates.
 - **Cross the boundary with a versioned integration event, not a raw domain event.** A domain event
@@ -53,11 +76,14 @@ services, and teams to these boundaries.
 - [ ] One model and one language hold inside it; terms aren't overloaded within the context
 - [ ] Shared terms across contexts are translated, not force-merged into one model
 - [ ] Each subdomain is classified core/supporting/generic and effort matches
-- [ ] The integration pattern with each neighbour is a deliberate choice, named
+- [ ] The core domain has a vision statement (or chart) keeping it visible as the system grows
+- [ ] The integration pattern with each neighbour is a deliberate choice, named — including when it's
+      Shared Kernel, Separate Ways, or a diagnosed Big Ball of Mud being remediated
+- [ ] Any Shared Kernel is as small as possible, with both teams' sign-off on changes to it
 - [ ] Foreign/legacy models enter only through an anti-corruption layer
 - [ ] Cross-context notifications are versioned integration events in the published language, not raw
       internal domain events
-- [ ] One team owns each context
+- [ ] One stream-aligned team owns each context
 
 ## Examples
 
@@ -66,6 +92,17 @@ services, and teams to these boundaries.
 `Account` in **Identity** is login credentials and MFA. `Account` in **Billing** is a balance and a
 payment method. Forcing one `Account` type to serve both yields a class that's half-authentication,
 half-ledger and coherent as neither. Keep two models; translate at the seam.
+
+### Shared Kernel vs. Separate Ways — a deliberate choice, not a default
+
+Two contexts, **Pricing** and **Promotions**, both need a `Money` type with the same rounding rules.
+**Shared Kernel** is right if the two teams will co-evolve `Money` together and accept joint sign-off
+on it — keep the shared surface to just `Money`, nothing else. **Separate Ways** is right if the
+teams rarely coordinate and `Money` drifting slightly apart (e.g. Promotions only ever needs whole
+currency units) costs less than the standing coordination overhead of a shared module — duplicate the
+small type instead of building a shared package for it. Picking Shared Kernel out of habit, for a
+relationship that's really Separate Ways, is how a "small shared module" becomes the next Big Ball of
+Mud.
 
 ### Anti-corruption layer — translate a foreign model into your language
 

@@ -1,38 +1,48 @@
 ---
 name: domain-driven-design
-description: Applies modern domain-driven design — strategic design (bounded contexts, ubiquitous language, context mapping), tactical modeling (aggregates, value objects, invariants, domain events), hexagonal/modular-monolith architecture, and the judgment for how much DDD ceremony a system actually needs. Use when modelling a domain, drawing a service/module boundary, defining a type with business rules, or designing a new system's or bounded context's architecture.
+description: Applies the full modern domain-driven design toolkit as a mandatory baseline — discovery techniques (EventStorming, domain storytelling), strategic design (bounded contexts, ubiquitous language, context mapping), tactical modeling (entities, value objects, aggregates, domain services, factories, specifications, repositories, domain events, event sourcing), process managers/sagas, and hexagonal/modular-monolith architecture. Use when modelling a domain, drawing a service/module boundary, defining a type with business rules, or designing a new system's or bounded context's architecture.
 ---
 
 # Domain-driven design
 
 ## Overview
 
-DDD earns its place where real complexity actually lives: genuine invariants and business rules
-that must always hold, more than one subdomain, a real core worth protecting from the rest, or
-non-trivial workflows and state transitions. It is never forced onto a thin CRUD problem — a plain
-script, a wrapper over someone else's service, or a handful of straightforward validations don't
-need a bounded context, an aggregate, or a hexagon; a clear module with good names is the whole
-design. Judge the weight neutrally from what the problem actually shows, not from habit, and pick
-the lightest structure that still protects what matters. See `reference/architecture-fit.md` for
-the full judgment and how it drives a design doc.
+This is the mandatory baseline for any domain being modelled, any service/module boundary being
+drawn, or any type carrying business rules — there is no lighter tier. Strategic design (bounded
+contexts, ubiquitous language, context mapping) and tactical modeling (aggregates, value objects,
+domain events, domain services) are always in force once this skill applies; hexagonal layering and
+the modular-monolith split are the required structure, not an option weighed against a simpler one.
+
+That mandate is about the *core building blocks*, not about instantiating every pattern in the
+toolkit on every problem. Entities, value objects, aggregates, domain events, domain services,
+repositories, bounded contexts, and hexagonal layering are never optional. Factories,
+Specifications, Event Sourcing, and Process Managers/Sagas each carry their *own* trigger condition
+inside the tactical layer (a Factory earns its place when construction itself has multi-step
+invariants; Event Sourcing earns its place when an aggregate's history is itself a business
+requirement; a Saga earns its place when a workflow spans more than one aggregate or context) —
+applying one of these without its trigger is over-engineering the same way skipping a mandatory
+building block is under-engineering. See `reference/architecture-fit.md` for how the references
+below sequence into a design.
 
 ## Quick reference
 
 | Need | Reference |
 |---|---|
-| Domain boundaries, ubiquitous language, integration patterns | `reference/strategic-design.md` |
-| Aggregates, value objects, invariants, domain events | `reference/tactical-patterns.md` |
+| Discovering contexts, events, and rules with domain experts | `reference/discovery-and-modeling-techniques.md` |
+| Domain boundaries, ubiquitous language, context mapping | `reference/strategic-design.md` |
+| Entities, value objects, aggregates, domain services, factories, specifications, repositories, domain events | `reference/tactical-patterns.md` |
+| Event-sourced aggregates and event stores | `reference/event-sourcing.md` |
+| Sagas/process managers, compensation, transactional outbox | `reference/process-managers-and-integration.md` |
 | Module layout, layering, ports/adapters, CQRS | `reference/architecture-and-layering.md` |
-| How much of this a given system actually needs | `reference/architecture-fit.md` |
+| Sequencing all of the above into one design | `reference/architecture-fit.md` |
 
-Strategic comes before tactical, which comes before structural — draw the boundary and fix the
-language first, then model the types inside it, then decide where the code lives. `architecture-fit`
-is consulted first, to decide how much of the other three to actually use.
+Discovery comes before strategic, which comes before tactical, which comes before structural — surface
+the domain's events and language with domain experts first, draw the boundary and fix the language,
+then model the types inside it, then decide where the code lives. `architecture-fit` sequences all
+six references into one design; it no longer weighs whether to use them.
 
 ## Common mistakes
 
-- **Forcing the hexagon on a thin domain.** Layers, ports, and aggregates on a CRUD problem with no
-  real invariants — pure ceremony that slows every future change without protecting anything.
 - **Anemic models.** A data bag with public fields, mutated by an external service — the invariant
   lives outside the type (or nowhere), gets duplicated at every call site, and is easy to forget.
 - **Missing invariants.** A rule that should always hold is enforced by convention or a stray `if`
@@ -43,4 +53,13 @@ is consulted first, to decide how much of the other three to actually use.
   DDD exists to draw.
 - **Skipping strategic design and jumping to types.** Modelling aggregates before the boundary and
   ubiquitous language are settled — "building without a map."
+- **Skipping discovery and guessing at boundaries.** Drawing bounded contexts from an org chart or a
+  hunch instead of running EventStorming/domain storytelling with the people who know the process.
+- **Reaching for Event Sourcing or a Saga without their trigger.** Event-sourcing an aggregate with
+  no history requirement, or building a process manager for a workflow that's really one aggregate's
+  method — ceremony that outruns the problem is still a mistake, it's just no longer justified by
+  "the whole system is thin."
+- **Domain services and factories used as an escape hatch.** Moving behaviour into a domain service
+  because the aggregate boundary is unclear, instead of fixing the boundary — a domain service is for
+  behaviour that genuinely spans more than one aggregate, not a place to dump logic that doesn't fit.
 

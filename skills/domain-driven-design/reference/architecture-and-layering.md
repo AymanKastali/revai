@@ -7,13 +7,16 @@ logical CQRS · examples (module layout, dependency inversion, cross-module boun
 The house architecture. One deployable, partitioned into **modules — one per bounded context**.
 Each module is internally **hexagonal**: three layers (`domain` / `app` / `infra`) with
 dependencies pointing **inward**. The application layer is split **logically** into a command side
-and a query side (CQRS), sharing one datastore — no event sourcing, no separate read store.
+and a query side (CQRS), sharing one datastore by default — physical CQRS and event sourcing are
+available where their own trigger condition holds (see `reference/event-sourcing.md`), not the
+default starting point.
 
 This reference owns *the layout and the dependency direction*. It sits alongside the others in this
 skill: `reference/strategic-design.md` draws where a module's boundary is;
-`reference/tactical-patterns.md` fills each `domain/`; `clean-code`'s "layers don't leak" is made
-concrete here as an import rule; `best-practices` covers what goes in the infra adapters (data
-access patterns).
+`reference/tactical-patterns.md` fills each `domain/`; `reference/event-sourcing.md` and
+`reference/process-managers-and-integration.md` extend the write side and the app layer respectively
+where their trigger applies; `clean-code`'s "layers don't leak" is made concrete here as an import
+rule; `best-practices` covers what goes in the infra adapters (data access patterns).
 
 ## Modules — the modular monolith
 
@@ -55,10 +58,24 @@ access patterns).
 ## Logical CQRS
 
 - **Commands mutate through aggregates; queries read through read models and skip the domain.**
-- **One datastore.** The split is in code paths and models, not infrastructure — read/write
-  separation without the operational cost. No event sourcing, no separate read database.
+- **One datastore, by default.** The split is in code paths and models, not infrastructure — read/
+  write separation without the operational cost.
 - Queries may use optimised/raw SQL returning DTOs; commands go through the aggregate so invariants
   always hold.
+- **When logical CQRS isn't enough, physical CQRS is the escalation — driven by event sourcing, not
+  by a general performance itch.** If an aggregate is event-sourced (see `reference/event-sourcing.md`
+  for the trigger condition), its read models are typically real projections maintained by a
+  separate process consuming the event stream — a second, purpose-built store, not just a second code
+  path over the same tables. Reach for this because the write side is already event-sourced, not as
+  a standalone scaling move.
+
+## Composition root: wiring a saga
+
+A process manager/saga (see `reference/process-managers-and-integration.md`) is wired at the
+composition root exactly like a command handler: its dependencies (repositories, the outbox, a
+command dispatcher) are injected there, and it's registered as the handler for the events that drive
+it forward. It lives in `app/` alongside the command and query sides, not in `infra/` — the
+coordination logic is application logic, even though its triggers arrive as events from `infra/`.
 
 ## Checklist
 
@@ -68,7 +85,9 @@ access patterns).
 - [ ] Dependencies point inward; nothing inner imports `infra`
 - [ ] Ports declared in `domain`/`app`; adapters in `infra`; wired only at the composition root
 - [ ] `app` is split into command and query sides; queries return DTOs and bypass the domain
-- [ ] One datastore; no event sourcing / no separate read store
+- [ ] One datastore by default; a second store/event sourcing is present only where its own trigger
+      condition (see `reference/event-sourcing.md`) actually holds
+- [ ] Any saga/process manager is wired at the composition root and lives in `app/`, not `infra/`
 
 ## Examples
 
