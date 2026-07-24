@@ -54,7 +54,8 @@ still gets a line stating that, so its absence reads as "considered, not applica
 3. **Domain & ubiquitous language** — the core concepts and the exact words for them, plus the domain
    vision statement for the core.
 4. **Subdomain map** — each subdomain classified **core / supporting / generic**, so effort is spent
-   where it differentiates.
+   where it differentiates, and which bounded context(s) each one maps to — don't assume 1:1 (see
+   `reference/strategic-design.md`).
 5. **Recommended architecture** — the shape, the reasoning tied to the evidence above, and the
    **alternatives considered** with the trade-off that ruled each out. This is the load-bearing
    section; make the decision defensible.

@@ -25,6 +25,13 @@ services, and teams to these boundaries.
   context keep the model it needs.
 - **A bounded context is where one model and one language hold.** Make the boundary explicit — a
   package, module, or service.
+- **Subdomain and bounded context are not the same thing — don't conflate them.** A subdomain is
+  discovered in the **problem space**: a piece of the business as it actually works, whether or not
+  any software models it. A bounded context is designed in the **solution space**: where you choose
+  to draw a model boundary. They often align one-to-one for a new area, but they don't have to — one
+  bounded context can cover several supporting/generic subdomains that don't need their own boundary
+  yet, and a single subdomain can later split across two contexts as it grows. Don't assume a 1:1
+  map by default; state which subdomain(s) a context covers.
 - **One stream-aligned team owns each context (Conway's law, applied deliberately).** A context
   shouldn't be split across teams that must coordinate on every change, and one team shouldn't own
   so many contexts that it can't keep their languages distinct. Team boundaries and context
@@ -73,6 +80,7 @@ services, and teams to these boundaries.
 ## Checklist
 
 - [ ] The boundary is explicit (a package/module/service), not implied
+- [ ] Subdomain(s) covered by each context are stated, not assumed 1:1 with the context
 - [ ] One model and one language hold inside it; terms aren't overloaded within the context
 - [ ] Shared terms across contexts are translated, not force-merged into one model
 - [ ] Each subdomain is classified core/supporting/generic and effort matches

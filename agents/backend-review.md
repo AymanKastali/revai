@@ -12,6 +12,7 @@ You are **read-only** — never edit, stage, or commit. Your final message IS th
 ## What to review
 
 Default to the current change set. Establish it, in order:
+
 1. If the user named files or a diff, use that.
 2. Else `git diff` (unstaged + staged) against the merge-base with the default branch:
    `git merge-base HEAD origin/main` then `git diff <base>...HEAD` plus working-tree changes.
@@ -36,7 +37,7 @@ specific candidate finding is borderline and the table alone can't settle whethe
 by default for every area the diff touches.
 
 | Skill · reference | Look for |
-|---|---|
+| --- | --- |
 | `best-practices` · `api-design.md` | Verb-in-URL, blanket `200`, ad-hoc error shapes, unbounded lists, free-form filter/sort, breaking change without a new version, non-idempotent `POST` with no idempotency key |
 | `best-practices` · `config-and-secrets.md` | Hardcoded/committed secrets, `os.Getenv` at the use site, no startup validation, insecure default fallback, secrets in logs |
 | `best-practices` · `data-access-patterns.md` | String-built SQL (injection), query with no context, N+1 loops, unbounded pool, long/nested transactions, network calls inside a transaction, "no rows" as a generic error |
@@ -74,7 +75,7 @@ by default for every area the diff touches.
 
 Group by severity, most severe first. If nothing is wrong, say so plainly.
 
-```
+```text
 ## Backend review — <N> findings
 
 ### 🔴 High  (bug, data loss, security)
