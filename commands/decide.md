@@ -59,21 +59,44 @@ read the file if it's a path. If it's empty, ask what to decide and stop.
 
 ## 3. Decide  ⏸ GATE
 
+**Dimension checklist** — shared by Architecture and Plan below. Architecture walks it in full;
+Plan scales it to what the feature actually touches, but every dimension must be actively
+considered either way: ask a question where it's genuinely in play, or state in one line why it's
+out of scope here — never skip one without comment.
+
+- Domain & invariants — the core rules that must always hold
+- Users & key flows — who uses this, the primary paths through it
+- Subdomains — which are core vs. supporting/generic
+- Functional scope & NFRs — availability, consistency, latency, read/write ratio
+- Capacity — expected traffic, data volume/growth, bandwidth
+- Integrations — what this talks to and how
+- Component shape — the pieces involved and how they communicate
+- Data storage & partitioning — datastore choice, tenancy/partitioning, schema shape
+- Caching — what's worth caching, invalidation
+- Scaling & load distribution — statelessness, horizontal-scaling story
+- Reliability & failure semantics — fail-open vs. fail-closed, redundancy/failover
+- Security & isolation — authn/authz model, tenant/data isolation, rate limiting
+- Observability — what must be visible to operate this safely
+- Deployment topology — environments, how it ships
+- Constraints — team, deadline, stack
+
 Apply the method that matches the classification, at a depth proportional to the stakes — never
 more ceremony than the decision warrants, never less rigor than it requires:
 
 - **Architecture:** invoke `superpowers:brainstorming` and keep asking, one question at a time,
-  until the architecture-determining unknowns are resolved — the domain and its invariants, who
-  uses it and the key flows, the subdomains and which is core, scale/consistency/latency needs,
-  integrations, and constraints (team, deadline, stack). Then invoke `domain-driven-design`'s
-  **architecture-fit reference** for the neutral fit judgment — **rich** (modular monolith,
-  hexagonal, strategic + tactical DDD), **moderate** (simple layered app, DDD tactics only where
-  they pay), or **thin** (script/CRUD, no ceremony). Present the recommendation, the module/context
-  boundaries, the subdomain map, and **2–3 alternatives with the trade-off that ruled each out**.
-- **Plan:** if genuine open design questions remain, resolve them with `superpowers:brainstorming`,
-  weighing candidate approaches through `best-practices`' standard-first bias. Check
-  `best-practices`' **pr-sizing reference** — if the scope spans multiple bounded contexts, would
-  take multiple sessions, or bundles independently-valuable capabilities, apply it and scope
+  against the **full dimension checklist above**, until every architecture-determining dimension is
+  resolved. Then invoke `domain-driven-design`'s **architecture-fit reference** for the neutral fit
+  judgment — **rich** (modular monolith, hexagonal, strategic + tactical DDD), **moderate** (simple
+  layered app, DDD tactics only where they pay), or **thin** (script/CRUD, no ceremony). Present the
+  recommendation, the module/context boundaries, the subdomain map, and **2–3 alternatives with the
+  trade-off that ruled each out**.
+- **Plan:** walk the **same dimension checklist**, scaled to this feature — resolve with
+  `superpowers:brainstorming` whatever it actually touches (new data model, new API surface, a new
+  failure mode, caching behaviour, and so on), weighing candidate approaches through
+  `best-practices`' standard-first bias; for dimensions it plainly doesn't touch (e.g. deployment
+  topology unchanged, no new scaling concern), say so in one line instead of skipping silently.
+  Check `best-practices`' **pr-sizing reference** — if the scope spans multiple bounded contexts,
+  would take multiple sessions, or bundles independently-valuable capabilities, apply it and scope
   **this** decision to slice 1 only; the rest becomes a short backlog note. Invoke
   `superpowers:writing-plans` for the step-by-step plan, making explicit: the module/bounded
   context, the layers touched (domain / app / infra, and the command/query split where it
