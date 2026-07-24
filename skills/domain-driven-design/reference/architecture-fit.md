@@ -32,7 +32,9 @@ Bring these to bear in this order. `clean-code` and `best-practices` apply throu
    Naming these explicitly and stating whether each one's trigger holds is part of the design — don't
    silently skip them, and don't apply either without its trigger.
 5. **Structural — `reference/architecture-and-layering.md`.** Lay out the modules (one per context),
-   the three layers per module, the dependency direction, and the command/query split.
+   the three layers per module, and the dependency direction. One set of use-case handlers per
+   module by default; split a module into command/query sides (CQRS) only where its own trigger
+   holds (a read shape genuinely diverged from the write model) — state per module whether it does.
 6. **Edges — `best-practices`** as the design touches them: the API contract, persistence and
    one-aggregate-per-transaction, migrations, startup/config, resilience for external calls, and what
    to test per layer.
@@ -58,8 +60,9 @@ still gets a line stating that, so its absence reads as "considered, not applica
    section; make the decision defensible.
 6. **Module / bounded-context breakdown** — the top-level partition and what each module owns
    (including its data). How they contact each other (published interface or event).
-7. **Layers & CQRS per module** — the `domain`/`app`/`infra` split and the command/query sides; note
-   explicitly whether any module needs physical CQRS/event sourcing and why.
+7. **Layers per module** — the `domain`/`app`/`infra` split for each module. For each one, state
+   whether CQRS's trigger holds (and it gets a command/query split) or it stays a single set of
+   use-case handlers — and separately, whether physical CQRS/event sourcing applies and why.
 8. **Domain-model sketch** — the key aggregates, value objects, domain services, and events. Types
    and rules, not full code.
 9. **Process managers / sagas** — any multi-step or cross-context workflow, its steps, and its

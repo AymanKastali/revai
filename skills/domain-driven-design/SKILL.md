@@ -16,13 +16,14 @@ the modular-monolith split are the required structure, not an option weighed aga
 That mandate is about the *core building blocks*, not about instantiating every pattern in the
 toolkit on every problem. Entities, value objects, aggregates, domain events, domain services,
 repositories, bounded contexts, and hexagonal layering are never optional. Factories,
-Specifications, Event Sourcing, and Process Managers/Sagas each carry their *own* trigger condition
-inside the tactical layer (a Factory earns its place when construction itself has multi-step
+Specifications, Event Sourcing, Process Managers/Sagas, and CQRS (logical or physical) each carry
+their *own* trigger condition (a Factory earns its place when construction itself has multi-step
 invariants; Event Sourcing earns its place when an aggregate's history is itself a business
-requirement; a Saga earns its place when a workflow spans more than one aggregate or context) —
-applying one of these without its trigger is over-engineering the same way skipping a mandatory
-building block is under-engineering. See `reference/architecture-fit.md` for how the references
-below sequence into a design.
+requirement; a Saga earns its place when a workflow spans more than one aggregate or context; CQRS
+earns its place when a query's read shape has genuinely diverged from the write model) — applying
+one of these without its trigger is over-engineering the same way skipping a mandatory building
+block is under-engineering. See `reference/architecture-fit.md` for how the references below
+sequence into a design.
 
 ## Quick reference
 
@@ -55,10 +56,11 @@ six references into one design; it no longer weighs whether to use them.
   ubiquitous language are settled — "building without a map."
 - **Skipping discovery and guessing at boundaries.** Drawing bounded contexts from an org chart or a
   hunch instead of running EventStorming/domain storytelling with the people who know the process.
-- **Reaching for Event Sourcing or a Saga without their trigger.** Event-sourcing an aggregate with
-  no history requirement, or building a process manager for a workflow that's really one aggregate's
-  method — ceremony that outruns the problem is still a mistake, it's just no longer justified by
-  "the whole system is thin."
+- **Reaching for Event Sourcing, a Saga, or CQRS without their trigger.** Event-sourcing an aggregate
+  with no history requirement, building a process manager for a workflow that's really one
+  aggregate's method, or splitting a module into command/query sides when nothing about the read
+  shape has diverged — ceremony that outruns the problem is still a mistake, it's just no longer
+  justified by "the whole system is thin."
 - **Domain services and factories used as an escape hatch.** Moving behaviour into a domain service
   because the aggregate boundary is unclear, instead of fixing the boundary — a domain service is for
   behaviour that genuinely spans more than one aggregate, not a place to dump logic that doesn't fit.

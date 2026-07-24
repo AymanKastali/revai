@@ -1,15 +1,17 @@
-# Architecture & layering (hexagonal, modular monolith, logical CQRS)
+# Architecture & layering (hexagonal, modular monolith)
 
 ## Contents
 Modules as bounded contexts · the inward dependency rule · the three layers (domain/app/infra) ·
-logical CQRS · examples (module layout, dependency inversion, cross-module boundary).
+CQRS as an optional escalation, not a default · examples (module layout, dependency inversion,
+cross-module boundary).
 
 The house architecture. One deployable, partitioned into **modules — one per bounded context**.
 Each module is internally **hexagonal**: three layers (`domain` / `app` / `infra`) with
-dependencies pointing **inward**. The application layer is split **logically** into a command side
-and a query side (CQRS), sharing one datastore by default — physical CQRS and event sourcing are
-available where their own trigger condition holds (see `reference/event-sourcing.md`), not the
-default starting point.
+dependencies pointing **inward**. The application layer holds **one set of use-case handlers per
+module** by default — the same path serves commands and queries alike. CQRS (splitting into a
+command side and a query side), physical CQRS, and event sourcing are each available where their
+own trigger condition holds (see `## CQRS — when queries outgrow the aggregate` below and
+`reference/event-sourcing.md`) — none of them is the default starting shape.
 
 This reference owns *the layout and the dependency direction*. It sits alongside the others in this
 skill: `reference/strategic-design.md` draws where a module's boundary is;
@@ -42,39 +44,46 @@ rule; `best-practices` covers what goes in the infra adapters (data access patte
 
 ## The three layers
 
-- **`domain/`** — the write model: aggregates, value objects, domain services, domain events, and
-  the **write-repository ports** (interfaces) it needs. Pure and framework-free — no DB, clock, or
-  HTTP inside it (this is the layer rule that keeps the domain a functional core).
-- **`app/`** — use cases, split by CQRS:
-  - **command side** — a command handler loads an aggregate through a write-repository port, invokes
-    the domain to enforce invariants, persists, and emits events.
-  - **query side** — a query handler uses **read/query ports** to return **read DTOs directly,
-    bypassing the domain** (never hydrate an aggregate just to read it). Read ports and read DTOs
-    live here — a read shape is an application concern, not a domain concept.
-- **`infra/`** — adapters. **Driven:** write-repository and read-model implementations (see
-  `best-practices`), external clients, event publishers. **Driving:** HTTP/CLI/gRPC controllers
-  that dispatch to command or query handlers. Plus the composition root that wires it all.
+- **`domain/`** — aggregates, value objects, domain services, domain events, and the
+  **repository ports** (interfaces) they need. Pure and framework-free — no DB, clock, or HTTP
+  inside it (this is the layer rule that keeps the domain a functional core).
+- **`app/`** — one set of use-case handlers per module, by default. A handler loads the aggregate
+  through its repository port, invokes the domain to enforce invariants, persists, and emits
+  events; the **same handler shape serves a simple query too** — load the aggregate through the
+  same repository, read what's needed off it. There is no command/query split here unless CQRS's
+  own trigger holds (see below) — most modules never need one.
+- **`infra/`** — adapters. **Driven:** repository implementations (see `best-practices`), external
+  clients, event publishers. **Driving:** HTTP/CLI/gRPC controllers that dispatch to the use-case
+  handlers. Plus the composition root that wires it all.
 
-## Logical CQRS
+## CQRS — when queries outgrow the aggregate
 
-- **Commands mutate through aggregates; queries read through read models and skip the domain.**
-- **One datastore, by default.** The split is in code paths and models, not infrastructure — read/
-  write separation without the operational cost.
-- Queries may use optimised/raw SQL returning DTOs; commands go through the aggregate so invariants
-  always hold.
-- **When logical CQRS isn't enough, physical CQRS is the escalation — driven by event sourcing, not
-  by a general performance itch.** If an aggregate is event-sourced (see `reference/event-sourcing.md`
-  for the trigger condition), its read models are typically real projections maintained by a
-  separate process consuming the event stream — a second, purpose-built store, not just a second code
-  path over the same tables. Reach for this because the write side is already event-sourced, not as
-  a standalone scaling move.
+CQRS is an escalation, not a starting shape. Reaching for it without the trigger below is the same
+mistake as skipping a mandatory building block — ceremony that outruns the problem.
+
+- **The trigger:** a query's read shape has genuinely diverged from the write model — a screen or
+  report needs data joined/shaped in a way no single aggregate maps to cleanly, or loading a whole
+  aggregate just to read a handful of fields is a measured, real cost. Neither "we're doing DDD" nor
+  "it might scale someday" is the trigger.
+- **Logical CQRS, once the trigger holds:** split the module's use cases into a **command side**
+  (loads the aggregate through its repository, invokes the domain, persists, emits events) and a
+  **query side** (uses a **read port** to return **read DTOs directly, bypassing the domain and the
+  aggregate** entirely — never hydrate an aggregate just to read it). One datastore; the split is in
+  code paths and models, not infrastructure. Read ports and read DTOs live in `app/` — a read shape
+  is an application concern, not a domain concept. Queries may use optimised/raw SQL returning DTOs;
+  commands still go through the aggregate so invariants always hold.
+- **Physical CQRS, a further escalation — driven by event sourcing, not by a general performance
+  itch.** If an aggregate is event-sourced (see `reference/event-sourcing.md` for that trigger), its
+  read models are typically real projections maintained by a separate process consuming the event
+  stream — a second, purpose-built store, not just a second code path over the same tables. Reach
+  for this because the write side is already event-sourced, not as a standalone scaling move.
 
 ## Composition root: wiring a saga
 
 A process manager/saga (see `reference/process-managers-and-integration.md`) is wired at the
-composition root exactly like a command handler: its dependencies (repositories, the outbox, a
+composition root exactly like any use-case handler: its dependencies (repositories, the outbox, a
 command dispatcher) are injected there, and it's registered as the handler for the events that drive
-it forward. It lives in `app/` alongside the command and query sides, not in `infra/` — the
+it forward. It lives in `app/` alongside the module's other use-case handlers, not in `infra/` — the
 coordination logic is application logic, even though its triggers arrive as events from `infra/`.
 
 ## Checklist
@@ -84,33 +93,32 @@ coordination logic is application logic, even though its triggers arrive as even
 - [ ] No module imports another module's `domain` or `infra`; cross-module via published port or event
 - [ ] Dependencies point inward; nothing inner imports `infra`
 - [ ] Ports declared in `domain`/`app`; adapters in `infra`; wired only at the composition root
-- [ ] `app` is split into command and query sides; queries return DTOs and bypass the domain
+- [ ] `app` holds one set of use-case handlers by default; a command/query split exists only where
+      the read shape has actually diverged from the write model, stated explicitly why
 - [ ] One datastore by default; a second store/event sourcing is present only where its own trigger
       condition (see `reference/event-sourcing.md`) actually holds
 - [ ] Any saga/process manager is wired at the composition root and lives in `app/`, not `infra/`
 
 ## Examples
 
-### Module layout
+### Module layout — the default, no CQRS
 
-**Go** — partition by module; hexagon recurses inside each:
+**Go** — partition by module; hexagon recurses inside each; one set of handlers per module:
 
 ```
 internal/
   order/                         # module = bounded context
     domain/
-      order.go                   # Order aggregate, invariants (write model)
+      order.go                   # Order aggregate, invariants
       money.go                   # value objects
       events.go                  # OrderPlaced, …
-      repository.go              # OrderRepository — WRITE port (interface)
+      repository.go              # OrderRepository port (load + save the aggregate)
     app/
-      command/place_order.go     # PlaceOrderHandler: load → invoke domain → save → emit
-      query/list_orders.go       # ListOrdersHandler: OrderReadPort → []OrderView
-      query/ports.go             # OrderReadPort + OrderView DTO (read model)
+      place_order.go             # PlaceOrderHandler: load → invoke domain → save → emit
+      list_orders.go             # ListOrdersHandler: same repository, reads off the aggregate
     infra/
-      persistence/order_repo_pg.go  # implements domain.OrderRepository (write)
-      persistence/order_read_pg.go  # implements app/query.OrderReadPort (raw SQL → OrderView)
-      http/order_handler.go         # driving adapter → command/query handlers
+      persistence/order_repo_pg.go  # implements domain.OrderRepository
+      http/order_handler.go         # driving adapter → handlers
       events/publisher.go
   billing/                       # another module, same internal shape
     domain/ app/ infra/
@@ -124,19 +132,40 @@ src/
   orders/                        # module = bounded context
     domain/
       order.py                   # Order aggregate, value objects, events
-      repository.py              # OrderRepository Protocol — WRITE port
+      repository.py              # OrderRepository Protocol (load + save the aggregate)
     app/
-      command/place_order.py     # PlaceOrderHandler
-      query/list_orders.py       # ListOrdersHandler
-      query/ports.py             # OrderReadPort Protocol + OrderView dataclass (read DTO)
+      place_order.py             # PlaceOrderHandler
+      list_orders.py             # ListOrdersHandler: same repository, reads off the aggregate
     infra/
       persistence/order_repo_pg.py  # implements OrderRepository
-      persistence/order_read_pg.py  # implements OrderReadPort
       http/routes.py                # driving adapter → handlers
       events/publisher.py
   billing/                       # another module, same internal shape
     domain/ app/ infra/
   main.py                        # composition root (wiring / DI)
+```
+
+### Module layout — once CQRS's trigger holds
+
+A reporting screen needs orders shaped and joined in a way the `Order` aggregate never will, and
+loading the whole aggregate to serve it is a measured, real cost — the trigger is met, so `orders`
+(only this module, not every module) splits into command and query sides:
+
+```
+internal/
+  order/
+    domain/
+      order.go repository.go     # OrderRepository — now specifically the WRITE port
+    app/
+      command/place_order.go     # PlaceOrderHandler: load → invoke domain → save → emit
+      query/list_orders.go       # ListOrdersHandler: OrderReadPort → []OrderView
+      query/ports.go             # OrderReadPort + OrderView DTO (read model, bypasses the domain)
+    infra/
+      persistence/order_repo_pg.go  # implements domain.OrderRepository (write)
+      persistence/order_read_pg.go  # implements app/query.OrderReadPort (raw SQL → OrderView)
+      http/order_handler.go         # driving adapter → command/query handlers
+  billing/                       # unaffected — still the default, no split
+    domain/ app/ infra/
 ```
 
 ### The dependency rule, inverted
@@ -178,7 +207,7 @@ def place_order(cmd):
 class PaymentGateway(Protocol):
     def charge(self, customer_id: CustomerId, amount: Money) -> PaymentRef: ...
 
-# orders/app/command/place_order.py — depends on the seam, not on billing's internals.
+# orders/app/place_order.py — depends on the seam, not on billing's internals.
 class PlaceOrderHandler:
     def __init__(self, orders: OrderRepository, payments: PaymentGateway) -> None:
         self._orders, self._payments = orders, payments
