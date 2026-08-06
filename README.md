@@ -51,7 +51,7 @@ This is how every project stays on the single source of truth described above.
 
 ## Bundled skills
 
-Once revai is installed, exactly **3 skills** surface automatically when their subject comes up —
+Once revai is installed, exactly **4 skills** surface automatically when their subject comes up —
 no setup per repo. Each is a concise index (`SKILL.md`) pointing to focused `reference/*.md` files —
 progressive disclosure, so only the concern actually in play gets read into context. They complement
 the other plugins rather than duplicate them — rules, a checklist, and (except for pure recognition
@@ -62,6 +62,7 @@ catalogs) concrete Go/Python examples in every reference file.
 | `best-practices` | Writing any code, or making any implementation choice, in `/revai:implement` or `/revai:decide` | Standard-solution-first meta-principle, plus a reference for each cross-cutting concern: `api-design`, `data-access-patterns`, `safe-schema-changes`, `config-and-secrets`, `error-handling-and-logging`, `resilience-and-timeouts`, `concurrency-and-context-safety`, `tdd`, `backend-testing`, `pr-sizing`, `event-driven-messaging`, `authn-and-authorization`, `observability`, `caching` |
 | `clean-code` | Naming or structuring anything — any function, variable, type, class, file, or module | A reference for each concern: `naming`, `functions` (size, arguments, side effects), `comments-and-formatting`, `objects-and-data-structures` (Law of Demeter), `error-handling` (code shape, not operations), `classes-and-cohesion`, `smells-and-heuristics` (a recognition catalog) — all strictly enforced (rationalization tables + red flags) |
 | `domain-driven-design` | Modelling a domain, drawing a service/module boundary, or designing a new system's/bounded context's architecture | The full toolkit, mandatory once it applies: `discovery-and-modeling-techniques` (EventStorming, domain storytelling), `strategic-design` (bounded contexts, ubiquitous language, context mapping), `tactical-patterns` (aggregates, value objects, domain services, factories, specifications, domain events), `event-sourcing`, `process-managers-and-integration` (sagas, outbox), `architecture-and-layering` (hexagonal, modular monolith, CQRS), `architecture-fit` (sequences all of the above into one design) |
+| `system-design` | Estimating scale, drawing a system's high-level shape, choosing a protocol/storage engine, or planning deployment/security/observability | The system-level mechanics between domain shape and code: `capacity-estimation`, `high-level-architecture-diagramming`, `api-contract-design`, `data-layer-architecture`, `communication-patterns`, `scalability-and-resilience`, `security-and-compliance`, `observability-strategy`, `infrastructure-and-cicd` |
 
 ## Deciding, then implementing (`decide` · `implement`)
 
@@ -158,7 +159,7 @@ revai/
 ├── agents/                  # backend-review subagent
 ├── hooks/                   # secrets guardrail + branch-protection guardrail + verify-on-Stop
 ├── templates/               # files /revai:attach instantiates into a project
-├── skills/                  # best-practices, clean-code, domain-driven-design (each with reference/)
+├── skills/                  # best-practices, clean-code, domain-driven-design, system-design (each with reference/)
 ├── CLAUDE.md                # conventions for developing revai itself
 └── README.md
 ```
