@@ -1,13 +1,14 @@
 ---
-description: Broadly review the code you generated — bugs, security, backend design, quality — report ranked findings, auto-fix what's confident, re-verify, and show the diff.
+description: Broadly review the code you generated — bugs, security, backend design, quality — report ranked findings, fix what's confident once you approve, re-verify, and show the diff.
 argument-hint: [optional path, file, or commit range — defaults to your uncommitted changes]
 ---
 
 # /revai:review
 
 Review the code you just generated across every dimension, then **fix it**: report ranked findings,
-auto-apply the fixes you're confident about, re-verify, and show what changed. You **orchestrate**;
-the real judgement comes from the skills you invoke — don't reinvent review or verification.
+apply the fixes you're confident about once you approve them, re-verify, and show what changed. You
+**orchestrate**; the real judgement comes from the skills you invoke — don't reinvent review or
+verification.
 
 The argument (`$ARGUMENTS`) is an optional target (a file, directory, or commit range).
 
@@ -42,12 +43,13 @@ Require the report back as **ranked findings**, most severe first, each as:
 
 Show the ranked findings to the user before touching anything. Group by severity.
 
-## 4. Auto-fix (confident only)
+## 4. Auto-fix (confident only)  ⏸ GATE
 
-- **Apply every fix you're confident about** — an unambiguous defect with a clear, local fix.
-- **Do not force** low-confidence, ambiguous, or design-level findings. List those under
-  **"Needs your call"** with the tradeoff, and leave the code alone.
-- Fix the actual issue, not the symptom. Don't expand scope beyond the findings.
+- List the fixes you're confident about — an unambiguous defect with a clear, local fix — and ask
+  the user once whether to apply them. **Fix nothing before they approve.**
+- **Never offer** low-confidence, ambiguous, or design-level findings for auto-fix, approved or not.
+  List those under **"Needs your call"** with the tradeoff, and leave the code alone.
+- On approval, fix the actual issue, not the symptom. Don't expand scope beyond the findings.
 
 ## 5. Re-verify
 

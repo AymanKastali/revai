@@ -97,7 +97,8 @@ any classification — so it works on a bare idea with no repo at all, and its o
 and drives it to an open PR: branch (only after you approve, so declining leaves the repo
 untouched) → build/fix/reshape (TDD by default, `code-simplifier`-driven for a reshape) → self-review
 → verify → `backend-review` → a final approval gate before the PR goes up. This is the **only**
-command in the harness that mutates the repo.
+command that drives a change all the way to an open PR — `/revai:review` (below) can also patch a
+confident, local fix in place, but only after you approve it, and it never branches or ships a PR.
 
 Two gates, always: **Approve & branch** (before any repo mutation) and **Ship** (before the PR).
 Everything between runs automatically.
@@ -106,7 +107,7 @@ Everything between runs automatically.
 
 | Command | What it does |
 |---|---|
-| `/revai:review [target]` | Broadly reviews the code you generated (bugs, security, backend design, quality), reports ranked findings, **auto-fixes** what it's confident about, re-verifies, and shows the diff. Defaults to your uncommitted changes. |
+| `/revai:review [target]` | Broadly reviews the code you generated (bugs, security, backend design, quality), reports ranked findings, **fixes what it's confident about once you approve**, re-verifies, and shows the diff. Defaults to your uncommitted changes. |
 
 ## Review agent & guardrails
 

@@ -84,6 +84,8 @@ out of scope here — never skip one without comment.
 - Observability — what must be visible to operate this safely
 - Deployment topology & infra — environments, how it ships, IaC/containerization approach, CI/CD
   strategy where it's a live decision
+- Reversibility — how this would be rolled back if it's wrong; a live question for anything
+  schema/migration/infra-shaped, one line of "revert the PR/commit is enough" otherwise
 - Constraints — team, deadline, stack
 
 Apply the method that matches the classification, at a depth proportional to the stakes — never
