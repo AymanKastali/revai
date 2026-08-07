@@ -8,9 +8,9 @@ argument-hint: <the idea, spec, bug description, or refactor target — or a pat
 Every kind of judgment call a change needs before any code is touched — lives here, in one place,
 through four stages: **Frame → Survey → Decide ⏸ → Deliver & hand off ↺**. You **orchestrate** —
 `superpowers:brainstorming`, `domain-driven-design` (its architecture-fit reference), `system-design`
-(the capacity/protocol/infra mechanics architecture-fit brings in alongside it), `systematic-debugging`,
-`writing-plans`, and `best-practices` (its pr-sizing reference) do the actual thinking; don't
-reimplement any of it.
+and `modular-monolith` (the capacity/protocol/infra mechanics and the concrete modular-monolith
+build-out architecture-fit brings in alongside DDD), `systematic-debugging`, `writing-plans`, and
+`best-practices` (its pr-sizing reference) do the actual thinking; don't reimplement any of it.
 
 **This command never touches the repo.** No code, no branch, no commit — under any classification,
 with no exceptions. Its only output is one written artifact and your explicit approval of it. That
