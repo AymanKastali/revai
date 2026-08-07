@@ -17,13 +17,16 @@ added="$(git diff --cached 2>/dev/null | grep -E '^\+' | grep -vE '^\+\+\+' || t
 [ -z "$added" ] && exit 0
 
 # High-confidence patterns — curated to minimize false positives.
+# Note: this is precision-over-recall, named-pattern matching, not a general secrets scanner —
+# it won't catch an arbitrary high-entropy token (a random-looking Stripe/JWT/GCP-JSON secret)
+# that doesn't match one of these shapes. That's an accepted, documented gap, not an oversight.
 patterns=(
   '-----BEGIN [A-Z ]*PRIVATE KEY-----'                                              # private keys
   'AKIA[0-9A-Z]{16}'                                                                # AWS access key id
   'ghp_[0-9A-Za-z]{36}'                                                             # GitHub PAT
   'xox[baprs]-[0-9A-Za-z-]{10,}'                                                    # Slack token
   'AIza[0-9A-Za-z_-]{35}'                                                           # Google API key
-  '(password|passwd|secret|api[_-]?key|access[_-]?token)[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']{8,}["'"'"']'  # inline credential
+  '[A-Za-z0-9_-]*(password|passwd|secret|api[_-]?key|access[_-]?token)[A-Za-z0-9_-]*[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']{8,}["'"'"']'  # quoted inline credential
 )
 
 matched=""
@@ -32,6 +35,16 @@ for p in "${patterns[@]}"; do
     matched+=$'\n'"  • $p"
   fi
 done
+
+# Unquoted KEY=VALUE / KEY: VALUE credential assignment — the .env / shell-export / unquoted-YAML
+# shape the quoted pattern above can't see. The credential keyword can be a substring of a longer
+# identifier (AWS_SECRET_ACCESS_KEY, DB_PASSWORD — the common real-world naming shape), not just a
+# bare word. Require a long, space-free value and exclude obvious placeholders (changeme, example,
+# <...>, ${...}) to keep this from flagging fixture/template values.
+unquoted_re='[A-Za-z0-9_-]*(password|passwd|secret|api[_-]?key|access[_-]?token)[A-Za-z0-9_-]*[[:space:]]*[:=][[:space:]]*[^[:space:]"'"'"']{16,}'
+placeholder_re='(changeme|change_me|your[_-]|example|placeholder|xxx|redacted|todo|<.*>|\$\{)'
+unquoted_hits="$(grep -Ei -e "$unquoted_re" <<<"$added" | grep -Eiv -e "$placeholder_re" || true)"
+[ -n "$unquoted_hits" ] && matched+=$'\n'"  • unquoted credential assignment"
 
 [ -z "$matched" ] && exit 0
 
