@@ -22,10 +22,11 @@ codebase.
   the top of the function, and keep the main logic unindented after it. This supersedes the old
   "single entry, single exit" dogma — modern style prefers early returns because they remove
   nesting, not because a function must have exactly one `return`.
-- **Few arguments — 0 to 2 ideal, 3 is the ceiling.** A parameter list past three means the function
-  is coordinating too much, or the arguments belong together as one thing. When several values
-  always travel together (a customer's id, email, and tier, say), that's a type waiting to be
-  named — refactor the list into a struct or dataclass instead of adding a fourth parameter.
+- **Few arguments — 0 to 2 ideal, 3 should be avoided where possible.** A third argument is a signal
+  to look for a grouping, not a sanctioned stopping point; a fourth needs a genuinely special reason,
+  and usually shouldn't happen at all. When several values always travel together (a customer's id,
+  email, and tier, say), that's a type waiting to be named — refactor the list into a struct or
+  dataclass instead of adding another parameter.
 - **No flag/boolean parameters that branch the function's behavior in two.** A boolean argument that
   changes *what* the function does — not just a value it computes with — means two different
   functions are welded together behind one name. Split it into two named functions instead of adding
@@ -65,7 +66,8 @@ codebase.
 - [ ] Every function fits in view and does one thing; no extractable chunk left inline
 - [ ] No function mixes high-level orchestration with low-level detail
 - [ ] Exceptional/invalid cases return or raise early as guard clauses; the main path is unindented
-- [ ] No function takes more than 3 arguments; related values are grouped into a struct/dataclass
+- [ ] No function takes more than 3 arguments; a 3rd is only there for a real reason, not by default;
+      related values are grouped into a struct/dataclass instead of piling on more parameters
 - [ ] No boolean parameter branches a function's behavior — split into two named functions instead
 - [ ] No function does something its name doesn't say
 - [ ] No function is both a command and a query
