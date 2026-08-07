@@ -35,9 +35,16 @@ Bring these to bear in this order. `clean-code` and `best-practices` apply throu
    the three layers per module, and the dependency direction. One set of use-case handlers per
    module by default; split a module into command/query sides (CQRS) only where its own trigger
    holds (a read shape genuinely diverged from the write model) — state per module whether it does.
-6. **Edges — `best-practices`** as the design touches them: the API contract, persistence and
-   one-aggregate-per-transaction, migrations, startup/config, resilience for external calls, and what
-   to test per layer.
+   Once the modules are laid out, `modular-monolith` covers the concrete build-out: boundary-
+   enforcement tooling, in-process communication (published-interface facade vs. domain event — never
+   a network call between modules), per-module data-isolation tier, module-scoped testing, and
+   observability/flag namespacing — plus the extraction-to-microservice playbook for any module that
+   might outgrow the monolith.
+6. **Edges — `best-practices` and `system-design`** as the design touches them: the API contract,
+   persistence and one-aggregate-per-transaction, migrations, startup/config, resilience for
+   external calls, and what to test per layer. `system-design` decides the system-level shape —
+   which protocol crosses a boundary, how the system scales, what it runs on; `best-practices`
+   governs the code-level implementation once that shape is chosen.
 
 ## The design-doc template
 
@@ -47,7 +54,10 @@ still gets a line stating that, so its absence reads as "considered, not applica
 "forgotten."
 
 1. **Problem & context** — what's being built and why, in a few sentences. The need it serves, who
-   uses it, and the constraints that bound the design (scale, deadline, team, existing stack).
+   uses it, and the constraints that bound the design (scale, deadline, team, existing stack) —
+   including a back-of-envelope capacity estimate (traffic, data volume/growth, bandwidth) per
+   `system-design`'s `reference/capacity-estimation.md`, proportional to how much scale is actually
+   in question.
 2. **Discovery summary** — what EventStorming/domain storytelling/example mapping surfaced: the event
    timeline, hotspots, and open questions that came out of it (see
    `reference/discovery-and-modeling-techniques.md`).
@@ -58,26 +68,38 @@ still gets a line stating that, so its absence reads as "considered, not applica
    `reference/strategic-design.md`).
 5. **Recommended architecture** — the shape, the reasoning tied to the evidence above, and the
    **alternatives considered** with the trade-off that ruled each out. This is the load-bearing
-   section; make the decision defensible.
+   section; make the decision defensible. Include a simple ASCII block diagram of the request path
+   (client → edge/CDN → gateway → services → data stores) per `system-design`'s
+   `reference/high-level-architecture-diagramming.md`.
 6. **Module / bounded-context breakdown** — the top-level partition and what each module owns
-   (including its data). How they contact each other (published interface or event).
+   (including its data). How they contact each other, stated concretely per `modular-monolith/
+   reference/in-process-communication.md`: which mechanism (facade call or event), sync or async, an
+   outbox if async — and each module's data-isolation tier per `modular-monolith/reference/
+   data-isolation-and-persistence.md`.
 7. **Layers per module** — the `domain`/`app`/`infra` split for each module. For each one, state
    whether CQRS's trigger holds (and it gets a command/query split) or it stays a single set of
-   use-case handlers — and separately, whether physical CQRS/event sourcing applies and why.
+   use-case handlers — and separately, whether physical CQRS/event sourcing applies and why. Name
+   the boundary-enforcement tooling/config for each module — `go-arch-lint`/`depguard` or
+   `import-linter` — per `modular-monolith/reference/boundary-enforcement-and-fitness-functions.md`.
 8. **Domain-model sketch** — the key aggregates, value objects, domain services, and events. Types
    and rules, not full code.
 9. **Process managers / sagas** — any multi-step or cross-context workflow, its steps, and its
    compensating actions. State explicitly if none apply to this design.
 10. **Integration / context map** — external systems and the pattern for each seam (ACL, open-host,
     Shared Kernel, Separate Ways, integration events).
-11. **Cross-cutting** — API contract, persistence, config/secrets, resilience, and the testing
-    approach, each in a line or two, pointing at the skill that governs it.
+11. **Cross-cutting** — API contract & protocol choice, communication patterns (sync/async,
+    concurrency control), persistence & data-layer choice, config/secrets, scalability &
+    resilience, security & compliance, observability, deployment topology & infra/CI-CD, and the
+    testing approach, each in a line or two, pointing at whichever of `best-practices` or
+    `system-design` governs it.
 12. **Build order (the slices)** — the sequence of vertical slices to implement, smallest useful
     first, each one a candidate for its own `/revai:decide` → `/revai:implement` run. This is what
     turns the design into work. Use `best-practices`' pr-sizing reference for how to slice and order
     them.
 13. **Open questions & risks** — what's still undecided, what could invalidate the design, and what
-    to revisit once real usage arrives.
+    to revisit once real usage arrives. Name which module(s), if any, are realistic extraction
+    candidates and why — or state plainly that none are, per `modular-monolith/reference/
+    extraction-to-microservice.md`.
 
 ## The rules
 

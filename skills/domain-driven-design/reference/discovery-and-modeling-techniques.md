@@ -22,11 +22,12 @@ doesn't compete with either — running it is how you earn the right to skip gue
   of resolving them on the spot. This pass finds candidate bounded-context boundaries: clusters of
   events that cohere, and the seams between clusters where vocabulary or ownership visibly shifts.
 - **EventStorming — process level.** Take one cluster from the big picture and add **commands**
-  (blue, the trigger), **actors** (who/what issues the command), and **policies** (yellow, "whenever
-  X happens, do Y" — the reactive rules that turn one event into the next command). This pass
-  surfaces the process as command → event → policy → command chains, which is the shape a Saga/
-  process manager formalizes later (see `reference/process-managers-and-integration.md`) when a
-  chain crosses aggregates or contexts.
+  (blue, the trigger), **actors** (a small yellow sticky/figure tacked onto the command that issues
+  it, not a separate top-level color), and **policies** (purple/lilac, "whenever X happens, do Y" —
+  the reactive rules that turn one event into the next command). This pass surfaces the process as
+  command → event → policy → command chains, which is the shape a Saga/process manager formalizes
+  later (see `reference/process-managers-and-integration.md`) when a chain crosses aggregates or
+  contexts.
 - **EventStorming — design level.** Group the events for one cluster into candidate **aggregates**
   (the boundary that must be consistent to produce that sequence of events) and **read models** (what
   a user needs to see to issue the next command). This pass's output maps directly onto

@@ -36,11 +36,13 @@ if a blocking check (test/lint) fails.
 
 ## Backend skills (via revai)
 
-If this is a backend project, revai bundles 3 skills that surface automatically when relevant —
+If this is a backend project, revai bundles 4 skills that surface automatically when relevant —
 `best-practices` (API design, data access, migrations, config/secrets, error handling, resilience,
 concurrency, testing, messaging, auth, observability, caching), `clean-code` (naming, functions,
-comments/formatting, objects/data structures, error handling, class cohesion, code smells), and
-`domain-driven-design` (bounded contexts, domain modelling, hexagonal architecture). Follow them
+comments/formatting, objects/data structures, error handling, class cohesion, code smells),
+`domain-driven-design` (bounded contexts, domain modelling, hexagonal architecture), and
+`system-design` (capacity estimation, HLD diagramming, API/protocol selection, storage-engine
+selection, communication patterns, resilience, security, observability, infra/CI-CD). Follow them
 when the work touches those areas.
 
 ## Do not touch

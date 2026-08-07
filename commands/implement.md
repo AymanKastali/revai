@@ -11,9 +11,11 @@ Review → Ship ⏸**. You **orchestrate** — the `superpowers` skills, the `co
 `backend-review` agents, and revai's guardrails do the actual execution, TDD, review, and PR work;
 don't reimplement any of it.
 
-**This is the only command in the harness that mutates the repo** — creates the branch, writes
-code, commits, opens the PR. `/revai:decide` never does; if you don't have a decision yet, run that
-first.
+**This is the only command that drives a change all the way to an open PR** — creates the branch,
+writes code, commits, opens the PR. (`/revai:review` can also patch a confident, local fix in place,
+but only after you approve it, and it never branches or opens a PR — this command is still the only
+path to a PR.) `/revai:decide` never touches the repo at all; if you don't have a decision yet, run
+that first.
 
 **Two hard stops:** right before the branch is created (so declining leaves the repo untouched),
 and before opening the PR. Everything between runs automatically — never skip a gate.
@@ -71,7 +73,8 @@ Execute per the loaded classification:
   `superpowers:subagent-driven-development` when its tasks are independent). **TDD by default** —
   `superpowers:test-driven-development`: failing test → implement → pass → refactor, per behaviour.
   Verify each increment as it lands (`superpowers:verification-before-completion`) rather than
-  saving all checks for the end.
+  saving all checks for the end. **No scope creep** — build what the plan/slice scoped; anything else
+  you notice along the way becomes a follow-up note, not an in-scope addition.
 - **Defect:** first, write the regression test `/revai:decide` **described** — confirm it fails
   (RED) against the current, buggy code. Then make the **minimal** change that turns it green
   (`superpowers:test-driven-development`, green-then-refactor) — fix the **root cause**, not the

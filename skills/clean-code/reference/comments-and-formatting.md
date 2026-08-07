@@ -15,9 +15,12 @@ true, and formatting predictable enough that a diff shows only the change that m
 - **Comments are a last resort, not a first instinct.** Before writing one, ask whether renaming a
   variable or extracting a function would make it unnecessary — if so, do that instead of
   commenting around the problem.
-- **Comments explain why, never what.** "Why" is a non-obvious constraint, a workaround for a
-  specific bug, or a business rule the code can't say on its own. "What" the code does must be
-  obvious from reading it, so restating it in prose is noise.
+- **Comments explain why, almost never what.** "Why" is a non-obvious constraint, a workaround for a
+  specific bug, or a business rule the code can't say on its own — treat that as the default reason
+  to write one. The narrow exceptions (a required legal/license header, a trackable `TODO`, a warning
+  of a costly consequence, or a public API's doc-comment) stay rare enough that "why, not what" is
+  still the right instinct to reach for first. "What" the code does must be obvious from reading it,
+  so restating it in prose is noise.
 - **Delete commented-out code immediately — never keep it "just in case."** Git already remembers
   it; nobody comes back to uncomment it, and the next reader can't tell whether it's still relevant
   or abandoned.

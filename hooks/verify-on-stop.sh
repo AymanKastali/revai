@@ -8,11 +8,14 @@
 # blocking=true  → failure blocks the stop and feeds the agent the output (exit 2).
 # blocking=false → advisory: reported, never blocks.
 #
-# No config → no-op. Runs only when code changed since the last commit. Gives up
+# No config → no-op. Runs when code changed this turn — either it's still uncommitted, or it was
+# committed since the session started (tracked by session-start.sh, since a turn that edits AND
+# commits leaves a clean tree by Stop time and `git status` alone can't see that). Gives up
 # blocking after MAX_ATTEMPTS so a genuinely stuck build can't loop forever.
 set -euo pipefail
 
 MAX_ATTEMPTS=3
+EMPTY_TREE_SHA="4b825dc642cb6eb9a060e54bf8d69288fbee4904"  # git's well-known empty-tree object
 
 input="$(cat)"
 
@@ -37,15 +40,36 @@ fi
 
 # Scope: only verify when code actually changed. A docs-only or Q&A turn shouldn't
 # pay for the test suite. If it isn't a git repo we can't tell, so we proceed.
+is_code_file() {
+  case "$1" in
+    *.md|*.txt|*.rst|docs/*|*/docs/*) return 1 ;;   # docs — ignore for scope
+    *) return 0 ;;
+  esac
+}
+
 if git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   code_changed=false
+
+  # Currently uncommitted (working-tree or staged) changes.
   while IFS= read -r f; do
     [ -z "$f" ] && continue
-    case "$f" in
-      *.md|*.txt|*.rst|docs/*|*/docs/*) ;;      # docs — ignore for scope
-      *) code_changed=true ;;
-    esac
+    is_code_file "$f" && code_changed=true
   done < <(git -C "$cwd" status --porcelain 2>/dev/null | sed 's/^...//; s/.* -> //')
+
+  # Commits made since this session started (session-start.sh's baseline) — catches a turn that
+  # edits AND commits before stopping, which the dirty-tree check above can't see.
+  baseline_file="${TMPDIR:-/tmp}/revai-verify-head-${session_id//[^A-Za-z0-9_-]/_}"
+  baseline_head="$(cat "$baseline_file" 2>/dev/null || true)"
+  current_head="$(git -C "$cwd" rev-parse HEAD 2>/dev/null || echo "unborn")"
+  if [ -n "$baseline_head" ] && [ "$baseline_head" != "$current_head" ]; then
+    from="$baseline_head"
+    [ "$from" = "unborn" ] && from="$EMPTY_TREE_SHA"
+    while IFS= read -r f; do
+      [ -z "$f" ] && continue
+      is_code_file "$f" && code_changed=true
+    done < <(git -C "$cwd" diff --name-only "$from" "$current_head" 2>/dev/null || true)
+  fi
+
   $code_changed || exit 0
 fi
 

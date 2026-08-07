@@ -7,9 +7,10 @@ argument-hint: <the idea, spec, bug description, or refactor target — or a pat
 
 Every kind of judgment call a change needs before any code is touched — lives here, in one place,
 through four stages: **Frame → Survey → Decide ⏸ → Deliver & hand off ↺**. You **orchestrate** —
-`superpowers:brainstorming`, `domain-driven-design` (its architecture-fit reference),
-`systematic-debugging`, `writing-plans`, and `best-practices` (its pr-sizing reference) do the
-actual thinking; don't reimplement any of it.
+`superpowers:brainstorming`, `domain-driven-design` (its architecture-fit reference), `system-design`
+and `modular-monolith` (the capacity/protocol/infra mechanics and the concrete modular-monolith
+build-out architecture-fit brings in alongside DDD), `systematic-debugging`, `writing-plans`, and
+`best-practices` (its pr-sizing reference) do the actual thinking; don't reimplement any of it.
 
 **This command never touches the repo.** No code, no branch, no commit — under any classification,
 with no exceptions. Its only output is one written artifact and your explicit approval of it. That
@@ -70,6 +71,10 @@ out of scope here — never skip one without comment.
 - Functional scope & NFRs — availability, consistency, latency, read/write ratio
 - Capacity — expected traffic, data volume/growth, bandwidth
 - Integrations — what this talks to and how
+- API & protocol design — contract shape per boundary (REST/GraphQL/gRPC/events/WebSocket) and
+  versioning approach
+- Communication patterns — synchronous vs. asynchronous, message queues/streams for decoupling,
+  concurrency control for shared state
 - Component shape — the pieces involved and how they communicate
 - Data storage & partitioning — datastore choice, tenancy/partitioning, schema shape
 - Caching — what's worth caching, invalidation
@@ -77,7 +82,10 @@ out of scope here — never skip one without comment.
 - Reliability & failure semantics — fail-open vs. fail-closed, redundancy/failover
 - Security & isolation — authn/authz model, tenant/data isolation, rate limiting
 - Observability — what must be visible to operate this safely
-- Deployment topology — environments, how it ships
+- Deployment topology & infra — environments, how it ships, IaC/containerization approach, CI/CD
+  strategy where it's a live decision
+- Reversibility — how this would be rolled back if it's wrong; a live question for anything
+  schema/migration/infra-shaped, one line of "revert the PR/commit is enough" otherwise
 - Constraints — team, deadline, stack
 
 Apply the method that matches the classification, at a depth proportional to the stakes — never

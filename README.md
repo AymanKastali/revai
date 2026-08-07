@@ -51,7 +51,7 @@ This is how every project stays on the single source of truth described above.
 
 ## Bundled skills
 
-Once revai is installed, exactly **3 skills** surface automatically when their subject comes up —
+Once revai is installed, exactly **5 skills** surface automatically when their subject comes up —
 no setup per repo. Each is a concise index (`SKILL.md`) pointing to focused `reference/*.md` files —
 progressive disclosure, so only the concern actually in play gets read into context. They complement
 the other plugins rather than duplicate them — rules, a checklist, and (except for pure recognition
@@ -62,6 +62,8 @@ catalogs) concrete Go/Python examples in every reference file.
 | `best-practices` | Writing any code, or making any implementation choice, in `/revai:implement` or `/revai:decide` | Standard-solution-first meta-principle, plus a reference for each cross-cutting concern: `api-design`, `data-access-patterns`, `safe-schema-changes`, `config-and-secrets`, `error-handling-and-logging`, `resilience-and-timeouts`, `concurrency-and-context-safety`, `tdd`, `backend-testing`, `pr-sizing`, `event-driven-messaging`, `authn-and-authorization`, `observability`, `caching` |
 | `clean-code` | Naming or structuring anything — any function, variable, type, class, file, or module | A reference for each concern: `naming`, `functions` (size, arguments, side effects), `comments-and-formatting`, `objects-and-data-structures` (Law of Demeter), `error-handling` (code shape, not operations), `classes-and-cohesion`, `smells-and-heuristics` (a recognition catalog) — all strictly enforced (rationalization tables + red flags) |
 | `domain-driven-design` | Modelling a domain, drawing a service/module boundary, or designing a new system's/bounded context's architecture | The full toolkit, mandatory once it applies: `discovery-and-modeling-techniques` (EventStorming, domain storytelling), `strategic-design` (bounded contexts, ubiquitous language, context mapping), `tactical-patterns` (aggregates, value objects, domain services, factories, specifications, domain events), `event-sourcing`, `process-managers-and-integration` (sagas, outbox), `architecture-and-layering` (hexagonal, modular monolith, CQRS), `architecture-fit` (sequences all of the above into one design) |
+| `system-design` | Estimating scale, drawing a system's high-level shape, choosing a protocol/storage engine, or planning deployment/security/observability | The system-level mechanics between domain shape and code: `capacity-estimation`, `high-level-architecture-diagramming`, `api-contract-design`, `data-layer-architecture`, `communication-patterns`, `scalability-and-resilience`, `security-and-compliance`, `observability-strategy`, `infrastructure-and-cicd` |
+| `modular-monolith` | Building, enforcing, testing, or extracting from the modular-monolith shape once domain-driven-design's module/layer boundaries are laid out | `boundary-enforcement-and-fitness-functions`, `in-process-communication`, `data-isolation-and-persistence`, `observability-and-feature-flags`, `extraction-to-microservice` |
 
 ## Deciding, then implementing (`decide` · `implement`)
 
@@ -96,7 +98,8 @@ any classification — so it works on a bare idea with no repo at all, and its o
 and drives it to an open PR: branch (only after you approve, so declining leaves the repo
 untouched) → build/fix/reshape (TDD by default, `code-simplifier`-driven for a reshape) → self-review
 → verify → `backend-review` → a final approval gate before the PR goes up. This is the **only**
-command in the harness that mutates the repo.
+command that drives a change all the way to an open PR — `/revai:review` (below) can also patch a
+confident, local fix in place, but only after you approve it, and it never branches or ships a PR.
 
 Two gates, always: **Approve & branch** (before any repo mutation) and **Ship** (before the PR).
 Everything between runs automatically.
@@ -105,7 +108,7 @@ Everything between runs automatically.
 
 | Command | What it does |
 |---|---|
-| `/revai:review [target]` | Broadly reviews the code you generated (bugs, security, backend design, quality), reports ranked findings, **auto-fixes** what it's confident about, re-verifies, and shows the diff. Defaults to your uncommitted changes. |
+| `/revai:review [target]` | Broadly reviews the code you generated (bugs, security, backend design, quality), reports ranked findings, **fixes what it's confident about once you approve**, re-verifies, and shows the diff. Defaults to your uncommitted changes. |
 
 ## Review agent & guardrails
 
@@ -158,7 +161,7 @@ revai/
 ├── agents/                  # backend-review subagent
 ├── hooks/                   # secrets guardrail + branch-protection guardrail + verify-on-Stop
 ├── templates/               # files /revai:attach instantiates into a project
-├── skills/                  # best-practices, clean-code, domain-driven-design (each with reference/)
+├── skills/                  # best-practices, clean-code, domain-driven-design, system-design, modular-monolith (each with reference/)
 ├── CLAUDE.md                # conventions for developing revai itself
 └── README.md
 ```
