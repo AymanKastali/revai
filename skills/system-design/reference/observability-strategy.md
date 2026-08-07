@@ -11,6 +11,12 @@ where a health check or alert belongs in the topology. The actual metric/trace i
 
 ## The three pillars
 
+The default this reference builds around, and still the right one for the large majority of systems
+it'll be applied to. There's a live, credible industry critique arguing wide structured events serve
+better than three siloed pillars that discard relational context at write time — worth knowing about,
+but it doesn't change what to build here unless this system's own observability need has already
+outgrown metrics/logs/traces.
+
 - **Metrics** — numeric time series (latency, error rate, throughput, resource usage) per service
   in the diagram. State which metrics matter for *this* system's failure modes, not a generic list
   — a queue-backed worker cares about queue depth and consumer lag; a request/response API cares

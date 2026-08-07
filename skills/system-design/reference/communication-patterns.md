@@ -36,10 +36,20 @@ overdrawing the same balance), state the mechanism:
 
 - **Optimistic locking** — a version/timestamp column checked on write; the losing writer retries
   or fails visibly. Default when contention is rare — cheap, no held lock.
-- **Distributed lock** (Redis/ZooKeeper-based) — a lock held for the duration of a critical section
-  across processes. Reach for this only when optimistic retry genuinely can't work (the operation
-  isn't idempotent/retryable) — a held lock is a correctness tool, not a default concurrency
-  strategy, and it introduces its own failure mode (a lock holder that dies without releasing it).
+- **Distributed lock** — a lock held for the duration of a critical section across processes. Reach
+  for this only when optimistic retry genuinely can't work (the operation isn't idempotent/
+  retryable) — a held lock is a correctness tool, not a default concurrency strategy, and it
+  introduces its own failure mode (a lock holder that dies without releasing it, or a paused client
+  that outlives its lease and acts on the resource anyway). The mechanism matters, not just "a lock
+  exists":
+  - **ZooKeeper/etcd, with fencing tokens** — for a genuine correctness guarantee. A fencing token
+    (a monotonically increasing number handed out with the lock) lets the protected resource reject
+    a stale holder's write — the piece that actually closes the "client paused, woke up after its
+    lease expired" gap.
+  - **Redis-based (e.g. Redlock)** — best-effort/efficiency locking, not a strict-correctness tool.
+    It relies on clock synchronization and bounded process-pause assumptions that don't generally
+    hold, and without a fencing mechanism a delayed client can still violate mutual exclusion. Use it
+    to cut duplicate work, never to protect an operation that must not run twice.
 
 This is a system-level decision that a given aggregate needs *some* concurrency guard; the actual
 locking code is `best-practices/concurrency-and-context-safety.md`'s territory.
@@ -52,5 +62,7 @@ locking code is `best-practices/concurrency-and-context-safety.md`'s territory.
 - [ ] Any shared, concurrently-writable state names its concurrency-control mechanism
 - [ ] A distributed lock is proposed only where optimistic retry genuinely doesn't work, with the
       reason stated
+- [ ] Where a lock must guarantee correctness (not just cut duplicate work), it's fencing-token-backed
+      (ZooKeeper/etcd) — a bare Redis lock is proposed only for best-effort/efficiency locking
 - [ ] The message contract, idempotent-consumer rule, and retry/backoff code are left to
       `best-practices`, not re-specified here

@@ -18,9 +18,13 @@ weight.
 
 ## Authn/authz, at the system level
 
-- **Authentication model** — OAuth2/OpenID Connect with JWTs, or session tokens; state which, and
-  where it's issued/validated (typically the ingress layer — see
-  `reference/high-level-architecture-diagramming.md`).
+- **Authentication model** — OpenID Connect (OIDC), or session tokens; state which, and where it's
+  issued/validated (typically the ingress layer — see
+  `reference/high-level-architecture-diagramming.md`). OIDC, not bare OAuth2, is what actually
+  supplies authentication (the ID token) — OAuth2 alone is a delegated-*authorization* framework, it
+  doesn't verify who the user is. Don't reach for "OAuth2" as a stand-in for "the user is
+  authenticated"; if the design needs an identity claim, that's OIDC's ID token, with the access
+  token (OAuth2 proper, usually a JWT) covering delegated access to a resource.
 - **Authorization model** — RBAC (or finer-grained, if a role genuinely doesn't capture the access
   rule) resolved once, at the edge, not re-derived deep in each module — this is the same rule
   `best-practices/authn-and-authorization.md` enforces in code; state the model here, let that

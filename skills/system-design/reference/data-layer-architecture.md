@@ -15,11 +15,17 @@ or caching strategy (the existing "Caching" dimension in `/revai:decide`'s check
 | Access pattern | Engine type | Examples |
 |---|---|---|
 | Structured data, complex joins, strong consistency (ACID) | Relational (RDBMS) | PostgreSQL, MySQL |
-| Semi-structured/unstructured, schema varies per record or evolves often | Document | MongoDB, DynamoDB |
-| Simple key→value lookups, session/cache-shaped data | Key-value | Redis, Memcached |
+| Semi-structured/unstructured, schema varies per record or evolves often | Document | MongoDB |
+| Simple key→value lookups at scale, session/cache-shaped data | Key-value / wide-column | Redis, Memcached, DynamoDB |
 | Full-text search, fuzzy matching, faceted filtering | Search engine | Elasticsearch, OpenSearch |
 | High-volume timestamped metrics/events | Time-series | TimescaleDB |
 | Data whose value is in the connections (social graphs, recommendations) | Graph | Neo4j |
+
+DynamoDB is listed under key-value/wide-column, not document — that's its own official
+classification (Dynamo/Bigtable lineage). It supports a flexible, JSON-like item schema, which can
+read as "document," but it doesn't give you MongoDB's rich nested-query/secondary-indexing model —
+pick it for single-digit-millisecond key/partition-key access at scale, not because the data happens
+to be document-shaped.
 
 Pick by the *actual* read/write and query shape from `reference/capacity-estimation.md` and the
 domain's aggregates (`domain-driven-design/reference/tactical-patterns.md`) — not by familiarity or

@@ -35,6 +35,10 @@ measured as insufficient, not pre-emptively:
 
 - **Circuit breaker** — placed in the diagram between a service and a downstream dependency that
   can fail slow or hard; state which dependency it guards and what it falls back to when open.
+- **Bulkhead** — give each downstream dependency its own resource pool (connections, threads,
+  goroutines) rather than one shared pool for everything, so one dependency that's slow or failing
+  exhausts only its own pool, not the capacity every other call needs too. Pairs directly with the
+  circuit breaker above — name which dependencies get an isolated pool, not just which get a breaker.
 - **Rate limiting / throttling** — at the ingress layer (see
   `reference/high-level-architecture-diagramming.md`) to protect the system from a traffic spike or
   a bad actor, stated as a topology decision even though the token-bucket/algorithm detail is
@@ -54,5 +58,7 @@ measured as insufficient, not pre-emptively:
       a measured or estimated need, not applied pre-emptively
 - [ ] Each circuit breaker/rate limiter in the design names what it protects and its fallback
       behavior
+- [ ] Each downstream dependency with a real failure risk has its own isolated resource pool
+      (bulkhead), not one shared pool with every other dependency
 - [ ] Fail-open vs. fail-closed is stated per critical path, consistent with the existing
       "Reliability & failure semantics" checklist dimension
