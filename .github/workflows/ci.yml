@@ -13,6 +13,11 @@ permissions:
 
 env:
   SKILL_MAX_LINES: 500
+  # system-design and implementation-planning carry a procedure (former commands/*.md content)
+  # on top of their standard, so they get more room than a rules-only skill. See CLAUDE.md's
+  # "commands are gone" note under § Structure rules.
+  PROCEDURE_SKILL_MAX_LINES: 650
+  PROCEDURE_SKILLS: "system-design implementation-planning"
   # Total rules across every *injected* skill's HARD-RULES fence:
   # clean-code 56 + best-practices 99 + domain-driven-design 74 + modular-monolith 95.
   EXPECTED_RULES: 324
@@ -59,6 +64,13 @@ jobs:
             fail=1
           fi
 
+          # commands/ was removed in favour of procedure-carrying skills — see CLAUDE.md
+          # § Structure rules. A stray commands/ dir means the split is drifting back.
+          if [ -d commands ]; then
+            echo "::error::commands/ must not exist — system-design and implementation-planning carry their own procedure now"
+            fail=1
+          fi
+
           # every marketplace source path resolves
           while read -r src; do
             if [ ! -e "$src" ]; then
@@ -95,14 +107,20 @@ jobs:
               bad=1
             fi
 
+            name=$(basename "$(dirname "$skill")")
+            budget="$SKILL_MAX_LINES"
+            case " $PROCEDURE_SKILLS " in
+              *" $name "*) budget="$PROCEDURE_SKILL_MAX_LINES" ;;
+            esac
+
             lines=$(wc -l < "$skill")
-            if [ "$lines" -gt "$SKILL_MAX_LINES" ]; then
-              echo "::error::${skill} is ${lines} lines, budget is ${SKILL_MAX_LINES}"
+            if [ "$lines" -gt "$budget" ]; then
+              echo "::error::${skill} is ${lines} lines, budget is ${budget}"
               bad=1
             fi
 
             if [ "$bad" -eq 0 ]; then
-              echo "✓ ${skill}: fence ${start}–${end}, ${lines}/${SKILL_MAX_LINES} lines"
+              echo "✓ ${skill}: fence ${start}–${end}, ${lines}/${budget} lines"
             else
               fail=1
             fi
@@ -190,38 +208,196 @@ jobs:
           done
           exit $fail
 
-      - name: Commands are well-formed and carry no rules of their own
+      - name: Procedure standards carry their own procedure, and only they do
         run: |
           set -euo pipefail
-          # A command is the deliberate entry point to a procedure standard: it sequences a SKILL.md
-          # and never restates a rule, or the fence stops being the single source of truth.
-          # See CLAUDE.md § Structure rules.
+          # A procedure standard is one file: the fence for its rules, a '## Procedure' section below
+          # it for how to run them. This replaces the old commands/*.md check — the entry point moved
+          # inside the skill, so the guard has to move with it. See CLAUDE.md § Structure rules.
           fail=0
-          for cmd in commands/*.md; do
-            [ -e "$cmd" ] || continue
+          injected=$(sed -n "/^readonly STANDARDS=(/,/^)/s/^ *'\([a-z0-9-]*\):.*/\1/p" \
+            hooks/inject-hard-rules.sh)
+          for name in $PROCEDURE_SKILLS; do
+            skill="skills/${name}/SKILL.md"
             bad=0
-            fm=$(awk 'NR==1 && $0=="---" { inside=1; next } inside && $0=="---" { exit } inside' "$cmd")
-            if ! printf '%s\n' "$fm" | grep -q '^description: .'; then
-              echo "::error::${cmd}: needs a non-empty description in its frontmatter"
+            # Guards the budget lookup too: a typo here silently grants the default 500 instead.
+            if [ ! -f "$skill" ]; then
+              echo "::error::PROCEDURE_SKILLS names '${name}', but ${skill} does not exist"
+              fail=1
+              continue
+            fi
+            proc=$(grep -nx '## Procedure' "$skill" | cut -d: -f1 || true)
+            end=$(grep -n '<!-- HARD-RULES:END -->' "$skill" | cut -d: -f1 || true)
+            if [ -z "$proc" ]; then
+              echo "::error::${skill}: a procedure standard needs a '## Procedure' section"
+              bad=1
+            elif [ -n "$end" ] && [ "$proc" -lt "$end" ]; then
+              echo "::error::${skill}: '## Procedure' (${proc}) must sit below the fence (${end}), never inside it"
               bad=1
             fi
-            if grep -q 'HARD-RULES' "$cmd"; then
-              echo "::error::${cmd}: must not carry a HARD-RULES fence — it sequences a skill"
+            # The Contents section is what a partial read sees, so the procedure has to appear there.
+            if ! sed -n '/^## Contents$/,/^<!-- HARD-RULES:START -->/p' "$skill" | grep -q '\*\*Procedure\*\*'; then
+              echo "::error::${skill}: '## Contents' must list the Procedure section"
               bad=1
             fi
-            # Every skill a command points at must exist, or the procedure reads nothing.
-            while read -r skill; do
-              [ -n "$skill" ] || continue
-              if [ ! -f "skills/${skill}/SKILL.md" ]; then
-                echo "::error::${cmd}: references skills/${skill}/SKILL.md which does not exist"
+            # Layer 2 only: a procedure is sequenced by invoking the skill, never by the injected card.
+            case " $(printf '%s ' $injected)" in
+              *" ${name} "*)
+                echo "::error::${skill}: procedure standards are Layer 2 — remove '${name}' from the hook's STANDARDS array"
                 bad=1
-              fi
-            done < <(grep -oE 'skills/[a-z0-9-]+/SKILL\.md' "$cmd" | cut -d/ -f2 | sort -u)
+                ;;
+            esac
             if [ "$bad" -eq 0 ]; then
-              echo "✓ ${cmd}: described, ruleless, skill references resolve"
+              echo "✓ ${skill}: procedure below the fence at line ${proc}, in Contents, not injected"
             else
               fail=1
             fi
+          done
+          # A rules-only standard constrains code as it is written; it has no procedure to run.
+          for skill in skills/*/SKILL.md; do
+            name=$(basename "$(dirname "$skill")")
+            case " $PROCEDURE_SKILLS " in
+              *" $name "*) continue ;;
+            esac
+            if grep -qx '## Procedure' "$skill"; then
+              echo "::error::${skill}: has a '## Procedure' section but is not in PROCEDURE_SKILLS"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Scan lists are sequential and state their own row count
+        run: |
+          set -euo pipefail
+          # A scan list is cited by code (`G12`, `R7`), so a gap or a duplicate makes a citation
+          # ambiguous — the same property CI already enforces for rules inside a fence. The row
+          # count each Contents section advertises has to be the real one too: it is a claim about
+          # the shipped artifact, and README repeats it (checked in the next step).
+          fail=0
+          for skill in skills/*/SKILL.md; do
+            bad=0
+            list=$(sed -n '/^## Anti-pattern scan list/,$p' "$skill")
+
+            rows=$(printf '%s\n' "$list" |
+              sed -n 's/^| *\([A-Z][A-Z]*\)\([0-9][0-9]*\) *|.*/\1 \2/p')
+            count=$(printf '%s\n' "$rows" | grep -c . || true)
+            if [ "$count" -eq 0 ]; then
+              echo "::error::${skill}: no coded rows found under '## Anti-pattern scan list'"
+              fail=1
+              continue
+            fi
+
+            # Codes restart at 1 for each group prefix, so track the prefix as it changes.
+            if ! printf '%s\n' "$rows" | awk -v s="$skill" '
+              $1 != prefix { prefix = $1; n = 0 }
+              { n++ }
+              $2 != n {
+                print "::error::" s ": scan-list code " $1 $2 " breaks the " prefix \
+                  " sequence (expected " prefix n ")"
+                broken = 1
+              }
+              END { exit broken }'; then
+              bad=1
+            fi
+
+            # The Contents entry sits above the fence, so read only that far. The leading .* is
+            # greedy on purpose: clean-code's entry says "Ch17" before its count, so a [^0-9]*
+            # run would stop short of the number that actually matters.
+            stated=$(sed -n '/^## Contents/,/^<!-- HARD-RULES:START -->/p' "$skill" |
+              sed -n 's/.*\*\*Anti-pattern scan list\*\*.*[^0-9]\([0-9][0-9]*\) rows.*/\1/p' |
+              head -1)
+            if [ -z "$stated" ]; then
+              echo "::error::${skill}: Contents must state its scan list's row count as 'N rows'"
+              bad=1
+            elif [ "$stated" -ne "$count" ]; then
+              echo "::error::${skill}: Contents claims ${stated} scan-list rows, the list has ${count}"
+              bad=1
+            fi
+
+            if [ "$bad" -eq 0 ]; then
+              echo "✓ ${skill}: ${count} scan-list rows, sequential, count stated correctly"
+            else
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: README's rule and scan-list counts match the skills
+        run: |
+          set -euo pipefail
+          # README's tables are the first thing a reader trusts, and nothing regenerates them. Key
+          # each row off the skill name in its first cell so the numbers cannot go stale silently.
+          fail=0
+          checked=0
+          while IFS='|' read -r _ name rules rows _; do
+            name=$(printf '%s' "$name" | tr -d ' `')
+            rules=$(printf '%s' "$rules" | tr -d ' ')
+            rows=$(printf '%s' "$rows" | tr -d ' ')
+            skill="skills/${name}/SKILL.md"
+            [ -f "$skill" ] || continue
+
+            start=$(grep -n '<!-- HARD-RULES:START -->' "$skill" | cut -d: -f1)
+            end=$(grep -n '<!-- HARD-RULES:END -->' "$skill" | cut -d: -f1)
+            actual_rules=$(sed -n "${start},${end}p" "$skill" | grep -cE '^[0-9]+\. ')
+            actual_rows=$(sed -n '/^## Anti-pattern scan list/,$p' "$skill" |
+              grep -cE '^\| *[A-Z][A-Z]*[0-9][0-9]* *\|')
+
+            checked=$((checked + 1))
+            if [ "$rules" != "$actual_rules" ]; then
+              echo "::error::README says ${name} has ${rules} rules, its fence has ${actual_rules}"
+              fail=1
+            fi
+            if [ "$rows" != "$actual_rows" ]; then
+              echo "::error::README says ${name} has ${rows} scan-list rows, it has ${actual_rows}"
+              fail=1
+            fi
+          done < <(grep -E '^\| `[a-z-]+` \| [0-9]+ \| [0-9]+ \|' README.md)
+
+          # Guard the guard: a reworded table would make the loop above pass vacuously.
+          if [ "$checked" -ne "$(ls -d skills/*/ | wc -l)" ]; then
+            echo "::error::matched ${checked} README rows, expected one per skill in skills/"
+            exit 1
+          fi
+          [ "$fail" -eq 0 ] && echo "✓ README's counts match all ${checked} skills"
+          exit $fail
+
+      - name: References to a design section resolve against system-design's outline
+        run: |
+          set -euo pipefail
+          # implementation-planning reads an approved design by section, and README describes it
+          # doing so. Those numbers belong to system-design's document outline, which has been
+          # renumbered before — so every reference carries the section's title, and this step
+          # checks the pairing. A renumber that forgets one fails here instead of sending the
+          # planner to the wrong section of a real design.
+          outline='skills/system-design/SKILL.md'
+          fail=0
+          for file in skills/implementation-planning/SKILL.md README.md; do
+            # References wrap across lines in prose, so flatten before matching.
+            flat=$(tr '\n' ' ' < "$file" | tr -s ' ')
+            pairs=$(printf '%s' "$flat" |
+              grep -oE '[Ss]ections? [0-9]+ \([A-Z][^)]*\)( and [0-9]+ \([A-Z][^)]*\))?' |
+              grep -oE '[0-9]+ \([A-Z][^)]*\)' || true)
+            n=0
+            while IFS= read -r pair; do
+              [ -z "$pair" ] && continue
+              num="${pair%% *}"
+              title="${pair#*(}"
+              title="${title%)}"
+              if grep -qE "^ *${num}  +${title}( |\$)" "$outline"; then
+                n=$((n + 1))
+              else
+                echo "::error::${file}: 'section ${num} (${title})' is not row ${num} of the outline"
+                fail=1
+              fi
+            done <<< "$pairs"
+
+            # A numeric reference with no title is unfalsifiable, so it is not allowed to exist.
+            bare=$(printf '%s' "$flat" | grep -oE '[Ss]ections? [0-9]+[^ ]* [^(]' || true)
+            if [ -n "$bare" ]; then
+              echo "::error::${file}: section reference without a title: ${bare}"
+              fail=1
+            fi
+            [ "$fail" -eq 0 ] && echo "✓ ${file}: ${n} section references resolve"
           done
           exit $fail
 
@@ -305,18 +481,28 @@ jobs:
           done
           exit $fail
 
-      - name: Gate is silent when no source files changed
+      - name: Gate is silent when only docs and config changed
         run: |
           set -euo pipefail
           chmod +x hooks/*.sh
+          # Docs, plus the config files a repo actually carries: .gitignore has no extension and
+          # .jsonc is not .json, so both slipped the gate's filter and demanded four code reviews
+          # of a file holding no code. The dotfile rule in changed_source_files() is what fixes it.
           echo "docs only" >> README.md
-          if ./hooks/review-gate.sh; then
-            echo "✓ gate exits 0 on a docs-only diff"
-          else
-            echo "::error::gate blocked a docs-only diff"
+          echo "# scratch" >> .gitignore
+          printf '{}\n' > scratch_gate_check.jsonc
+          set +e
+          ./hooks/review-gate.sh
+          code=$?
+          set -e
+          rm -f scratch_gate_check.jsonc
+          rm -rf .revai
+          git checkout -- README.md .gitignore
+          if [ "$code" -ne 0 ]; then
+            echo "::error::gate exited ${code} on a diff of only docs and config, expected 0"
             exit 1
           fi
-          git checkout -- README.md
+          echo "✓ gate exits 0 on a docs-and-config diff"
 
       - name: Gate blocks when source files changed
         run: |

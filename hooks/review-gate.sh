@@ -19,6 +19,12 @@ readonly MAX_ATTEMPTS=3
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
 
 # Docs, config, lockfiles, vendored trees and generated output are not source we judge.
+#
+# The dotfile rule carries its weight: a repo's configuration lives in files like .gitignore and
+# .markdownlint-cli2.jsonc, which no extension list catches (.gitignore has none, .jsonc is not
+# .json). Without it, editing either one demands four code reviews of a file holding no code. A
+# real source file is essentially never a dotfile, and a dotfile *directory* is unaffected — the
+# basename is what is tested, so .github/scripts/deploy.py is still gated.
 changed_source_files() {
   {
     git diff --name-only HEAD
@@ -26,7 +32,8 @@ changed_source_files() {
     git ls-files --others --exclude-standard
   } 2>/dev/null |
     sort -u |
-    grep -vE '\.(md|markdown|txt|json|ya?ml|toml|ini|cfg|lock|sum|svg|png|jpg)$' |
+    grep -vE '\.(md|markdown|txt|jsonc?|json5|ya?ml|toml|ini|cfg|lock|sum|svg|png|jpg)$' |
+    grep -vE '(^|/)\.[^/]*$' |
     grep -vE '(^|/)(vendor|node_modules|third_party|dist|build|target|\.git|\.revai)/' |
     grep -vE '(_pb2?\.py|\.pb\.go|_generated\.|\.gen\.|\.min\.)'
 }

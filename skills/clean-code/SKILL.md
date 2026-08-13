@@ -17,7 +17,7 @@ wins — but say which rule you are overriding and why, rather than drifting awa
   and data structures, error handling, classes, and the four rules of simple design. Injected every
   session, so they may already be in your context.
 - **Depth** — worked bad/good pairs for the rules that get misread without one.
-- **Anti-pattern scan list** — the Ch17 smells and heuristics, 55 rows coded `C` comments,
+- **Anti-pattern scan list** — the Ch17 smells and heuristics, 52 rows coded `C` comments,
   `F` functions, `G` general, `N` names, to work down while reviewing.
 
 <!-- HARD-RULES:START -->

@@ -5,38 +5,38 @@ actually follow them.
 
 Four are stack-agnostic and always in context:
 
-| Standard | Rules | Canonical to |
-| --- | --- | --- |
-| `clean-code` | 56 | *Clean Code* (Robert C. Martin) — names, functions, comments, formatting, objects and data structures, error handling, classes, the four rules of simple design |
-| `best-practices` | 99 | The published canon — API guidelines (Zalando, Microsoft, Google), RFC 9457 and 3339, twelve-factor config, *Release It!* stability patterns, expand/contract migrations, OWASP defaults, SRE golden signals, at-least-once messaging, the test pyramid |
-| `domain-driven-design` | 74 | Modern DDD (Evans, Vernon, Khononov) — subdomains, bounded contexts, ubiquitous language, context mapping, aggregates, value objects, services, domain and integration events, hexagonal layering, sagas |
-| `modular-monolith` | 95 | The modular-monolith canon — Grzybek's primer, integration-styles and architecture-enforcement series, Simon Brown's package-by-component, Fowler's *MonolithFirst* and the microservice premium, Martin's package-coupling principles, Shopify's Packwerk componentisation, GitLab's bounded contexts, Spring Modulith's module model, and the strangler-fig extraction path |
+| Standard | Rules | Scan list | Canonical to |
+| --- | --- | --- | --- |
+| `clean-code` | 56 | 52 | *Clean Code* (Robert C. Martin) — names, functions, comments, formatting, objects and data structures, error handling, classes, the four rules of simple design |
+| `best-practices` | 99 | 85 | The published canon — API guidelines (Zalando, Microsoft, Google), RFC 9457 and 3339, twelve-factor config, *Release It!* stability patterns, expand/contract migrations, OWASP defaults, SRE golden signals, at-least-once messaging, the test pyramid |
+| `domain-driven-design` | 74 | 51 | Modern DDD (Evans, Vernon, Khononov) — subdomains, bounded contexts, ubiquitous language, context mapping, aggregates, value objects, services, domain and integration events, hexagonal layering, sagas |
+| `modular-monolith` | 95 | 82 | The modular-monolith canon — Grzybek's primer, integration-styles and architecture-enforcement series, Simon Brown's package-by-component, Fowler's *MonolithFirst* and the microservice premium, Martin's package-coupling principles, Shopify's Packwerk componentisation, GitLab's bounded contexts, Spring Modulith's module model, and the strangler-fig extraction path |
 
-Two are design-time standards, each with its own command:
+Two are design-time standards, each a procedure carried entirely inside its own skill:
 
-| Standard | Rules | Canonical to |
-| --- | --- | --- |
-| `system-design` | 123 | The design canon — Google's design-doc practice (goals, non-goals, alternatives considered, cross-cutting concerns), the SRE workbook on SLIs, SLOs and error budgets, SEI quality-attribute scenarios, Little's law and back-of-envelope sizing, the C4 model's labelled container view, AWS's reliability design principles and blast-radius containment, STRIDE threat modelling over trust boundaries, *Designing Data-Intensive Applications* on consistency, replication and partitioning, McKinley's innovation tokens, Ford and Parsons' fitness functions, MADR decision records, Conway's law and cognitive load, and the strangler-fig transition |
-| `implementation-planning` | 27 | The seam between `system-design`'s own delivery-slicing rules (118–122) and `superpowers:writing-plans`' scope-check and file-structure discipline — this repo's own answer to keeping a plan's boundaries consistent with the design it implements, not an external canon |
+| Standard | Rules | Scan list | Canonical to |
+| --- | --- | --- | --- |
+| `system-design` | 123 | 97 | The design canon — Google's design-doc practice (goals, non-goals, alternatives considered, cross-cutting concerns), the SRE workbook on SLIs, SLOs and error budgets, SEI quality-attribute scenarios, Little's law and back-of-envelope sizing, the C4 model's labelled container view, AWS's reliability design principles and blast-radius containment, STRIDE threat modelling over trust boundaries, *Designing Data-Intensive Applications* on consistency, replication and partitioning, McKinley's innovation tokens, Ford and Parsons' fitness functions, MADR decision records, Conway's law and cognitive load, and the strangler-fig transition |
+| `implementation-planning` | 27 | 26 | The seam between `system-design`'s own delivery-slicing rules (118–122) and `superpowers:writing-plans`' scope-check and file-structure discipline — this repo's own answer to keeping a plan's boundaries consistent with the design it implements, not an external canon |
 
 Two are stack-specific, and are invoked rather than injected:
 
-| Standard | Rules | Canonical to |
-| --- | --- | --- |
-| `golang` | 125 | What the Go team publishes — `gofmt`, `go vet`, the Go Code Review Comments, Google's Go Style Guide, the `log/slog`, `iter`, `errors` and `testing/synctest` package docs, and the release notes from Go 1.18 through 1.26 that retired the idioms most Go code still carries |
-| `postgres` | 123 | What the PostgreSQL project publishes — the manual on locking, isolation, indexes and `SECURITY DEFINER`, the wiki's *Don't Do This* page, and the release notes from Postgres 10 through 18 that retired the workarounds most SQL still carries |
+| Standard | Rules | Scan list | Canonical to |
+| --- | --- | --- | --- |
+| `golang` | 125 | 85 | What the Go team publishes — `gofmt`, `go vet`, the Go Code Review Comments, Google's Go Style Guide, the `log/slog`, `iter`, `errors` and `testing/synctest` package docs, and the release notes from Go 1.18 through 1.26 that retired the idioms most Go code still carries |
+| `postgres` | 123 | 79 | What the PostgreSQL project publishes — the manual on locking, isolation, indexes and `SECURITY DEFINER`, the wiki's *Don't Do This* page, and the release notes from Postgres 10 through 18 that retired the workarounds most SQL still carries |
 
-Each ships an anti-pattern scan list too, with citable codes: the Ch17 smells and heuristics (55
-rows), a 90-row best-practice list, a 45-row DDD list, an 82-row modular-monolith list, a 97-row
-system-design list, an 85-row Go list and a 79-row Postgres list. `best-practices` also ships the table
-of answers you are not allowed to reinvent — 22 recurring concerns, each with its established solution
-named; `modular-monolith` ships 21 coupling shortcuts with what each one costs and what to do instead;
-`system-design` ships the design-document outline (functional and non-functional requirements, capacity
-estimation, API and interface contracts, a detailed-design deep dive, and the rest), a table mapping
-the dominant requirement to the shape it forces, the arithmetic behind every estimate and what each
-number decides, and 12 design shortcuts with their price; and `golang` and `postgres` each ship a
-legacy-to-modern table: 30 forms that were correct once, each with the current answer and the release
-that introduced it.
+The `Scan list` column is each standard's anti-pattern list, with citable codes — `clean-code`'s is
+the Ch17 smells and heuristics, and every other standard's is coded by group. Several ship more than
+that. `best-practices` adds the table of answers you are not allowed to reinvent — 22 recurring
+concerns, each with its established solution named; `modular-monolith` adds 21 coupling shortcuts with
+what each one costs and what to do instead; `system-design` adds the design-document outline
+(functional and non-functional requirements, capacity estimation, API and interface contracts, a
+detailed-design deep dive, and the rest), a table mapping the dominant requirement to the shape it
+forces, the arithmetic behind every estimate and what each number decides, and 12 design shortcuts
+with their price; `implementation-planning` adds a worked module-boundary split and the exact shape of
+a one-slice handoff; and `golang` and `postgres` each add a legacy-to-modern table: 30 forms that were
+correct once, each with the current answer and the release that introduced it.
 
 Every `SKILL.md` stays inside the six frontmatter fields of the [Agent Skills](https://agentskills.io)
 spec, so the skills load unchanged in Claude Code, on claude.ai, and through the API. CI enforces that,
@@ -69,10 +69,11 @@ wrong one for Go rules landing in a Python repo or Postgres rules in a repo with
 reached the way any skill is reached — by their descriptions — and they keep their fences, so injecting
 one later is a one-line change.
 
-`system-design` is Layer 2 for a different reason: its rules govern a design act and the document it
-produces, not the code being typed, so injecting them into a session that is fixing a typo would be the
-same waste. Instead it has an exact entry point — `/revai:design` — which is both a stronger trigger
-than a description match and able to do what a card cannot: run the standard as a procedure.
+`system-design` and `implementation-planning` are Layer 2 for a different reason: their rules govern
+a design act and the document or plan it produces, not the code being typed, so injecting them into a
+session that is fixing a typo would be the same waste. Each carries its own `## Procedure` section
+inside its `SKILL.md`, below the fence — running the standard as a procedure, which a card cannot do
+— so invoking the skill directly is the entry point, no separate command needed.
 
 ## Scope: the standards behave differently on purpose
 
@@ -127,57 +128,66 @@ config file to write, and nothing to add to that project's `CLAUDE.md`.
 
 Pull improvements with `/plugin update revai@revai`, then `/reload-plugins` or start a fresh session.
 
-## `/revai:design`
+## `system-design`
 
 ```text
-/revai:design a service that lets our couriers claim delivery slots
+Design a service that lets our couriers claim delivery slots.
 ```
 
-One command, one idea in one sentence, one design document out. It reads the `system-design` standard,
-then:
+No command — the skill itself runs the procedure. Say what you want designed (or invoke the skill by
+name, e.g. `/revai:system-design a service that lets our couriers claim delivery slots`) and it reads
+the `system-design` standard, then:
 
 1. **Decides whether a design is warranted at all.** A well-understood change inside an existing shape
-   gets one paragraph and no document — that is rule 97, and it is the difference between a standard
+   gets one paragraph and no document — that is rule 109, and it is the difference between a standard
    and a ritual.
-2. **Reads the repository before asking you anything** — language, datastore, deployment shape,
+2. **Tags the idea narrow or complex**, out loud — how many journeys, integrations and stores, and
+   whether a genuinely hard mechanism is in play — which governs how hard the question round and the
+   detailed-design deep dive push.
+3. **Reads the repository before asking you anything** — language, datastore, deployment shape,
    existing modules, existing decision records. It will not ask what it can find.
-3. **Asks one bounded round of questions**, at most three batches, and only where the answer changes
-   the design: the journeys that define the system, users and growth (never "what's your QPS" — it
-   derives the rate), what must never be lost, where staleness is unacceptable, the constraints you
-   don't control, and where it runs. Every question carries a recommended default, so accepting the
-   defaults is one click. Skip them and it proceeds anyway, recording each gap as an assumption and an
-   open question.
-4. **Writes `docs/design/<slug>.md`** — fifteen sections: problem, goals and non-goals, constraints,
-   requirements as measurable scenarios with SLOs, sizing with the arithmetic shown, a labelled
-   component diagram, data ownership and access patterns, integration, a failure table per dependency,
-   trust boundaries and threats, operability and cost, decision records with real alternatives and
-   reversibility, validation, delivery, open questions.
-5. **Checks its own output** against the standard's scan list and fixes what fails before showing you
-   anything — every quality attribute measurable, every number sourced, every dependency in the failure
-   table, the availability target surviving the arithmetic, every component traceable to a requirement.
-6. **Stops.** It reports the shape, the sizing headline, the three decisions that matter and the
-   riskiest assumption it made for you. It does not start building — turning a chosen slice into an
-   implementation plan is `/revai:plan`'s job, run separately.
+4. **Keeps asking as long as there is doubt**, not a fixed number of rounds: the journeys that define
+   the system, users and growth (never "what's your QPS" — it derives the rate), what must never be
+   lost, where staleness is unacceptable, who consumes each interface, the constraints you don't
+   control, where it runs, and — for a complex design — what's actually hard. Every question carries a
+   recommended default, so accepting it is one click. Skip a round and it proceeds anyway, recording
+   the gap as an assumption and an open question.
+5. **Writes `docs/design/<slug>.md`** — nineteen sections: problem, goals and non-goals, constraints,
+   functional and non-functional requirements (each an actor, priority and acceptance criterion, or a
+   measurable scenario with an SLO), capacity estimation with the arithmetic shown, a labelled
+   component diagram, data ownership and access patterns, concrete API and interface contracts, a
+   detailed-design deep dive on the 1-3 hardest mechanisms, integration, a failure table per
+   dependency, trust boundaries and threats, operability and cost, decision records with real
+   alternatives and reversibility, validation, delivery, open questions.
+6. **Checks its own output** against the standard's scan list and fixes what fails before showing you
+   anything — every requirement measurable, every number sourced, every interface under contract, the
+   hardest mechanisms walked to their edge case, every dependency in the failure table, the
+   availability target surviving the arithmetic, every component traceable to a requirement.
+7. **Stops.** It reports the complexity tag, the shape, the sizing headline, the hardest mechanism
+   covered, the three decisions that matter and the riskiest assumption it made for you. It does not
+   start building — turning a chosen slice into an implementation plan is `implementation-planning`'s
+   job, run separately.
 
 Defaults it applies unless a requirement overrides them, each recorded as a decision when overridden:
 one deployable with modules inside it, boring technology, a managed service before self-hosting before
 building, a single region, and no queue, cache or tier without the requirement that demands it.
 
-## `/revai:plan`
+## `implementation-planning`
 
 ```text
-/revai:plan docs/design/courier-delivery-slots.md
+Plan the next slice from docs/design/courier-delivery-slots.md.
 ```
 
-One command, one design document in, one right-sized implementation plan out — for exactly one
-slice at a time. It reads the `implementation-planning` standard, then:
+No command here either — one approved design document in, one right-sized implementation plan out,
+for exactly one slice at a time. It reads the `implementation-planning` standard, then:
 
 1. **Loads the design.** No path, or nothing readable there: it says so and stops. There is nothing
    to slice without an approved design.
-2. **Reads the design's own delivery slices** (section 14) and its module and data-ownership
-   boundaries (sections 6–7) before inventing anything — then **right-sizes** whatever still spans
-   more than one module or bundles more than one independently-shippable capability, splitting along
-   the module boundary rather than down the middle of one.
+2. **Reads the design's own delivery slices** — section 18 (Delivery & Rollout) — and its module
+   and data-ownership boundaries — sections 7 (Architecture) and 8 (Data) — before inventing
+   anything, then **right-sizes** whatever still spans more than one module or bundles more than one
+   independently-shippable capability, splitting along the module boundary rather than down the
+   middle of one.
 3. **Orders the sequence** by dependency first, the thinnest end-to-end path where dependency order
    leaves a choice, and records the reason for each slice's position.
 4. **Detects what's already planned or built** by searching `docs/superpowers/plans/` for a plan
@@ -191,7 +201,7 @@ slice at a time. It reads the `implementation-planning` standard, then:
    no cycle in the sequence — before showing anything.
 7. **Stops.** It reports the full ordered sequence, which slice it just planned, and the plan's path.
    It does not touch code, and it never hands more than one slice to `writing-plans` in a single run
-   — run the command again once that slice has shipped.
+   — invoke it again once that slice has shipped.
 
 ## The gate, concretely
 
@@ -266,13 +276,10 @@ revai/
 │   ├── best-practices/SKILL.md              99 rules — source of truth, injected
 │   ├── domain-driven-design/SKILL.md        74 rules — source of truth, injected
 │   ├── modular-monolith/SKILL.md            95 rules — source of truth, injected
-│   ├── system-design/SKILL.md              123 rules — source of truth, run by /revai:design
-│   ├── implementation-planning/SKILL.md     27 rules — source of truth, run by /revai:plan
+│   ├── system-design/SKILL.md              123 rules + its own procedure — source of truth, invoked
+│   ├── implementation-planning/SKILL.md     27 rules + its own procedure — source of truth, invoked
 │   ├── golang/SKILL.md                     125 rules — source of truth, invoked
 │   └── postgres/SKILL.md                   123 rules — source of truth, invoked
-├── commands/
-│   ├── design.md                            /revai:design — sequences system-design, states no rule
-│   └── plan.md                          /revai:plan — sequences implementation-planning, states no rule
 ├── agents/
 │   ├── clean-code-review.md                 read-only reviewer
 │   ├── best-practices-review.md             read-only reviewer, reinvention check first
@@ -286,9 +293,10 @@ revai/
 └── README.md
 ```
 
-Two commands, no more, no `templates/`, and deliberately no `reference/` directory. A command exists
-only where a standard is a procedure someone starts on purpose; it sequences a `SKILL.md` and states no
-rule of its own, which CI checks.
+No `commands/`, no `templates/`, and deliberately no `reference/` directory. A procedure standard
+lives entirely inside its own `SKILL.md` — the fence for the rules, a `## Procedure` section below it
+for how to run them — so there is exactly one file per standard and CI has one thing to check per
+standard, not two.
 
 ## Deferred
 
@@ -304,3 +312,4 @@ material and testing are no longer deferred — `system-design` carries the form
 ## License
 
 MIT — see [LICENSE](LICENSE).
+docs only

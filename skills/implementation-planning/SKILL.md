@@ -1,6 +1,6 @@
 ---
 name: implementation-planning
-description: Applies the implementation-planning standard — turn an approved system design into an ordered sequence of right-sized slices, each handed to superpowers:writing-plans one at a time so a plan's file and module structure inherits the design's own boundaries instead of guessing at them. Use when running /revai:plan, turning a design document into an implementation plan, deciding what to build first after a design is approved, splitting a design's delivery slice that still spans more than one module, or sequencing a multi-slice build.
+description: Applies the implementation-planning standard — turn an approved system design into an ordered sequence of right-sized slices, each handed to superpowers:writing-plans one at a time so a plan's file and module structure inherits the design's own boundaries instead of guessing at them. Use when turning a design document into an implementation plan, deciding what to build first after a design is approved, splitting a design's delivery slice that still spans more than one module, or sequencing a multi-slice build.
 ---
 
 # Implementation planning
@@ -25,10 +25,13 @@ boundaries the design already drew.
   before slicing, right-sizing a slice, ordering the slices, detecting progress, handing off one
   slice, and validating the breakdown. Rule 1 gates the standard on there being an approved design to
   plan from; rule 2 treats each group as a procedure stage rather than an independently-gated
-  concern. Not injected — reached only through `/revai:plan`.
+  concern. Not injected — invoked directly as a skill.
+- **Procedure** — how to run the standard end to end: load the design, right-size and order the
+  slices, detect what's already done, confirm and hand off exactly one slice, validate, report.
 - **Depth** — a worked example of splitting a coarse slice along a module boundary, and the exact
   shape of a one-slice handoff to `writing-plans`.
-- **Anti-pattern scan list** — coded by group, to work down while reviewing a proposed breakdown.
+- **Anti-pattern scan list** — 26 rows, coded by group, to work down while reviewing a proposed
+  breakdown.
 
 <!-- HARD-RULES:START -->
 ## Implementation-planning rules
@@ -43,16 +46,16 @@ plan. Rule 1 decides whether the rest apply; rule 2 says how to read the groups 
 
 ### Reading the design before slicing — always applies
 
-3. Read section 14 (delivery) for the design's own named slices before inventing new ones; a design that already answers "what ships first" is the starting point, not a blank page.
-4. Read sections 6 and 7 (architecture, data ownership) for the module and storage boundaries the design already settled; a slice's scope is read from these, never re-derived.
-5. Read section 12 (decisions) for anything that already bounds sequencing — a decision recorded as "defer until X" is a dependency, not a suggestion.
-6. A design with no section-14 slice, or one section-14 "slice" that is really the whole system, has not actually been sliced yet; treat the whole document as one candidate slice and right-size it.
+3. Read section 18 (Delivery & Rollout) for the design's own named slices before inventing new ones; a design that already answers "what ships first" is the starting point, not a blank page.
+4. Read sections 7 (Architecture) and 8 (Data) for the module and storage boundaries the design already settled; a slice's scope is read from these, never re-derived.
+5. Read section 16 (Decisions) for anything that already bounds sequencing — a decision recorded as "defer until X" is a dependency, not a suggestion.
+6. A design that names no slice in section 18 (Delivery & Rollout), or whose one named "slice" is really the whole system, has not actually been sliced yet; treat the whole document as one candidate slice and right-size it.
 
 ### Right-sizing a slice — applies to every candidate slice
 
 7. A slice is right-sized when it touches one module or capability, ships one coherent piece of observable behavior, and can be built, tested and shipped without another slice existing first — except where an explicit dependency says otherwise.
-8. A slice spanning more than one module from section 6 is not right-sized; split it along the module boundary, never down the middle of one.
-9. A slice whose data ownership (section 7) spans more than one store or more than one owning module is not right-sized, for the same reason `modular-monolith` rule 63 forbids one transaction writing two modules' storage.
+8. A slice spanning more than one module from section 7 (Architecture) is not right-sized; split it along the module boundary, never down the middle of one.
+9. A slice whose data ownership in section 8 (Data) spans more than one store or more than one owning module is not right-sized, for the same reason `modular-monolith` rule 63 forbids one transaction writing two modules' storage.
 10. A slice that bundles an independently-valuable capability with another is two slices, even when the design described them together.
 11. A slice that is only infrastructure with nothing observable to ship — a schema nothing reads yet, a client with no caller — is not yet a slice; fold it into the first slice that actually uses it.
 12. Splitting stops once every resulting slice passes rules 7–11; a piece smaller than one module's worth of one capability is a task, not a slice, and belongs inside `writing-plans`' own task breakdown instead.
@@ -73,25 +76,89 @@ plan. Rule 1 decides whether the rest apply; rule 2 says how to read the groups 
 ### Handing off one slice — applies to the slice chosen this run
 
 20. Hand `writing-plans` exactly one slice per run, never the whole sequence — a plan for a slice three steps away is speculation about a codebase that doesn't exist yet.
-21. State the slice's module and data ownership verbatim from sections 6–7 in the handoff, so `writing-plans`' file-structure step inherits the design's boundaries instead of drawing its own.
+21. State the slice's module and data ownership verbatim from sections 7 (Architecture) and 8 (Data) in the handoff, so `writing-plans`' file-structure step inherits the design's boundaries instead of drawing its own.
 22. State what the slice explicitly excludes — the boundary with the next slice matters as much as the boundary with the last one, and an unstated one invites scope creep.
 23. Never repeat `writing-plans`' own job in the handoff: task granularity, TDD step shape and file-level structure inside the slice are its call once it has the scoped requirement, not this standard's to pre-decide.
 24. Name `golang` or `postgres` in the handoff when the slice's module was built on that stack, so `writing-plans` writes tasks that already respect that stack's idioms instead of generic pseudocode.
 
 ### Validating the breakdown — before showing it
 
-25. Every slice traces to a requirement or a section-14 slice in the design; a slice with no such trace is scope invented here, not read from the design.
-26. Every requirement in the design's section 4 is covered by some slice in the sequence; an uncovered requirement is a gap to report, not to silently drop.
+25. Every slice traces to a requirement, or to a slice named in section 18 (Delivery & Rollout); a slice with no such trace is scope invented here, not read from the design.
+26. Every requirement in section 4 (Functional Reqs) is covered by some slice in the sequence; an uncovered requirement is a gap to report, not to silently drop.
 27. The sequence has no cycle; a cycle means the design's own module boundaries are wrong, and that is a finding for the design, not something resolved here by picking an arbitrary order.
 <!-- HARD-RULES:END -->
+
+## Procedure
+
+Running this standard end to end: turning one approved design document into the next right-sized
+implementation plan.
+
+Terminal state: one implementation plan on disk, and a short summary in chat. Write no
+implementation code, create no branch, and never hand more than one slice to
+`superpowers:writing-plans` in a single run.
+
+### 1. Load the design
+
+The input is a path to a `system-design` document. No path, or nothing readable there: say so and
+stop (rule 1) — there is nothing to slice without an approved design.
+
+### 2. Read, then right-size
+
+Apply rules 3–6: read section 18 (Delivery & Rollout) for the design's own named slices,
+sections 7 (Architecture) and 8 (Data) for the module and data-ownership boundaries, section 16
+(Decisions) for anything that already bounds sequencing. No slice named there, or its one named
+"slice" is really the whole system: treat the whole document as one candidate slice (rule 6).
+
+Right-size every candidate against rules 7–12: one module, one shippable behavior, no bundled
+independent capability, nothing infrastructure-only left dangling. Split along a module boundary
+wherever a candidate still fails — never down the middle of one (rule 8).
+
+### 3. Order the sequence
+
+Apply rules 13–16: dependency first, the thinnest end-to-end path where dependency order leaves a
+choice, an unforced slice last rather than first. Record the sequence and the reason for each
+position — a later re-ordering with no stated reason is the undocumented decision `system-design`
+rule 102 already forbids.
+
+### 4. Detect progress
+
+Apply rules 17–19. Search `docs/superpowers/plans/` for any plan whose `**Spec:**` header names
+this design document. A fully-checked plan means that slice is done; a partly-checked one means
+it's already in progress. Codebase work the design doesn't mention: say so now and adjust the
+sequence rather than silently planning over it.
+
+### 5. Confirm the slice
+
+Recommend the next undone slice in the sequence as the default. Use `AskUserQuestion` with that
+default first, but always ask; never commit to a slice without confirming (rule 18).
+
+### 6. Hand off exactly one slice
+
+Apply rules 20–24. Invoke `superpowers:writing-plans`, handing it: this design document's path, as
+the spec; the chosen slice's module and data ownership, verbatim from sections 7 (Architecture) and
+8 (Data); what the slice ships and what it explicitly excludes; the stack skill (`golang` or
+`postgres`) if section 7 (Architecture) named one for this module, otherwise plan generically.
+Never hand over more than this one slice, and never pre-decide what `writing-plans` already owns:
+task granularity, TDD step shape, file-level structure inside the slice.
+
+### 7. Validate, then report
+
+Before showing anything, check rules 25–27 against the full sequence: every slice traces to a
+requirement or to a slice named in section 18 (Delivery & Rollout), every requirement in section 4
+(Functional Reqs) is covered by some slice, the sequence has no cycle. Fix what fails rather than
+reporting it.
+
+Report, briefly: the full ordered sequence, so the user sees what's ahead; which slice was just
+planned, and why it was next; the resulting plan's path. Then stop — do not start building, and do
+not hand off a second slice in the same run.
 
 ## Depth
 
 ### Rules 8, 10 — splitting a coarse slice along a module boundary
 
-A design's section 14 named one slice: "Slice 1: courier delivery-slot claiming." Section 6 shows two
-modules — `scheduling` (owns delivery slots) and `notifications` (tells a courier their claim
-succeeded). The slice as named touches both.
+A design's section 18 (Delivery & Rollout) named one slice: "Slice 1: courier delivery-slot
+claiming." Section 7 (Architecture) shows two modules — `scheduling` (owns delivery slots) and
+`notifications` (tells a courier their claim succeeded). The slice as named touches both.
 
 Bad — plan the named slice as-is:
 
@@ -124,10 +191,12 @@ description of what to hand over, the handoff itself:
 ```text
 Spec: docs/design/courier-delivery-slots.md
 Slice: claim a delivery slot
-Module: scheduling (section 6) — owns the delivery-slot schema and its claim state (section 7)
+Module: scheduling — section 7 (Architecture)
+Owns: the delivery-slot schema and its claim state — section 8 (Data)
 Ships: a courier can claim an open slot; a claimed slot cannot be claimed twice
-Excludes: notifying the courier (slice 2), cancelling a claim (not in this design's section 4)
-Stack: none named for this module in section 6 — plan generically
+Excludes: notifying the courier (slice 2); cancelling a claim, absent from section 4
+          (Functional Reqs)
+Stack: none named for this module in section 7 (Architecture) — plan generically
 ```
 
 ## Anti-pattern scan list
@@ -139,10 +208,10 @@ Codes: `A` applicability, `R` reading, `Z` right-sizing, `O` ordering, `P` progr
 | --- | --- | --- |
 | A1 | Slicing attempted with no approved design to read | 1 |
 | A2 | A group skipped to save time rather than because it was empty | 2 |
-| R1 | New slices invented with no look at the design's own section 14 | 3 |
-| R2 | A slice's scope re-derived instead of read from sections 6–7 | 4 |
-| R3 | A "defer until X" decision in section 12 ignored by the sequence | 5 |
-| R4 | The whole design treated as done being sliced with no section-14 slice to show it | 6 |
+| R1 | New slices invented with no look at the design's own section 18 (Delivery & Rollout) | 3 |
+| R2 | A slice's scope re-derived instead of read from sections 7 (Architecture) and 8 (Data) | 4 |
+| R3 | A "defer until X" decision in section 16 (Decisions) ignored by the sequence | 5 |
+| R4 | The whole design treated as sliced with no slice named in section 18 (Delivery & Rollout) | 6 |
 | Z1 | A slice spanning more than one module handed off as one | 8 |
 | Z2 | A slice's data ownership spanning more than one store or module | 9 |
 | Z3 | Two independently-valuable capabilities bundled into one slice | 10 |
@@ -160,6 +229,6 @@ Codes: `A` applicability, `R` reading, `Z` right-sizing, `O` ordering, `P` progr
 | H3 | A handoff with no stated exclusion boundary | 22 |
 | H4 | Task-level detail pre-decided in the handoff instead of left to `writing-plans` | 23 |
 | H5 | A Go or Postgres module handed off with no stack named | 24 |
-| V1 | A slice with no traceable requirement or section-14 origin | 25 |
-| V2 | A section-4 requirement covered by no slice in the sequence | 26 |
+| V1 | A slice traceable to no requirement and to no slice in section 18 (Delivery & Rollout) | 25 |
+| V2 | A requirement in section 4 (Functional Reqs) covered by no slice in the sequence | 26 |
 | V3 | A cyclic slice sequence resolved by picking an arbitrary order | 27 |

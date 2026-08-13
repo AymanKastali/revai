@@ -23,7 +23,7 @@ standards apply too, they apply on top of these rules, not instead of them.
 - **The answers you are not allowed to reinvent** — 22 concerns, each with its established solution
   named. Start here when rule 2 asks what the standard solution is.
 - **Depth** — worked bad/good pairs for the rules that get misread without one.
-- **Anti-pattern scan list** — 90 rows, coded by group (`D` decisions, `I` interfaces, `Q` data,
+- **Anti-pattern scan list** — 85 rows, coded by group (`D` decisions, `I` interfaces, `Q` data,
   `C` config, `R` resilience, `X` concurrency, `S` security, `O` observability, `M` messaging,
   `T` tests), to work down while reviewing.
 

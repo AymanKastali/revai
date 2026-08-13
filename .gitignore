@@ -3,3 +3,6 @@ docs/
 
 # Review gate bookkeeping (reviewed diff hashes, attempt counters).
 .revai/
+
+# superpowers session scratch (plans, task briefs and reports) — local only.
+.superpowers/
