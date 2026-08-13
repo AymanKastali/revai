@@ -12,11 +12,12 @@ Four are stack-agnostic and always in context:
 | `domain-driven-design` | 74 | Modern DDD (Evans, Vernon, Khononov) — subdomains, bounded contexts, ubiquitous language, context mapping, aggregates, value objects, services, domain and integration events, hexagonal layering, sagas |
 | `modular-monolith` | 95 | The modular-monolith canon — Grzybek's primer, integration-styles and architecture-enforcement series, Simon Brown's package-by-component, Fowler's *MonolithFirst* and the microservice premium, Martin's package-coupling principles, Shopify's Packwerk componentisation, GitLab's bounded contexts, Spring Modulith's module model, and the strangler-fig extraction path |
 
-One is a design-time standard with its own command, `/revai:design`:
+Two are design-time standards, each with its own command:
 
 | Standard | Rules | Canonical to |
 | --- | --- | --- |
 | `system-design` | 110 | The design canon — Google's design-doc practice (goals, non-goals, alternatives considered, cross-cutting concerns), the SRE workbook on SLIs, SLOs and error budgets, SEI quality-attribute scenarios, Little's law and back-of-envelope sizing, the C4 model's labelled container view, AWS's reliability design principles and blast-radius containment, STRIDE threat modelling over trust boundaries, *Designing Data-Intensive Applications* on consistency, replication and partitioning, McKinley's innovation tokens, Ford and Parsons' fitness functions, MADR decision records, Conway's law and cognitive load, and the strangler-fig transition |
+| `implementation-planning` | 27 | The seam between `system-design`'s own delivery-slicing rules (105–109) and `superpowers:writing-plans`' scope-check and file-structure discipline — this repo's own answer to keeping a plan's boundaries consistent with the design it implements, not an external canon |
 
 Two are stack-specific, and are invoked rather than injected:
 
@@ -153,13 +154,42 @@ then:
    anything — every quality attribute measurable, every number sourced, every dependency in the failure
    table, the availability target surviving the arithmetic, every component traceable to a requirement.
 6. **Stops.** It reports the shape, the sizing headline, the three decisions that matter and the
-   riskiest assumption it made for you, then offers to turn a chosen delivery slice into an
-   implementation plan via `superpowers:writing-plans` — still no code, just a plan document. It
-   does not start building.
+   riskiest assumption it made for you. It does not start building — turning a chosen slice into an
+   implementation plan is `/revai:plan`'s job, run separately.
 
 Defaults it applies unless a requirement overrides them, each recorded as a decision when overridden:
 one deployable with modules inside it, boring technology, a managed service before self-hosting before
 building, a single region, and no queue, cache or tier without the requirement that demands it.
+
+## `/revai:plan`
+
+```text
+/revai:plan docs/design/courier-delivery-slots.md
+```
+
+One command, one design document in, one right-sized implementation plan out — for exactly one
+slice at a time. It reads the `implementation-planning` standard, then:
+
+1. **Loads the design.** No path, or nothing readable there: it says so and stops. There is nothing
+   to slice without an approved design.
+2. **Reads the design's own delivery slices** (section 14) and its module and data-ownership
+   boundaries (sections 6–7) before inventing anything — then **right-sizes** whatever still spans
+   more than one module or bundles more than one independently-shippable capability, splitting along
+   the module boundary rather than down the middle of one.
+3. **Orders the sequence** by dependency first, the thinnest end-to-end path where dependency order
+   leaves a choice, and records the reason for each slice's position.
+4. **Detects what's already planned or built** by searching `docs/superpowers/plans/` for a plan
+   citing this design document as its spec, and recommends the next undone slice — always confirmed,
+   never assumed.
+5. **Hands off exactly one slice** to `superpowers:writing-plans`, stating that slice's module and
+   data ownership verbatim from the design so the plan's own file structure inherits those boundaries
+   instead of guessing at new ones, and naming the stack skill (`golang`, `postgres`) if the design
+   named one for that module.
+6. **Validates the breakdown** — every slice traceable to a requirement, every requirement covered,
+   no cycle in the sequence — before showing anything.
+7. **Stops.** It reports the full ordered sequence, which slice it just planned, and the plan's path.
+   It does not touch code, and it never hands more than one slice to `writing-plans` in a single run
+   — run the command again once that slice has shipped.
 
 ## The gate, concretely
 
@@ -235,10 +265,12 @@ revai/
 │   ├── domain-driven-design/SKILL.md        74 rules — source of truth, injected
 │   ├── modular-monolith/SKILL.md            95 rules — source of truth, injected
 │   ├── system-design/SKILL.md              110 rules — source of truth, run by /revai:design
+│   ├── implementation-planning/SKILL.md     27 rules — source of truth, run by /revai:plan
 │   ├── golang/SKILL.md                     125 rules — source of truth, invoked
 │   └── postgres/SKILL.md                   123 rules — source of truth, invoked
 ├── commands/
-│   └── design.md                            /revai:design — sequences system-design, states no rule
+│   ├── design.md                            /revai:design — sequences system-design, states no rule
+│   └── plan.md                          /revai:plan — sequences implementation-planning, states no rule
 ├── agents/
 │   ├── clean-code-review.md                 read-only reviewer
 │   ├── best-practices-review.md             read-only reviewer, reinvention check first
@@ -252,7 +284,7 @@ revai/
 └── README.md
 ```
 
-One command and no more, no `templates/`, and deliberately no `reference/` directory. A command exists
+Two commands, no more, no `templates/`, and deliberately no `reference/` directory. A command exists
 only where a standard is a procedure someone starts on purpose; it sequences a `SKILL.md` and states no
 rule of its own, which CI checks.
 
