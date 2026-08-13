@@ -9,9 +9,15 @@ that makes an AI actually follow them.
 | `best-practices` | 99 | The published canon — API guidelines (Zalando, Microsoft, Google), RFC 9457 and 3339, twelve-factor config, *Release It!* stability patterns, expand/contract migrations, OWASP defaults, SRE golden signals, at-least-once messaging, the test pyramid |
 | `domain-driven-design` | 74 | Modern DDD (Evans, Vernon, Khononov) — subdomains, bounded contexts, ubiquitous language, context mapping, aggregates, value objects, services, domain and integration events, hexagonal layering, sagas |
 
-Each ships a review scan list too: the Ch17 smells catalog, a 90-entry best-practice anti-pattern
-catalog, and a 45-entry DDD anti-pattern catalog. `best-practices` also ships the table of answers you
-are not allowed to reinvent — 22 recurring concerns, each with its established solution named.
+Each ships an anti-pattern scan list too, with citable codes: the Ch17 smells and heuristics (55
+rows), a 90-row best-practice list, and a 45-row DDD list. `best-practices` also ships the table of
+answers you are not allowed to reinvent — 22 recurring concerns, each with its established solution
+named.
+
+Every `SKILL.md` stays inside the six frontmatter fields of the [Agent Skills](https://agentskills.io)
+spec, so the skills load unchanged in Claude Code, on claude.ai, and through the API. CI enforces that,
+along with the name and description limits and a `## Contents` section on every file long enough to be
+read in parts.
 
 ## Why it's built this way
 

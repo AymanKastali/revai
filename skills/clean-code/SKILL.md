@@ -1,6 +1,6 @@
 ---
 name: clean-code
-description: The language-agnostic clean-code standard, canonical to Robert C. Martin's Clean Code — intention-revealing names, small single-purpose functions, comments that explain why, honest error handling, cohesive classes, and the four rules of simple design. Use whenever writing, editing, naming, refactoring, structuring, or reviewing any function, variable, type, class, file, or module, in any language.
+description: Applies the language-agnostic clean-code standard, canonical to Robert C. Martin's Clean Code — intention-revealing names, small single-purpose functions, comments that explain why, honest error handling, cohesive classes, and the four rules of simple design. Use when writing, editing, naming, refactoring, structuring, or reviewing any function, variable, type, class, file, or module, in any language.
 ---
 
 # Clean code
@@ -10,6 +10,15 @@ the context you hold right now. Every rule below exists to pay that reader.
 
 The rules are language-agnostic. Where a language's idiom genuinely conflicts with one, the idiom
 wins — but say which rule you are overriding and why, rather than drifting away from it silently.
+
+## Contents
+
+- **Clean-code rules** — 56 rules in seven groups: names, functions, comments, formatting, objects
+  and data structures, error handling, classes, and the four rules of simple design. Injected every
+  session, so they may already be in your context.
+- **Depth** — worked bad/good pairs for the rules that get misread without one.
+- **Anti-pattern scan list** — the Ch17 smells and heuristics, 55 rows coded `C` comments,
+  `F` functions, `G` general, `N` names, to work down while reviewing.
 
 <!-- HARD-RULES:START -->
 ## Clean-code rules (Clean Code, Robert C. Martin)
@@ -339,7 +348,7 @@ class UserCsvExport:     write(users)
 Cohesion test: if you can split a class's fields into two groups, where each group's methods only
 touch their own group, it is two classes.
 
-## Smells and heuristics — Ch17
+## Anti-pattern scan list — Ch17 smells and heuristics
 
 A scan list, not rules. Work down it when reviewing.
 

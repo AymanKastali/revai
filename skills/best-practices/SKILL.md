@@ -1,6 +1,6 @@
 ---
 name: best-practices
-description: The language-agnostic standard for engineering decisions — never invent what the industry already solved. Use whenever choosing an approach, adopting a library or pattern, or writing anything that touches an API or contract, a query, transaction or migration, configuration or secrets, timeouts, retries or failure handling, concurrency, authentication or authorization, logging, metrics or tracing, caching, queues, background jobs, tests, or how a change is delivered.
+description: Applies the language-agnostic standard for engineering decisions — never invent what the industry already solved. Use when choosing an approach, adopting a library or pattern, or writing anything that touches an API or contract, a query, transaction or migration, configuration or secrets, timeouts, retries or failure handling, concurrency, authentication or authorization, logging, metrics or tracing, caching, queues, background jobs, tests, or how a change is delivered.
 ---
 
 # Best practices
@@ -13,6 +13,19 @@ production incident later.
 This standard governs **what you build with**: which solution, protocol and shape. `clean-code`
 governs how the result reads; `domain-driven-design` governs how the domain is modelled. When those
 standards apply too, they apply on top of these rules, not instead of them.
+
+## Contents
+
+- **Best-practice rules** — 99 rules in ten groups: choosing the solution, interfaces, data,
+  config and lifecycle, resilience, concurrency, security, observability, messaging, tests and
+  delivery. Rule 1 gates each group on its concern. Injected every session, so they may already be in
+  your context.
+- **The answers you are not allowed to reinvent** — 22 concerns, each with its established solution
+  named. Start here when rule 2 asks what the standard solution is.
+- **Depth** — worked bad/good pairs for the rules that get misread without one.
+- **Anti-pattern scan list** — 90 rows, coded by group (`D` decisions, `I` interfaces, `Q` data,
+  `C` config, `R` resilience, `X` concurrency, `S` security, `O` observability, `M` messaging,
+  `T` tests), to work down while reviewing.
 
 <!-- HARD-RULES:START -->
 ## Best-practice rules
@@ -187,35 +200,6 @@ worse than either convention.
 ## Depth
 
 Pseudocode is deliberately language-neutral.
-
-### Rules 3, 4, 5 — the search order, applied
-
-Bad — a hand-rolled backoff, invented on the spot, that synchronizes every caller onto the same
-retry schedule and hammers a struggling dependency:
-
-```text
-attempt = 0
-while attempt < 5:
-    response = http.post(url, body)
-    if response.ok: return response
-    sleep(2 ^ attempt)              # no jitter, no budget, no idempotency
-    attempt = attempt + 1
-```
-
-Good — the retry policy is the library's, the shape is the named pattern, and the write is safe to
-repeat:
-
-```text
-policy = retry.Policy(
-    attempts   = 4,
-    backoff    = retry.ExponentialWithJitter(base = 100.milliseconds),
-    budget     = 5.seconds,
-    retryOn    = [Transient, Timeout, TooManyRequests],
-)
-
-policy.run(deadline, fn():
-    return http.post(url, body, idempotencyKey = requestId))
-```
 
 ### Rule 22 — an idempotency key that actually works
 

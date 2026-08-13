@@ -1,5 +1,5 @@
 # Design docs from brainstorming/writing-plans — local only, not shipped with the plugin.
 docs/
 
-# Clean-code gate bookkeeping (reviewed diff hashes, attempt counters).
+# Review gate bookkeeping (reviewed diff hashes, attempt counters).
 .revai/

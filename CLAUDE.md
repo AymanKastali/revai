@@ -28,6 +28,13 @@ Editing a fence changes what every session sees. Keep the markers intact and in 
 - Component dirs live at the repo **root**: `skills/`, `agents/`, `hooks/`.
 - There is deliberately **no `reference/` directory**. Splitting rules into reference files that
   nothing opens is the exact failure this rewrite exists to remove — keep `SKILL.md` self-contained.
+  This is a **considered deviation** from Anthropic's progressive-disclosure guidance, which says to
+  split as a file approaches 500 lines. It holds here for two reasons: Layer 1 injects the rules
+  regardless of whether any file is opened, and the depth below each fence is precisely what a caller
+  invoked the skill to get, so putting it one hop further away buys nothing at the point of use. The
+  `## Contents` section is the mitigation the same guidance prescribes for long files. Do not
+  "fix" this by reintroducing reference files; if a `SKILL.md` genuinely cannot fit in 500 lines,
+  raise it with the repo owner instead of splitting it.
 - There is deliberately no `commands/` and no `templates/`. The harness needs no per-repo setup step;
   if you think you need one, that is a signal the design slipped.
 - Reference bundled files from a skill, agent, or hook with `${CLAUDE_PLUGIN_ROOT}`.
@@ -36,7 +43,8 @@ Editing a fence changes what every session sees. Keep the markers intact and in 
 
 Three edits, in this order, or the layers fall out of sync:
 
-1. `skills/<name>/SKILL.md` — frontmatter with a trigger-rich `description`, then the fence.
+1. `skills/<name>/SKILL.md` — spec-conformant frontmatter (see Conventions), a `## Contents` section,
+   then the fence.
 2. `hooks/inject-hard-rules.sh` — add `'<name>:<xml-tag>'` to the `STANDARDS` array. Nothing else in
    the hook needs to change; it loops.
 3. `.github/workflows/ci.yml` — raise `EXPECTED_RULES` to the new total across all fences.
@@ -46,6 +54,18 @@ name in `hooks/review-gate.sh`, and CI asserts that every agent the gate names a
 
 ## Conventions
 
+- Frontmatter stays inside the **six fields of the Agent Skills spec** (`name`, `description`,
+  `allowed-tools`, `compatibility`, `license`, `metadata`). We use only the first two. Claude Code
+  extensions like `when_to_use` are rejected by CI: they would make these skills fail to load on
+  claude.ai and through the API, and the description has room for what they would carry.
+- `name` equals its directory, is `[a-z0-9-]` within 64 characters, and contains no reserved word.
+  `description` is one line, ≤ 1024 characters, leads with a verb saying what the standard does, and
+  ends with a `Use when …` clause naming concrete triggers — that clause is what drives discovery, and
+  CI requires it.
+- Every `SKILL.md` over 100 lines carries a `## Contents` section above the fence, so a partial read
+  still shows the file's full scope. Keep it outside the fence: it must never enter the injected card.
+- Section names are parallel across skills — `## Contents`, the rules group, decision tables,
+  `## Depth`, then `## Anti-pattern scan list`. Same for the review agents.
 - Every `SKILL.md` has a hard budget of **500 lines**. Past that, cut examples — never move rules out.
 - Rules inside a fence are numbered `1..N` with no gaps or duplicates; CI enforces it. Renumber the
   whole group rather than inserting `12a`.
@@ -89,6 +109,8 @@ There is no build or test suite. Verification means:
 | Cards extract | `./hooks/inject-hard-rules.sh` — one tagged block per skill, exit 0 |
 | Rule count | `./hooks/inject-hard-rules.sh \| grep -cE '^[0-9]+\. '` — must equal `EXPECTED_RULES` (229) |
 | Numbering | rules in each fence run `1..N` — CI's awk check, or eyeball the tail of each group |
+| Spec conformance | CI's "Skills conform to the Agent Skills spec" step — name/description limits, spec-only frontmatter, `## Contents` present, agent name equals filename |
+| Card unaffected | `./hooks/inject-hard-rules.sh \| sha1sum` before and after editing anything outside a fence — it must not change |
 | Budgets held | `wc -l skills/*/SKILL.md` — each must be ≤ 500 |
 | Hooks parse | `bash -n hooks/*.sh` |
 | Hook paths resolve | `jq -r '.hooks[][].hooks[].command' hooks/hooks.json` — each file exists |
