@@ -109,8 +109,8 @@ the standard only to a system built as one deployable holding more than one busi
 library, a CLI or a single-purpose service says so in one line and skips the rest. Its edge against
 DDD is drawn deliberately — DDD owns how a boundary is found and what lives inside it, this standard
 owns what crosses it: the module graph, the public surface, storage ownership, in-process integration,
-wiring, and the seam a later extraction would use. It is injected and invocable but has **no review
-agent yet**, so the gate does not enforce it; that agent is the next iteration.
+wiring, and the seam a later extraction would use. `modular-monolith-review` enforces it, deciding
+rule 1's applicability first — exactly as `ddd-review` does for DDD.
 
 ## Install
 
@@ -167,11 +167,12 @@ On `Stop`, `hooks/review-gate.sh`:
 
 1. Collects changed files, filtering out docs, config, lockfiles, vendored and generated paths.
 2. Exits silently if no source files changed — zero cost on conversation and docs-only turns.
-3. Otherwise blocks with `exit 2`, demanding `clean-code-review` and `best-practices-review` always,
-   and `ddd-review` too. When a changed path looks like domain modelling (`domain/`, `application/`,
-   `*repositor*`, `*aggregate*` and friends) the gate names those paths and hard-requires the third;
-   otherwise it says to use judgment. All three are independent, so it asks for them in one message.
-4. Requires every HIGH finding from all three reviews fixed, then clears once the diff hash is recorded
+3. Otherwise blocks with `exit 2`, demanding `clean-code-review`, `best-practices-review` and
+   `modular-monolith-review` always, and `ddd-review` too. When a changed path looks like domain
+   modelling (`domain/`, `application/`, `*repositor*`, `*aggregate*` and friends) the gate names
+   those paths and hard-requires the fourth; otherwise it says to use judgment. All four are
+   independent, so it asks for them in one message.
+4. Requires every HIGH finding from all four reviews fixed, then clears once the diff hash is recorded
    in `.revai/reviewed`. Any further edit changes the hash and re-arms the gate.
 5. Relents after 3 attempts on one diff, so a genuine disagreement can't trap you in a loop.
 
@@ -203,6 +204,15 @@ running version can't survive, a task with no owner or cancellation, unguarded s
 sleep as synchronization, a consumer that breaks on duplicates or has no dead-letter path, a behaviour
 change with no test, and a new test that depends on real time or the real network.
 
+`modular-monolith-review` blocks on: a missing or disabled boundary check, two modules sharing a
+database or schema, a query or join reading across a module boundary, a foreign key across a
+boundary, a domain or framework type on a module's public surface, an import reaching past an entry
+point or a back door into internals, an undeclared or cyclic module dependency, one transaction
+writing two modules' storage, a multi-module workflow with no named process or compensation, a
+handler running inside the publisher's transaction unannounced, an integration event with no outbox,
+ambient user or tenant state crossing a boundary, business logic in the host, a migration touching two
+modules' objects, and a `common`/`shared`/`util` module holding a business rule.
+
 `ddd-review` blocks on: tactical patterns with no subdomain classification (or a full domain model in
 a supporting subdomain), two contexts sharing a database or persistence type, a domain type reused
 across a context boundary, a foreign model with no anticorruption layer, an internal aggregate exposed
@@ -232,6 +242,7 @@ revai/
 ├── agents/
 │   ├── clean-code-review.md                 read-only reviewer
 │   ├── best-practices-review.md             read-only reviewer, reinvention check first
+│   ├── modular-monolith-review.md           read-only reviewer, decides applicability first
 │   └── ddd-review.md                        read-only reviewer, decides applicability first
 ├── hooks/
 │   ├── hooks.json
@@ -247,11 +258,11 @@ rule of its own, which CI checks.
 
 ## Deferred
 
-Each its own future iteration: a `modular-monolith-review` agent and the Layer 3 demand for it; a
-`design-review` agent that reads an existing design document against `system-design` and reports what
-it cannot answer; review agents and Layer 3 demands for the stack standards, gated on `*.go` and
-`*.sql`/migration paths; shipped configs for the checks the standards require (which would restore a
-machine-checkable half to the gate — `golangci-lint`, a migration linter, and the module-graph linter
+Each its own future iteration: a `design-review` agent that reads an existing design document against
+`system-design` and reports what it cannot answer; review agents and Layer 3 demands for the stack
+standards, gated on `*.go` and `*.sql`/migration paths; shipped configs for the checks the standards
+require (which would restore a machine-checkable half to the gate — `golangci-lint`, a migration
+linter, and the module-graph linter
 `modular-monolith` rules 75–82 insist on); and stack skills beyond Go and Postgres. System-design
 material and testing are no longer deferred — `system-design` carries the former, and
 `best-practices` rules 88–99, `modular-monolith` rules 83–85 and `golang` rules 112–125 the latter.
