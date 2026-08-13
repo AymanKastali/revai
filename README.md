@@ -3,13 +3,14 @@
 **revai** is a Claude Code plugin carrying engineering standards, plus the machinery that makes an AI
 actually follow them.
 
-Three are stack-agnostic and always in context:
+Four are stack-agnostic and always in context:
 
 | Standard | Rules | Canonical to |
 | --- | --- | --- |
 | `clean-code` | 56 | *Clean Code* (Robert C. Martin) — names, functions, comments, formatting, objects and data structures, error handling, classes, the four rules of simple design |
 | `best-practices` | 99 | The published canon — API guidelines (Zalando, Microsoft, Google), RFC 9457 and 3339, twelve-factor config, *Release It!* stability patterns, expand/contract migrations, OWASP defaults, SRE golden signals, at-least-once messaging, the test pyramid |
 | `domain-driven-design` | 74 | Modern DDD (Evans, Vernon, Khononov) — subdomains, bounded contexts, ubiquitous language, context mapping, aggregates, value objects, services, domain and integration events, hexagonal layering, sagas |
+| `modular-monolith` | 95 | The modular-monolith canon — Grzybek's primer, integration-styles and architecture-enforcement series, Simon Brown's package-by-component, Fowler's *MonolithFirst* and the microservice premium, Martin's package-coupling principles, Shopify's Packwerk componentisation, GitLab's bounded contexts, Spring Modulith's module model, and the strangler-fig extraction path |
 
 Two are stack-specific, and are invoked rather than injected:
 
@@ -19,11 +20,12 @@ Two are stack-specific, and are invoked rather than injected:
 | `postgres` | 123 | What the PostgreSQL project publishes — the manual on locking, isolation, indexes and `SECURITY DEFINER`, the wiki's *Don't Do This* page, and the release notes from Postgres 10 through 18 that retired the workarounds most SQL still carries |
 
 Each ships an anti-pattern scan list too, with citable codes: the Ch17 smells and heuristics (55
-rows), a 90-row best-practice list, a 45-row DDD list, an 85-row Go list and a 79-row Postgres list.
-`best-practices` also ships the table of answers you are not allowed to reinvent — 22 recurring
-concerns, each with its established solution named — and `golang` and `postgres` each ship a
-legacy-to-modern table: 30 forms that were correct once, each with the current answer and the release
-that introduced it.
+rows), a 90-row best-practice list, a 45-row DDD list, an 82-row modular-monolith list, an 85-row Go
+list and a 79-row Postgres list. `best-practices` also ships the table of answers you are not allowed
+to reinvent — 22 recurring concerns, each with its established solution named; `modular-monolith`
+ships 21 coupling shortcuts with what each one costs and what to do instead; and `golang` and
+`postgres` each ship a legacy-to-modern table: 30 forms that were correct once, each with the current
+answer and the release that introduced it.
 
 Every `SKILL.md` stays inside the six frontmatter fields of the [Agent Skills](https://agentskills.io)
 spec, so the skills load unchanged in Claude Code, on claude.ai, and through the API. CI enforces that,
@@ -60,8 +62,9 @@ one later is a one-line change.
 
 They divide by question, not by topic: `clean-code` governs **how the code reads**, `best-practices`
 governs **what you build it with**, `domain-driven-design` governs **how the domain is modelled**,
-`golang` governs **how Go itself is written**, and `postgres` governs **how Postgres itself is used**.
-A finding belongs to exactly one of them.
+`modular-monolith` governs **how one deployable is partitioned**, `golang` governs **how Go itself is
+written**, and `postgres` governs **how Postgres itself is used**. A finding belongs to exactly one of
+them.
 
 That split is what keeps the stack skills from becoming a second copy of everything.
 `best-practices` rule 46 requires a timeout on every outbound call; `golang` rule 61 says the Go form
@@ -86,6 +89,14 @@ So the DDD standard is **self-gating**. Its first three rules require classifyin
 transaction script for a supporting one, an off-the-shelf product for a generic one. Applying the
 tactical patterns where they don't belong is itself a HIGH finding, and `ddd-review` opens by deciding
 whether DDD applies at all, reporting `Not applicable` in one line when it doesn't.
+
+`modular-monolith` self-gates the same way, on shape rather than on subdomain: its first rule applies
+the standard only to a system built as one deployable holding more than one business capability, so a
+library, a CLI or a single-purpose service says so in one line and skips the rest. Its edge against
+DDD is drawn deliberately — DDD owns how a boundary is found and what lives inside it, this standard
+owns what crosses it: the module graph, the public surface, storage ownership, in-process integration,
+wiring, and the seam a later extraction would use. It is injected and invocable but has **no review
+agent yet**, so the gate does not enforce it; that agent is the next iteration.
 
 ## Install
 
@@ -161,6 +172,7 @@ revai/
 │   ├── clean-code/SKILL.md                  56 rules — source of truth, injected
 │   ├── best-practices/SKILL.md              99 rules — source of truth, injected
 │   ├── domain-driven-design/SKILL.md        74 rules — source of truth, injected
+│   ├── modular-monolith/SKILL.md            95 rules — source of truth, injected
 │   ├── golang/SKILL.md                     125 rules — source of truth, invoked
 │   └── postgres/SKILL.md                   123 rules — source of truth, invoked
 ├── agents/
@@ -179,11 +191,13 @@ No `commands/`, no `templates/`, and deliberately no `reference/` directory.
 
 ## Deferred
 
-Each its own future iteration: review agents and Layer 3 demands for the stack standards, gated on
-`*.go` and `*.sql`/migration paths; shipped linter configs (which would restore a machine-checkable
-half to the gate, `golangci-lint` and a migration linter alike); stack skills beyond Go and Postgres;
-modular-monolith boundary enforcement; and system-design material. Testing is no longer deferred —
-`best-practices` rules 88–99 and `golang` rules 112–125 carry it.
+Each its own future iteration: a `modular-monolith-review` agent and the Layer 3 demand for it; review
+agents and Layer 3 demands for the stack standards, gated on `*.go` and `*.sql`/migration paths;
+shipped configs for the checks the standards require (which would restore a machine-checkable half to
+the gate — `golangci-lint`, a migration linter, and the module-graph linter `modular-monolith` rules
+75–82 insist on); stack skills beyond Go and Postgres; and system-design material. Testing is no longer
+deferred — `best-practices` rules 88–99, `modular-monolith` rules 83–85 and `golang` rules 112–125
+carry it.
 
 ## License
 

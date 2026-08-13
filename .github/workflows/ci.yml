@@ -13,9 +13,9 @@ permissions:
 
 env:
   SKILL_MAX_LINES: 500
-  # Total rules across every skill's HARD-RULES fence:
-  # clean-code 56 + best-practices 99 + domain-driven-design 74.
-  EXPECTED_RULES: 229
+  # Total rules across every *injected* skill's HARD-RULES fence:
+  # clean-code 56 + best-practices 99 + domain-driven-design 74 + modular-monolith 95.
+  EXPECTED_RULES: 324
 
 jobs:
   validate:
@@ -201,7 +201,7 @@ jobs:
             exit 1
           fi
           # A silent extraction failure would still exit 0, so require every injected skill's tag.
-          # The list comes from the hook's own STANDARDS array, not from skills/*/: a language-specific
+          # The list comes from the hook's own STANDARDS array, not from skills/*/: a stack-specific
           # skill is Layer 2 only and is deliberately absent from the card. See CLAUDE.md § Layers.
           fail=0
           tags=$(sed -n "/^readonly STANDARDS=(/,/^)/s/^ *'[a-z0-9-]*:\([a-z0-9-]*\)'.*/\1/p" \

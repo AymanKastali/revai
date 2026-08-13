@@ -1,6 +1,6 @@
 {
   "name": "revai",
-  "description": "Stack-agnostic clean-code, engineering best-practice and modern domain-driven-design standards injected into every session and enforced by a review gate, plus modern-Go and Postgres standards on invocation.",
+  "description": "Stack-agnostic clean-code, engineering best-practice, modern domain-driven-design and modular-monolith standards injected into every session and enforced by a review gate, plus modern-Go and Postgres standards on invocation.",
   "author": {
     "name": "Ayman Kastali",
     "email": "aymankastali@gmail.com"
@@ -12,6 +12,8 @@
     "clean-code",
     "best-practices",
     "domain-driven-design",
+    "modular-monolith",
+    "architecture",
     "golang",
     "go",
     "postgres",
