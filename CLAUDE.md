@@ -182,7 +182,7 @@ There is no build or test suite. Verification means:
 | Cards extract | `./hooks/inject-hard-rules.sh` — one tagged block per **injected** skill, exit 0 |
 | Rule count | `./hooks/inject-hard-rules.sh \| grep -cE '^[0-9]+\. '` — must equal `EXPECTED_RULES` (324) |
 | Layer 2 only | no `<golang>`, `<postgres>` or `<system-design>` block in the card, and all three absent from the hook's `STANDARDS` array |
-| Commands load | `/reload-plugins`, then confirm `/revai:design` is listed with its description |
+| Commands load | `/reload-plugins`, then confirm `/revai:design` and `/revai:plan` are both listed with their descriptions |
 | Commands carry no rules | `grep -c 'HARD-RULES' commands/*.md` — zero; a command sequences a skill, it never restates one |
 | Numbering | rules in each fence run `1..N` — CI's awk check, or eyeball the tail of each group |
 | Spec conformance | CI's "Skills conform to the Agent Skills spec" step — name/description limits, spec-only frontmatter, `## Contents` present, agent name equals filename |
