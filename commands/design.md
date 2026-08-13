@@ -111,12 +111,5 @@ In chat, briefly — the document holds the detail:
 - The open questions, and the riskiest assumption you made on the user's behalf.
 - The path to the document.
 
-Then stop and offer the next step: refine a section, or turn a delivery slice (section 14) into
-an implementation plan. Do not start building.
-
-If the user picks the plan: when section 14 names more than one slice, ask which one — recommend
-the first, thinnest end-to-end slice (rule 106) as the default. Then invoke
-`superpowers:writing-plans`, handing it this design document's path as the spec and the chosen
-slice's scope — what it ships, what stays deferred to a later slice, and any constraint from
-sections 8–12 that bounds it — as the requirement to plan against. Writing-plans writes a plan
-document only; it does not touch code, and neither does this handoff.
+Then stop. Do not start building, and do not offer to plan the implementation — that is
+`/revai:plan`'s job, run separately once this design is approved.
