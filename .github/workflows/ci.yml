@@ -248,11 +248,18 @@ jobs:
             echo "::error::parsed ${injected} tags from the STANDARDS array, expected at least 3"
             exit 1
           fi
+          # Match in-shell rather than through a pipe. `printf "$card" | grep -q` is a race under
+          # pipefail: grep exits on the first match, and printf — still writing a 50 KB card, which
+          # is far past PIPE_BUF and so not an atomic write — takes EPIPE. pipefail then reports the
+          # pipeline as failed even though the tag was found, which fails the build at random.
           for tag in $tags; do
-            printf '%s\n' "$card" | grep -q "<${tag}>" || {
-              echo "::error::card is missing the <${tag}> block"
-              fail=1
-            }
+            case "$card" in
+              *"<${tag}>"*) ;;
+              *)
+                echo "::error::card is missing the <${tag}> block"
+                fail=1
+                ;;
+            esac
           done
           [ "$fail" -eq 0 ] && echo "✓ card extracts ${count} rules from all ${injected} injected skills"
           exit $fail
@@ -336,13 +343,17 @@ jobs:
           printf 'package domain\n' > scratch_ctx/domain/order.go
           demand=$(./hooks/review-gate.sh 2>&1 >/dev/null || true)
           rm -rf scratch_ctx .revai
-          if printf '%s\n' "$demand" | grep -q 'Required — these changed paths are domain modelling'; then
-            echo "✓ gate hard-requires ddd-review for a domain/ path"
-          else
-            echo "::error::gate did not require ddd-review for a domain/ path"
-            printf '%s\n' "$demand"
-            exit 1
-          fi
+          # In-shell match, for the same reason as the card step above.
+          case "$demand" in
+            *'Required — these changed paths are domain modelling'*)
+              echo "✓ gate hard-requires ddd-review for a domain/ path"
+              ;;
+            *)
+              echo "::error::gate did not require ddd-review for a domain/ path"
+              printf '%s\n' "$demand"
+              exit 1
+              ;;
+          esac
 
       - uses: actions/setup-node@v4
         with:
