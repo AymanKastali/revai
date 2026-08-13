@@ -6,7 +6,7 @@
     {
       "name": "revai",
       "source": ".",
-      "description": "Language-agnostic clean-code and modern domain-driven-design standards, injected into every session and enforced by a review gate on every code turn."
+      "description": "Language-agnostic clean-code, engineering best-practice and modern domain-driven-design standards, injected into every session and enforced by a review gate on every code turn."
     }
   ]
 }

@@ -51,7 +51,14 @@ name in `hooks/review-gate.sh`, and CI asserts that every agent the gate names a
   whole group rather than inserting `12a`.
 - Every rule in the fence is one line. Depth, examples, decision tables and scan lists go below it.
 - A standard that is not universally applicable must say so **inside its own fence**, as its first
-  rules — not by being left out of Layer 1. `domain-driven-design` rules 1–3 are the pattern.
+  rules — not by being left out of Layer 1. Two shapes exist: `domain-driven-design` rules 1–3 gate
+  the whole standard on one up-front classification; `best-practices` rule 1 gates each group on the
+  concern named in its heading. Pick whichever matches how the standard actually varies.
+- Standards divide by **question**, not by topic, so a finding belongs to exactly one of them:
+  `clean-code` owns how the code reads, `best-practices` owns what it is built with, and
+  `domain-driven-design` owns how the domain is modelled. Before adding a rule, check that no other
+  fence already answers its question — the outbox, for example, is DDD rule 61, so `best-practices`
+  rule 82 states the general dual-write hazard instead of restating it.
 - Pseudocode examples stay language-neutral. Concrete-language idioms belong in a future
   language-specific skill, not here.
 - No rationalization tables and no "this standard is absolute" preamble. That was the old plugin's
@@ -80,15 +87,15 @@ There is no build or test suite. Verification means:
 | Manifests parse | `jq . .claude-plugin/plugin.json .claude-plugin/marketplace.json hooks/hooks.json` |
 | Fences intact | `grep -n 'HARD-RULES:\(START\|END\)' skills/*/SKILL.md` |
 | Cards extract | `./hooks/inject-hard-rules.sh` — one tagged block per skill, exit 0 |
-| Rule count | `./hooks/inject-hard-rules.sh \| grep -cE '^[0-9]+\. '` — must equal `EXPECTED_RULES` (130) |
+| Rule count | `./hooks/inject-hard-rules.sh \| grep -cE '^[0-9]+\. '` — must equal `EXPECTED_RULES` (229) |
 | Numbering | rules in each fence run `1..N` — CI's awk check, or eyeball the tail of each group |
 | Budgets held | `wc -l skills/*/SKILL.md` — each must be ≤ 500 |
 | Hooks parse | `bash -n hooks/*.sh` |
 | Hook paths resolve | `jq -r '.hooks[][].hooks[].command' hooks/hooks.json` — each file exists |
 | Gate is quiet | run `hooks/review-gate.sh` with only `*.md` changed — exit 0, no output |
-| Gate blocks | touch any source file, run it — exit 2, demand text names both review agents |
+| Gate blocks | touch any source file, run it — exit 2, demand text names all three review agents |
 | Gate escalates | touch `x/domain/y.go`, run it — demand hard-requires `ddd-review` and lists the path |
-| Components load | `/reload-plugins`, then confirm both skills and both review agents appear |
+| Components load | `/reload-plugins`, then confirm every skill and every review agent appears |
 
 Run the gate only in a throwaway repo, or clean up after: it writes `.revai/` bookkeeping into
 whatever tree it runs in.

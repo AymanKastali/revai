@@ -6,9 +6,12 @@ that makes an AI actually follow them.
 | Standard | Rules | Canonical to |
 | --- | --- | --- |
 | `clean-code` | 56 | *Clean Code* (Robert C. Martin) — names, functions, comments, formatting, objects and data structures, error handling, classes, the four rules of simple design |
+| `best-practices` | 99 | The published canon — API guidelines (Zalando, Microsoft, Google), RFC 9457 and 3339, twelve-factor config, *Release It!* stability patterns, expand/contract migrations, OWASP defaults, SRE golden signals, at-least-once messaging, the test pyramid |
 | `domain-driven-design` | 74 | Modern DDD (Evans, Vernon, Khononov) — subdomains, bounded contexts, ubiquitous language, context mapping, aggregates, value objects, services, domain and integration events, hexagonal layering, sagas |
 
-Each ships a review scan list too: the Ch17 smells catalog, and a 45-entry DDD anti-pattern catalog.
+Each ships a review scan list too: the Ch17 smells catalog, a 90-entry best-practice anti-pattern
+catalog, and a 45-entry DDD anti-pattern catalog. `best-practices` also ships the table of answers you
+are not allowed to reinvent — 22 recurring concerns, each with its established solution named.
 
 ## Why it's built this way
 
@@ -30,9 +33,20 @@ Layer 1 means the rules are present without a slash command. Layer 3 means ignor
 the turn. The cards are *generated* from each `SKILL.md` by `sed`, never maintained beside them, so
 the three layers cannot drift.
 
-## Scope: the two standards behave differently on purpose
+## Scope: the three standards behave differently on purpose
 
-`clean-code` applies to every line of code in any language. `domain-driven-design` does not — and
+They divide by question, not by topic: `clean-code` governs **how the code reads**, `best-practices`
+governs **what you build it with**, and `domain-driven-design` governs **how the domain is modelled**.
+A finding belongs to exactly one of them.
+
+`clean-code` applies to every line of code in any language. `best-practices` gates each of its ten
+groups on a named concern — a change with no HTTP interface answers to no interface rule, a pure
+refactor answers to no migration rule — while two groups always apply: choosing the solution, and how
+the change is tested and delivered. Its first ten rules are the spine: search the standard library,
+then the ecosystem's dominant library, then an established protocol, then a named pattern, and only
+then write something bespoke, with the reason recorded.
+
+`domain-driven-design` does not apply everywhere — and
 applying it everywhere is its single most common failure mode. Bolting aggregates and repositories
 onto a domain nobody analysed produces pattern-driven design: all the ceremony, none of the benefit.
 
@@ -60,11 +74,12 @@ On `Stop`, `hooks/review-gate.sh`:
 
 1. Collects changed files, filtering out docs, config, lockfiles, vendored and generated paths.
 2. Exits silently if no source files changed — zero cost on conversation and docs-only turns.
-3. Otherwise blocks with `exit 2`, demanding `clean-code-review` always, and `ddd-review` too. When a
-   changed path looks like domain modelling (`domain/`, `application/`, `*repositor*`, `*aggregate*`
-   and friends) the gate names those paths and hard-requires it; otherwise it says to use judgment.
-4. Requires every HIGH finding from both reviews fixed, then clears once the diff hash is recorded in
-   `.revai/reviewed`. Any further edit changes the hash and re-arms the gate.
+3. Otherwise blocks with `exit 2`, demanding `clean-code-review` and `best-practices-review` always,
+   and `ddd-review` too. When a changed path looks like domain modelling (`domain/`, `application/`,
+   `*repositor*`, `*aggregate*` and friends) the gate names those paths and hard-requires the third;
+   otherwise it says to use judgment. All three are independent, so it asks for them in one message.
+4. Requires every HIGH finding from all three reviews fixed, then clears once the diff hash is recorded
+   in `.revai/reviewed`. Any further edit changes the hash and re-arms the gate.
 5. Relents after 3 attempts on one diff, so a genuine disagreement can't trap you in a loop.
 
 Add `.revai/` to a project's `.gitignore` — it holds only gate bookkeeping.
@@ -84,6 +99,17 @@ Only **HIGH** findings block. MEDIUM and LOW are reported, never blocking.
 abstraction, a Law of Demeter violation, a returned or passed null, duplication at the third
 occurrence, and dead or commented-out code.
 
+`best-practices-review` blocks on: anything reinvented that has an established answer, an incompatible
+change to a shipped contract or message schema, a concatenated query or any interpreted string built
+from untrusted input, authorization taken from the client or never checked at the resource, hand-rolled
+crypto or a password behind a fast digest, a secret in source or a log, disabled certificate
+verification, a known-vulnerable dependency, a call with no timeout, retry with no jitter or budget or
+a retriable write with no idempotency key, anything unbounded a caller can grow, IO or a publish inside
+a transaction, a dual write treated as atomic, read-then-write with no version check, a migration the
+running version can't survive, a task with no owner or cancellation, unguarded shared mutable state,
+sleep as synchronization, a consumer that breaks on duplicates or has no dead-letter path, a behaviour
+change with no test, and a new test that depends on real time or the real network.
+
 `ddd-review` blocks on: tactical patterns with no subdomain classification (or a full domain model in
 a supporting subdomain), two contexts sharing a database or persistence type, a domain type reused
 across a context boundary, a foreign model with no anticorruption layer, an internal aggregate exposed
@@ -102,9 +128,11 @@ revai/
 │   └── marketplace.json                     lists revai as installable (source ".")
 ├── skills/
 │   ├── clean-code/SKILL.md                  56 rules — source of truth
+│   ├── best-practices/SKILL.md              99 rules — source of truth
 │   └── domain-driven-design/SKILL.md        74 rules — source of truth
 ├── agents/
 │   ├── clean-code-review.md                 read-only reviewer
+│   ├── best-practices-review.md             read-only reviewer, reinvention check first
 │   └── ddd-review.md                        read-only reviewer, decides applicability first
 ├── hooks/
 │   ├── hooks.json
@@ -119,8 +147,8 @@ No `commands/`, no `templates/`, and deliberately no `reference/` directory.
 ## Deferred
 
 Each its own future iteration: language-specific idioms and shipped linter configs (which would
-restore a machine-checkable half to the gate), testing practice (*Clean Code* Ch9), modular-monolith
-boundary enforcement, and system-design material.
+restore a machine-checkable half to the gate), modular-monolith boundary enforcement, and system-design
+material. Testing is no longer deferred — `best-practices` rules 88–99 carry it.
 
 ## License
 

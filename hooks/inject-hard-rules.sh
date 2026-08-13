@@ -15,6 +15,7 @@ readonly FENCE_END='<!-- HARD-RULES:END -->'
 # Standards to inject, in order, as "skill-directory:xml-tag".
 readonly STANDARDS=(
   'clean-code:clean-code'
+  'best-practices:best-practices'
   'domain-driven-design:domain-driven-design'
 )
 
@@ -69,9 +70,10 @@ The standards below are in force for every piece of code you write or change in 
 language. They are not suggestions. Before you finish a turn that touched source files, a gate will
 require that the matching review agent has passed over your diff.
 
-Each standard states its own scope. \`clean-code\` applies to every line you write;
-\`domain-driven-design\` applies only where its own first rules say it does — read them before using
-any pattern from it, and say so when it does not apply.
+Each standard states its own scope. \`clean-code\` applies to every line you write.
+\`best-practices\` gates each of its groups on a named concern, so only the groups your change
+actually touches are in play. \`domain-driven-design\` applies only where its own first rules say it
+does — read them before using any pattern from it, and say so when it does not apply.
 
 For depth on any rule — worked examples, decision tables and the anti-pattern catalogues — invoke
 ${skill_names}.
