@@ -15,5 +15,7 @@
     "MD029": false
   },
   "globs": ["**/*.md"],
-  "ignores": ["node_modules", "docs"]
+  // docs/ and .superpowers/ are local-only scratch (both gitignored, so CI never sees them);
+  // linting them would fail the run on notes that are never published.
+  "ignores": ["node_modules", "docs", ".superpowers"]
 }

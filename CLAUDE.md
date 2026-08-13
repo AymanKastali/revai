@@ -1,9 +1,9 @@
 # revai — developing the harness itself
 
 This repo IS a Claude Code plugin (and its own marketplace). It carries engineering standards — four
-stack-agnostic and injected into every session, one design-time standard reached by a command
-(`system-design`, via `/revai:design`), plus one per stack technology (`golang`, `postgres`) — and the
-machinery that makes an AI follow them. See `README.md` for the user-facing overview.
+stack-agnostic and injected into every session, two procedure standards invoked as skills
+(`system-design`, `implementation-planning`), plus one per stack technology (`golang`, `postgres`) —
+and the machinery that makes an AI follow them. See `README.md` for the user-facing overview.
 
 ## The one rule that matters here
 
@@ -35,14 +35,16 @@ Editing a fence changes what every session sees. Keep the markers intact and in 
   invoked the skill to get, so putting it one hop further away buys nothing at the point of use. The
   `## Contents` section is the mitigation the same guidance prescribes for long files. Do not
   "fix" this by reintroducing reference files; if a `SKILL.md` genuinely cannot fit in 500 lines,
-  raise it with the repo owner instead of splitting it.
-- `commands/` holds one kind of thing only: the deliberate entry point to a standard whose value is a
-  **procedure** rather than a set of constraints on code being written. `commands/design.md` is the
-  whole of it — `/revai:design` runs the `system-design` procedure. A command carries no rules; it
-  reads the `SKILL.md` and sequences it, so the fence stays the single source of truth. If a command
-  would only say "apply standard X", delete it: that is what the description and the injected card are
-  for. There is still deliberately no `templates/`, and still no per-repo setup step — a command the
-  user types is not setup. If you think you need one of those, the design slipped.
+  raise it with the repo owner instead of splitting it — `system-design` and
+  `implementation-planning` did exactly that, and now carry the higher
+  `PROCEDURE_SKILL_MAX_LINES` (650) budget in `.github/workflows/ci.yml` instead of the default.
+- **There is deliberately no `commands/` directory.** A standard whose value is a **procedure**
+  rather than a set of constraints on code being written (`system-design`, `implementation-planning`)
+  does not get a separate entry point that sequences a rules-only skill from outside it — the
+  procedure is a `## Procedure` section inside that same `SKILL.md`, below its `HARD-RULES` fence, so
+  there is exactly one file per standard and the fence stays the single source of truth for the rules
+  half of it. There is still deliberately no `templates/`, and still no per-repo setup step. If you
+  think a standard needs either of those, the design slipped.
 - Reference bundled files from a skill, agent, or hook with `${CLAUDE_PLUGIN_ROOT}`.
 
 ## Adding a standard
@@ -52,20 +54,26 @@ injected by Layer 1, so it is in context whether or not anything invokes it. A *
 standard — one that governs a single language or a single datastore — is not, and neither is a
 **procedure** standard that governs a deliberate act rather than the code being typed; see § Layers.
 
-For an agnostic standard, three edits, in this order, or the layers fall out of sync:
+For an agnostic standard, four edits, in this order, or the layers fall out of sync:
 
-1. `skills/<name>/SKILL.md` — spec-conformant frontmatter (see Conventions), a `## Contents` section,
-   then the fence.
+1. `skills/<name>/SKILL.md` — spec-conformant frontmatter (see Conventions), a `## Contents` section
+   stating the scan list's row count, then the fence.
 2. `hooks/inject-hard-rules.sh` — add `'<name>:<xml-tag>'` to the `STANDARDS` array. Nothing else in
    the hook needs to change; it loops.
 3. `.github/workflows/ci.yml` — raise `EXPECTED_RULES` to the new total across all fences.
+4. `README.md` — add a row to the matching table with the standard's rule count and scan-list row
+   count. CI requires one README row per directory in `skills/`, so a new skill fails the build until
+   this exists.
 
-For a stack-specific standard, step 1 only. `EXPECTED_RULES` counts the injected card, so it does not
-move, and CI derives the list of skills that must appear in the card from the hook's `STANDARDS`
-array rather than from `skills/*/` — which is what lets a skill exist without being injected.
+For a stack-specific standard, steps 1 and 4 only. `EXPECTED_RULES` counts the injected card, so it
+does not move, and CI derives the list of skills that must appear in the card from the hook's
+`STANDARDS` array rather than from `skills/*/` — which is what lets a skill exist without being
+injected.
 
-For a procedure standard, step 1 plus `commands/<verb>.md`, which sequences the skill and states no
-rule of its own. `EXPECTED_RULES` does not move here either.
+For a procedure standard, steps 1 and 4 plus a `## Procedure` section in that same `SKILL.md`, after
+the fence, sequencing the standard end to end. `EXPECTED_RULES` does not move either way. If the
+merged file won't fit the default 500-line budget, add its skill name to `PROCEDURE_SKILLS` in
+`.github/workflows/ci.yml` rather than splitting it into a second file.
 
 Then decide whether the standard needs its own review agent. If it does, the gate must demand it by
 name in `hooks/review-gate.sh`, and CI asserts that every agent the gate names actually exists.
@@ -86,20 +94,23 @@ They keep the fence anyway. It separates the hard rules from the depth below for
 what CI's numbering check keys off, and it means injecting one later is a one-line array edit rather
 than a restructure.
 
-`system-design` is Layer 2 for a different reason, and it is the only standard of its kind here. It is
-stack-agnostic, so the rule above would put it in the card — but its rules constrain **a design act and
-the document it produces**, not the lines of code being typed. 123 design rules injected into a session
-that is fixing a typo are the same noise as Go rules in a Python repo, and the trigger is not "you are
-writing code" but "you are deciding a system's shape". That act has an exact entry point, so it gets a
-command: `/revai:design` is a stronger and more reliable trigger than any `description` match, and it
-sequences the standard as a procedure, which the card cannot do. It self-gates in its fence regardless
-(rule 1 on the change deciding a shape, rule 2 on each group's concern).
+`system-design` and `implementation-planning` are Layer 2 for a different reason, and they are the
+only standards of this kind here. Both are stack-agnostic, so the rule above would put them in the
+card — but their rules constrain **a design act and the document or plan it produces**, not the lines
+of code being typed. 123 design rules injected into a session that is fixing a typo are the same
+noise as Go rules in a Python repo, and the trigger is not "you are writing code" but "you are
+deciding a system's shape" or "you are turning an approved design into a plan". A card cannot sequence
+a standard as a procedure, so each carries its own `## Procedure` section below its fence instead —
+reached the way any skill is reached, by its `description`'s `Use when …` clause, or by the user
+invoking it directly by name. Both still self-gate in their fence regardless (`system-design` rule 1
+on the change deciding a shape, `implementation-planning` rule 1 on there being an approved design to
+plan from; rule 2 in each on the group or stage in play).
 
 Neither case is a licence to scope-limit an agnostic standard by leaving it out of Layer 1. That was
 the old plugin's failure and the Conventions rule below still forbids it: an agnostic standard that
 governs code as it is written and does not always apply says so inside its own fence, as its first
 rules. The exemptions are exactly two and both are structural — the standard governs one technology, or
-it governs a deliberate act with its own entry point.
+it governs a deliberate act that produces its own artifact rather than lines of code.
 
 ## Conventions
 
@@ -114,11 +125,28 @@ it governs a deliberate act with its own entry point.
 - Every `SKILL.md` over 100 lines carries a `## Contents` section above the fence, so a partial read
   still shows the file's full scope. Keep it outside the fence: it must never enter the injected card.
 - Section names are parallel across skills — `## Contents`, the rules group, decision tables,
-  `## Depth`, then `## Anti-pattern scan list`. Same for the review agents.
-- Every `SKILL.md` has a hard budget of **500 lines**. Past that, cut examples — never move rules out.
+  `## Depth`, then `## Anti-pattern scan list`. Same for the review agents. A procedure standard adds
+  exactly one more, `## Procedure`, below its fence and above `## Depth`; CI checks that it is there,
+  that it is listed in `## Contents`, and that no rules-only skill has grown one.
+- Every `SKILL.md` has a hard budget of **500 lines**, or **650** for a procedure standard listed in
+  CI's `PROCEDURE_SKILLS`. Past that, cut examples — never move rules out.
 - Rules inside a fence are numbered `1..N` with no gaps or duplicates; CI enforces it. Renumber the
   whole group rather than inserting `12a`.
 - Every rule in the fence is one line. Depth, examples, decision tables and scan lists go below it.
+- Anti-pattern scan-list codes restart at `1` for each group prefix and run `1..N` within it, with no
+  gaps or duplicates — the codes get cited (`G12`, `R7`), so a gap makes a citation ambiguous. CI
+  enforces this the same way it enforces rule numbering.
+- Every count stated about a standard has to be true, because nothing regenerates it: each
+  `## Contents` states its scan list's row count as `N rows`, and README's tables carry each
+  standard's rule count and scan-list row count in a `Scan list` column keyed to the skill name. CI
+  checks both against the files, so **changing a scan list means updating two numbers** — that
+  skill's `## Contents` and its README row.
+- **A reference to a numbered section of a design document always carries that section's title** —
+  `section 18 (Delivery & Rollout)`, never a bare `section 18`. The numbers belong to
+  `system-design`'s document outline, which has been renumbered once already, silently breaking every
+  reference in `implementation-planning`. CI now resolves each `section N (Title)` pair against that
+  outline and rejects a numeric reference with no title, so a renumber fails the build instead of
+  sending the planner to the wrong section of a real design.
 - A standard that is not universally applicable must say so **inside its own fence**, as its first
   rules — not by being left out of Layer 1. Two shapes exist: `domain-driven-design` rules 1–3 gate
   the whole standard on one up-front classification; `best-practices` rule 1 gates each group on the
@@ -181,16 +209,20 @@ There is no build or test suite. Verification means:
 | Fences intact | `grep -n 'HARD-RULES:\(START\|END\)' skills/*/SKILL.md` |
 | Cards extract | `./hooks/inject-hard-rules.sh` — one tagged block per **injected** skill, exit 0 |
 | Rule count | `./hooks/inject-hard-rules.sh \| grep -cE '^[0-9]+\. '` — must equal `EXPECTED_RULES` (324) |
-| Layer 2 only | no `<golang>`, `<postgres>` or `<system-design>` block in the card, and all three absent from the hook's `STANDARDS` array |
-| Commands load | `/reload-plugins`, then confirm `/revai:design` and `/revai:plan` are both listed with their descriptions |
-| Commands carry no rules | `grep -c 'HARD-RULES' commands/*.md` — zero; a command sequences a skill, it never restates one |
+| Layer 2 only | no `<golang>`, `<postgres>`, `<system-design>` or `<implementation-planning>` block in the card, and all four absent from the hook's `STANDARDS` array |
+| No `commands/` | `[ ! -d commands ]` — the directory must not exist; CI's "Plugin structure rules" step asserts the same |
+| Procedure skills load | `/reload-plugins`, then confirm `system-design` and `implementation-planning` are both listed with their descriptions, and that `/revai:system-design <an idea>` still reaches the procedure with its argument — that slash form is the explicit entry point the README documents now that `commands/` is gone |
+| Procedure sections exist | `grep -nx '## Procedure' skills/*/SKILL.md` — exactly the two `PROCEDURE_SKILLS`, each below its fence; CI's "Procedure standards carry their own procedure" step asserts that, plus the `## Contents` entry and that neither is injected |
 | Numbering | rules in each fence run `1..N` — CI's awk check, or eyeball the tail of each group |
+| Scan lists sequential | CI's "Scan lists are sequential and state their own row count" step — codes run `1..N` per group prefix, and each `## Contents` states the true row count |
+| Counts true | same step, plus CI's "README's rule and scan-list counts match the skills" — README's `Rules` and `Scan list` columns are checked per skill, and the step fails if it does not match one row per `skills/*/` |
+| Section refs resolve | CI's "References to a design section resolve against system-design's outline" step — every `section N (Title)` in `implementation-planning` and README is row `N` of the outline, and no bare `section N` exists |
 | Spec conformance | CI's "Skills conform to the Agent Skills spec" step — name/description limits, spec-only frontmatter, `## Contents` present, agent name equals filename |
 | Card unaffected | `./hooks/inject-hard-rules.sh \| sha1sum` before and after editing anything outside a fence — it must not change |
-| Budgets held | `wc -l skills/*/SKILL.md` — each must be ≤ 500 |
+| Budgets held | `wc -l skills/*/SKILL.md` — each must be ≤ 500, except `system-design` and `implementation-planning` (`PROCEDURE_SKILLS`), which get ≤ 650 (`PROCEDURE_SKILL_MAX_LINES`) |
 | Hooks parse | `bash -n hooks/*.sh` |
 | Hook paths resolve | `jq -r '.hooks[][].hooks[].command' hooks/hooks.json` — each file exists |
-| Gate is quiet | run `hooks/review-gate.sh` with only `*.md` changed — exit 0, no output |
+| Gate is quiet | run `hooks/review-gate.sh` with only docs or config changed — exit 0, no output. Config means an extension in the filter *and* any dotfile basename: `.gitignore` has no extension and `.jsonc` is not `.json`, so both once demanded four reviews of a file holding no code |
 | Gate blocks | touch any source file, run it — exit 2, demand text names all four review agents |
 | Gate escalates | touch `x/domain/y.go`, run it — demand hard-requires `ddd-review` and lists the path |
 | Components load | `/reload-plugins`, then confirm every skill and every review agent appears |

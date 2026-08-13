@@ -25,7 +25,7 @@ and it is the single most common way DDD fails.
 - **Integration patterns** — the eight context-mapping relationships, selected on team communication
   and control over the other system.
 - **Depth** — worked bad/good pairs for the rules that get misread without one.
-- **Anti-pattern scan list** — 45 rows, coded by group (`S` strategic, `L` language, `V` value
+- **Anti-pattern scan list** — 51 rows, coded by group (`S` strategic, `L` language, `V` value
   objects, `A` aggregates, `R` repositories and services, `E` events, `H` architecture, `P` process),
   to work down while reviewing.
 

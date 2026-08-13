@@ -1,6 +1,6 @@
 ---
 name: system-design
-description: Applies the system design standard — turn an idea into a documented high-level design: the problem and its non-goals, functional and non-functional requirements as testable capabilities and measurable scenarios, capacity estimated from stated numbers, the simplest shape that meets them, data ownership and access patterns, concrete API contracts, a deep dive on the hardest mechanisms, enumerated failure and overload behaviour, trust boundaries, operability and cost, every consequential decision recorded with its alternatives, and a delivery path validated against the requirements before anything is built. Use when designing a new system, service or major capability, running /revai:design, sizing for load or growth, choosing a datastore or architecture, designing an API or event contract, specifying the algorithm behind a hard component, setting SLOs, planning a migration or rollout, writing or reviewing a design document, or recording an architecture decision.
+description: Applies the system design standard — turn an idea into a documented high-level design: the problem and its non-goals, functional and non-functional requirements as testable capabilities and measurable scenarios, capacity estimated from stated numbers, the simplest shape that meets them, data ownership and access patterns, concrete API contracts, a deep dive on the hardest mechanisms, enumerated failure and overload behaviour, trust boundaries, operability and cost, every consequential decision recorded with its alternatives, and a delivery path validated against the requirements before anything is built. Use when designing a new system, service or major capability, sizing for load or growth, choosing a datastore or architecture, designing an API or event contract, specifying the algorithm behind a hard component, setting SLOs, planning a migration or rollout, writing or reviewing a design document, or recording an architecture decision.
 ---
 
 # System design
@@ -30,9 +30,12 @@ settle something, cite them rather than deciding it again here.
   data, API and interface design, detailed design, failure, security and privacy, operability and
   cost, model-backed capability, recording the decision, validating the design, and delivery and
   evolution. Rules 1–3 gate the standard on the change deciding a system's shape, and rule 2 gates
-  each group on the concern in its heading. Not injected — invoked, or reached through `/revai:design`.
+  each group on the concern in its heading. Not injected — invoked directly as a skill.
 - **The design document** — the section-by-section outline the rules produce, and what each section
   has to contain to count.
+- **Procedure** — how to run the standard end to end: the warrant check, tagging the idea narrow or
+  complex, gathering context, bounded question rounds, the defaults applied without asking, writing
+  the document, the self-check before showing it, and the report.
 - **What forces the shape** — the dominant requirement and the shape it implies, read before choosing
   an architecture.
 - **The estimate and what it decides** — the arithmetic behind rules 25–35, with the decision each
@@ -42,10 +45,10 @@ settle something, cite them rather than deciding it again here.
 - **Depth** — one worked scenario, run end to end, through a requirement you can check, sizing before
   shape, a real interface contract, a mechanism walked to the edge case that breaks the naive
   version, and the failure table and decision record it forces.
-- **Anti-pattern scan list** — coded by group (`P` problem, `R` requirements, `Z` capacity, `A` shape,
-  `D` data, `I` interface, `X` detailed design, `F` failure, `S` security and privacy, `O`
-  operability, `M` model, `C` decisions, `V` validation, `L` delivery), to work down while reviewing a
-  design.
+- **Anti-pattern scan list** — 97 rows, coded by group (`P` problem, `R` requirements, `Z` capacity,
+  `A` shape, `D` data, `I` interface, `X` detailed design, `F` failure, `S` security and privacy,
+  `O` operability, `M` model, `C` decisions, `V` validation, `L` delivery), to work down while
+  reviewing a design.
 
 <!-- HARD-RULES:START -->
 ## System design rules
@@ -273,6 +276,124 @@ carrying what the rules require of it; nothing invented to fill a gap and nothin
                            for what exists; what is deferred and what triggers it          118-122
 19  Open Questions         question → owner → needed by                                     116
 ```
+
+## Procedure
+
+Running this standard end to end, from an idea to a written, self-checked document on disk.
+
+Terminal state: a design document on disk and a short summary in chat. Write no implementation
+code, scaffold nothing, install nothing.
+
+### 1. Is a design warranted?
+
+Apply rules 1 and 109. A well-understood change inside a shape that already exists gets one
+paragraph — the answer, and why it needed no document — and nothing else. Otherwise continue.
+
+### 2. Classify the complexity, out loud
+
+State in one line: how many distinct actor journeys the idea implies, how many integrations and
+stores, and whether multi-region, regulated data or a genuinely hard mechanism is in play. Tag it:
+
+- **Narrow** — one or two journeys, a well-trodden shape, no hard sub-problem. The question round
+  (step 4) can close as soon as the shape, store and loss tolerance are settled. Detailed Design
+  may be "not applicable" if nothing in the design is actually hard (rule 64's own gate).
+- **Complex** — several journeys, more than one integration or store, or a mechanism that isn't
+  off-the-shelf composition. The question round does not close on a fixed number of calls — it
+  closes when doubt runs out (step 4). Detailed Design covers 2–3 mechanisms, not fewer, unless the
+  design genuinely doesn't need one.
+
+### 3. Context before questions
+
+Do not ask what you can find. Establish from the repository: whether one exists, its language and
+frameworks, its datastore, its deployment shape, its existing modules, and any design docs, ADRs or
+`CLAUDE.md` already present. No repository: the design is greenfield — say so and move on.
+
+### 4. Question rounds — keep going as long as there is doubt
+
+Ask only what changes the design. Use `AskUserQuestion`, up to four questions per call, no cap on
+the number of calls. Every question carries a concrete recommended option first.
+
+A decision-critical unknown is any of: the shape, the store, the consistency model, what may be
+lost versus what must never be lost, the contract each interface needs, and — for a complex design
+— which sub-problem earns the Detailed Design deep dive. Keep issuing rounds until every one of
+these is answered or explicitly defaulted with a recorded rationale (step 5). Stop early only once
+the user has actually skipped a round or answered "you decide" — not before a first real attempt.
+
+When an answer is vague, numberless, or contradicts an earlier one, the next call's first question
+is a clarifying follow-up on that same point — do not carry an unresolved one into a new category.
+
+Ask in this order of value, adding a round rather than dropping a category while doubt remains:
+
+1. What it must do — journeys as functional requirements, actor + "done", and what's explicitly out.
+2. Scale and shape of load — users or events, growth, burstiness. Derive the rate (25–26); never ask for one.
+3. What must never fail or be lost, and what may (21).
+4. Consistency and freshness — where a stale read is unacceptable (50).
+5. Who consumes each interface, and what they expect from it (59–62).
+6. Hard constraints — deadline, team, budget, regulation, residency, existing systems (9, 87).
+7. Where it runs and what it may depend on (40).
+8. For a complex design, what's actually hard — the sub-problem(s) needing a mechanism walk (64).
+
+### 5. Defaults you apply without asking
+
+Each is the standard's own answer, overridden only by a stated requirement and recorded as a
+decision when it is: one deployable with modules inside it (38; `modular-monolith` 4–6), and a
+design with several deployables names the driver in the document; the boring option, managed before
+self-hosting before building (39, 40), and where the repository already has a stack, that stack is
+the boring option; single region, synchronous request/response, one relational source of truth
+until forced otherwise (36, 42); no tier without its requirement named beside it (41). Every
+requirement the user skipped or waved off becomes an assumption in the document and an open
+question with an owner and a "needed by" date (116) — never a silent guess.
+
+### 6. Write the document
+
+Path: `docs/design/<kebab-slug>.md`, created if needed, unless the user names another. Follow the
+outline above exactly, in order, all nineteen sections — a section with nothing in it says "not
+applicable" and why (108).
+
+- Do the arithmetic visibly, with its assumptions (33, 34) — not in your head.
+- Split Requirements into Functional (actor, priority, acceptance criterion — 13, 14) and
+  Non-Functional (a scenario with a measure — 15–24).
+- Give every boundary-crossing interface a real contract — types, error taxonomy, sync/async and
+  delivery semantics, versioning (59–63) — not a named endpoint with no shape.
+- Walk the 1–3 hardest mechanisms in Detailed Design: the naive approach and why it fails, the
+  chosen one step by step, its cost, the requirement it serves (64–68). Narrow and nothing hard:
+  "not applicable" and why.
+- One component-level `mermaid` diagram: every box its responsibility and technology, every edge
+  what flows and by what mechanism (44).
+- Mark every assumption inline as `Assumption:`, mirrored in Open Questions with an owner and date (116).
+- Cite the sibling standard instead of re-deciding what it owns: boundaries and the domain model to
+  `domain-driven-design`, what crosses a boundary to `modular-monolith`, libraries, protocols,
+  resilience and migration mechanics to `best-practices`; `golang`/`postgres` for that technology's
+  form of these.
+- Decisions carries a record per consequential decision: alternatives, consequence accepted,
+  reversibility, revisit trigger (102–107).
+- Before writing a sentence in Architecture, API & Interface Design or Detailed Design: would it be
+  equally true of a different system? If yes, delete it and write the version only true of this one.
+
+### 7. Check it before showing it
+
+Work the scan list and the validation group over the draft, and fix what fails rather than
+reporting it. It doesn't leave this step until: every functional requirement has an actor,
+priority and acceptance criterion (13, 14); every non-functional requirement has a measure, window
+and measurement point (15, 18, 88); every number shows its source and ties to this system's stated
+scale (23, 33); every boundary-crossing interface has a concrete contract (59); the hardest
+mechanisms are walked to the edge case that breaks the naive version (64–66); every dependency has
+a failure-table row and the availability target survives the arithmetic (72); every component
+traces to a requirement (41) and every primary journey traces through the components (110); trust
+boundaries are on the diagram and every crossing flow is walked (80, 81); there is a cost model
+(92), a transition plan if a system already exists (121), and a first increment that ships alone
+(118, 119); non-goals, what's not optimised for, and open questions are all non-empty (6, 22, 116).
+Then one final genericness pass over Architecture, API & Interface Design and Detailed Design: any
+sentence that would survive word-for-word in a design for a different system gets rewritten or cut.
+
+### 8. Report
+
+In chat, briefly — the document holds the detail: the complexity tag and why; the shape; the
+sizing headline and what saturates first; the hardest mechanism covered and the naive approach it
+beat; the three decisions that matter most, each with the alternative rejected; the open questions
+and the riskiest assumption made on the user's behalf; the path to the document. Then stop — do
+not start building, and do not plan the implementation; that is `implementation-planning`'s job,
+run separately once this design is approved.
 
 ## What forces the shape
 
