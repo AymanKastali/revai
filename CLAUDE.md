@@ -1,8 +1,9 @@
 # revai — developing the harness itself
 
 This repo IS a Claude Code plugin (and its own marketplace). It carries engineering standards — four
-stack-agnostic, plus one per stack technology (`golang`, `postgres`) — and the machinery that makes an
-AI follow them. See `README.md` for the user-facing overview.
+stack-agnostic and injected into every session, one design-time standard reached by a command
+(`system-design`, via `/revai:design`), plus one per stack technology (`golang`, `postgres`) — and the
+machinery that makes an AI follow them. See `README.md` for the user-facing overview.
 
 ## The one rule that matters here
 
@@ -35,15 +36,21 @@ Editing a fence changes what every session sees. Keep the markers intact and in 
   `## Contents` section is the mitigation the same guidance prescribes for long files. Do not
   "fix" this by reintroducing reference files; if a `SKILL.md` genuinely cannot fit in 500 lines,
   raise it with the repo owner instead of splitting it.
-- There is deliberately no `commands/` and no `templates/`. The harness needs no per-repo setup step;
-  if you think you need one, that is a signal the design slipped.
+- `commands/` holds one kind of thing only: the deliberate entry point to a standard whose value is a
+  **procedure** rather than a set of constraints on code being written. `commands/design.md` is the
+  whole of it — `/revai:design` runs the `system-design` procedure. A command carries no rules; it
+  reads the `SKILL.md` and sequences it, so the fence stays the single source of truth. If a command
+  would only say "apply standard X", delete it: that is what the description and the injected card are
+  for. There is still deliberately no `templates/`, and still no per-repo setup step — a command the
+  user types is not setup. If you think you need one of those, the design slipped.
 - Reference bundled files from a skill, agent, or hook with `${CLAUDE_PLUGIN_ROOT}`.
 
 ## Adding a standard
 
-First decide which layers it gets. An **agnostic** standard is injected by Layer 1, so it is in context
-whether or not anything invokes it. A **stack-specific** standard — one that governs a single language
-or a single datastore — is not; see § Layers.
+First decide which layers it gets. An **agnostic** standard that governs code as it is written is
+injected by Layer 1, so it is in context whether or not anything invokes it. A **stack-specific**
+standard — one that governs a single language or a single datastore — is not, and neither is a
+**procedure** standard that governs a deliberate act rather than the code being typed; see § Layers.
 
 For an agnostic standard, three edits, in this order, or the layers fall out of sync:
 
@@ -56,6 +63,9 @@ For an agnostic standard, three edits, in this order, or the layers fall out of 
 For a stack-specific standard, step 1 only. `EXPECTED_RULES` counts the injected card, so it does not
 move, and CI derives the list of skills that must appear in the card from the hook's `STANDARDS`
 array rather than from `skills/*/` — which is what lets a skill exist without being injected.
+
+For a procedure standard, step 1 plus `commands/<verb>.md`, which sequences the skill and states no
+rule of its own. `EXPECTED_RULES` does not move here either.
 
 Then decide whether the standard needs its own review agent. If it does, the gate must demand it by
 name in `hooks/review-gate.sh`, and CI asserts that every agent the gate names actually exists.
@@ -76,9 +86,20 @@ They keep the fence anyway. It separates the hard rules from the depth below for
 what CI's numbering check keys off, and it means injecting one later is a one-line array edit rather
 than a restructure.
 
-This is **not** a licence to scope-limit an agnostic standard by leaving it out of Layer 1.
-That was the old plugin's failure and the Conventions rule below still forbids it: an agnostic standard
-that does not always apply says so inside its own fence, as its first rules.
+`system-design` is Layer 2 for a different reason, and it is the only standard of its kind here. It is
+stack-agnostic, so the rule above would put it in the card — but its rules constrain **a design act and
+the document it produces**, not the lines of code being typed. 110 design rules injected into a session
+that is fixing a typo are the same noise as Go rules in a Python repo, and the trigger is not "you are
+writing code" but "you are deciding a system's shape". That act has an exact entry point, so it gets a
+command: `/revai:design` is a stronger and more reliable trigger than any `description` match, and it
+sequences the standard as a procedure, which the card cannot do. It self-gates in its fence regardless
+(rule 1 on the change deciding a shape, rule 2 on each group's concern).
+
+Neither case is a licence to scope-limit an agnostic standard by leaving it out of Layer 1. That was
+the old plugin's failure and the Conventions rule below still forbids it: an agnostic standard that
+governs code as it is written and does not always apply says so inside its own fence, as its first
+rules. The exemptions are exactly two and both are structural — the standard governs one technology, or
+it governs a deliberate act with its own entry point.
 
 ## Conventions
 
@@ -104,14 +125,20 @@ that does not always apply says so inside its own fence, as its first rules.
   concern named in its heading. Pick whichever matches how the standard actually varies, or both where
   both are true — `modular-monolith` rule 1 gates the whole standard on the system being one deployable
   with more than one capability, and rule 2 then gates each group on its heading's concern. A
-  stack-specific standard is the one exception to the "not by being left out" half (see § Layers),
-  and it still gates itself in its own fence: `golang` rule 1 on the change containing Go and
-  `postgres` rule 1 on it containing schema, SQL or a migration, rule 2 in each on the group's concern.
+  stack-specific or procedure standard is the exception to the "not by being left out" half (see
+  § Layers), and it still gates itself in its own fence: `golang` rule 1 on the change containing Go,
+  `postgres` rule 1 on it containing schema, SQL or a migration, `system-design` rule 1 on the change
+  deciding a system's shape, and rule 2 in each on the group's concern.
 - Standards divide by **question**, not by topic, so a finding belongs to exactly one of them:
   `clean-code` owns how the code reads, `best-practices` owns what it is built with,
   `domain-driven-design` owns how the domain is modelled, `modular-monolith` owns how one deployable is
-  partitioned, and a stack standard owns how that one technology is used — `golang` how Go itself is
-  written, `postgres` how Postgres itself is used.
+  partitioned, `system-design` owns what is being built and whether its shape meets requirements
+  someone can check, and a stack standard owns how that one technology is used — `golang` how Go itself
+  is written, `postgres` how Postgres itself is used. `system-design` is the newest edge and the one
+  most at risk of absorbing the others: it owns requirements, sizing, failure enumeration, trust
+  boundaries, cost, the decision record and the design document, and it cites the others for boundaries
+  (`domain-driven-design`), what crosses them (`modular-monolith`) and which library, protocol or
+  resilience pattern implements a choice (`best-practices`).
   Before adding a rule, check that no other fence already answers its question — the outbox, for
   example, is DDD rule 61, so `best-practices` rule 82 states the general dual-write hazard instead of
   restating it, and `modular-monolith` rule 58 points at both rather than describing an outbox again.
@@ -154,7 +181,9 @@ There is no build or test suite. Verification means:
 | Fences intact | `grep -n 'HARD-RULES:\(START\|END\)' skills/*/SKILL.md` |
 | Cards extract | `./hooks/inject-hard-rules.sh` — one tagged block per **injected** skill, exit 0 |
 | Rule count | `./hooks/inject-hard-rules.sh \| grep -cE '^[0-9]+\. '` — must equal `EXPECTED_RULES` (324) |
-| Layer 2 only | no `<golang>` or `<postgres>` block in the card, and both absent from the hook's `STANDARDS` array |
+| Layer 2 only | no `<golang>`, `<postgres>` or `<system-design>` block in the card, and all three absent from the hook's `STANDARDS` array |
+| Commands load | `/reload-plugins`, then confirm `/revai:design` is listed with its description |
+| Commands carry no rules | `grep -c 'HARD-RULES' commands/*.md` — zero; a command sequences a skill, it never restates one |
 | Numbering | rules in each fence run `1..N` — CI's awk check, or eyeball the tail of each group |
 | Spec conformance | CI's "Skills conform to the Agent Skills spec" step — name/description limits, spec-only frontmatter, `## Contents` present, agent name equals filename |
 | Card unaffected | `./hooks/inject-hard-rules.sh \| sha1sum` before and after editing anything outside a fence — it must not change |
