@@ -88,7 +88,7 @@ than a restructure.
 
 `system-design` is Layer 2 for a different reason, and it is the only standard of its kind here. It is
 stack-agnostic, so the rule above would put it in the card — but its rules constrain **a design act and
-the document it produces**, not the lines of code being typed. 110 design rules injected into a session
+the document it produces**, not the lines of code being typed. 123 design rules injected into a session
 that is fixing a typo are the same noise as Go rules in a Python repo, and the trigger is not "you are
 writing code" but "you are deciding a system's shape". That act has an exact entry point, so it gets a
 command: `/revai:design` is a stronger and more reliable trigger than any `description` match, and it

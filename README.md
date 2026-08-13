@@ -16,8 +16,8 @@ Two are design-time standards, each with its own command:
 
 | Standard | Rules | Canonical to |
 | --- | --- | --- |
-| `system-design` | 110 | The design canon — Google's design-doc practice (goals, non-goals, alternatives considered, cross-cutting concerns), the SRE workbook on SLIs, SLOs and error budgets, SEI quality-attribute scenarios, Little's law and back-of-envelope sizing, the C4 model's labelled container view, AWS's reliability design principles and blast-radius containment, STRIDE threat modelling over trust boundaries, *Designing Data-Intensive Applications* on consistency, replication and partitioning, McKinley's innovation tokens, Ford and Parsons' fitness functions, MADR decision records, Conway's law and cognitive load, and the strangler-fig transition |
-| `implementation-planning` | 27 | The seam between `system-design`'s own delivery-slicing rules (105–109) and `superpowers:writing-plans`' scope-check and file-structure discipline — this repo's own answer to keeping a plan's boundaries consistent with the design it implements, not an external canon |
+| `system-design` | 123 | The design canon — Google's design-doc practice (goals, non-goals, alternatives considered, cross-cutting concerns), the SRE workbook on SLIs, SLOs and error budgets, SEI quality-attribute scenarios, Little's law and back-of-envelope sizing, the C4 model's labelled container view, AWS's reliability design principles and blast-radius containment, STRIDE threat modelling over trust boundaries, *Designing Data-Intensive Applications* on consistency, replication and partitioning, McKinley's innovation tokens, Ford and Parsons' fitness functions, MADR decision records, Conway's law and cognitive load, and the strangler-fig transition |
+| `implementation-planning` | 27 | The seam between `system-design`'s own delivery-slicing rules (118–122) and `superpowers:writing-plans`' scope-check and file-structure discipline — this repo's own answer to keeping a plan's boundaries consistent with the design it implements, not an external canon |
 
 Two are stack-specific, and are invoked rather than injected:
 
@@ -27,14 +27,16 @@ Two are stack-specific, and are invoked rather than injected:
 | `postgres` | 123 | What the PostgreSQL project publishes — the manual on locking, isolation, indexes and `SECURITY DEFINER`, the wiki's *Don't Do This* page, and the release notes from Postgres 10 through 18 that retired the workarounds most SQL still carries |
 
 Each ships an anti-pattern scan list too, with citable codes: the Ch17 smells and heuristics (55
-rows), a 90-row best-practice list, a 45-row DDD list, an 82-row modular-monolith list, a 106-row
+rows), a 90-row best-practice list, a 45-row DDD list, an 82-row modular-monolith list, a 97-row
 system-design list, an 85-row Go list and a 79-row Postgres list. `best-practices` also ships the table
 of answers you are not allowed to reinvent — 22 recurring concerns, each with its established solution
 named; `modular-monolith` ships 21 coupling shortcuts with what each one costs and what to do instead;
-`system-design` ships the design-document outline, a table mapping the dominant requirement to the
-shape it forces, the arithmetic behind every estimate and what each number decides, and 16 design
-shortcuts with their price; and `golang` and `postgres` each ship a legacy-to-modern table: 30 forms
-that were correct once, each with the current answer and the release that introduced it.
+`system-design` ships the design-document outline (functional and non-functional requirements, capacity
+estimation, API and interface contracts, a detailed-design deep dive, and the rest), a table mapping
+the dominant requirement to the shape it forces, the arithmetic behind every estimate and what each
+number decides, and 12 design shortcuts with their price; and `golang` and `postgres` each ship a
+legacy-to-modern table: 30 forms that were correct once, each with the current answer and the release
+that introduced it.
 
 Every `SKILL.md` stays inside the six frontmatter fields of the [Agent Skills](https://agentskills.io)
 spec, so the skills load unchanged in Claude Code, on claude.ai, and through the API. CI enforces that,
@@ -264,7 +266,7 @@ revai/
 │   ├── best-practices/SKILL.md              99 rules — source of truth, injected
 │   ├── domain-driven-design/SKILL.md        74 rules — source of truth, injected
 │   ├── modular-monolith/SKILL.md            95 rules — source of truth, injected
-│   ├── system-design/SKILL.md              110 rules — source of truth, run by /revai:design
+│   ├── system-design/SKILL.md              123 rules — source of truth, run by /revai:design
 │   ├── implementation-planning/SKILL.md     27 rules — source of truth, run by /revai:plan
 │   ├── golang/SKILL.md                     125 rules — source of truth, invoked
 │   └── postgres/SKILL.md                   123 rules — source of truth, invoked

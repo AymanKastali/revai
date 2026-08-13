@@ -13,7 +13,7 @@ design produces speculation about a codebase that doesn't exist yet.
 
 Scope: this standard owns **how an approved design becomes an ordered sequence of right-sized,
 plannable slices**. It does not own what the slices are supposed to be — `system-design` rules
-105–109 already produce a first cut in the design's own delivery section — and it does not own how a
+118–122 already produce a first cut in the design's own delivery section — and it does not own how a
 chosen slice becomes bite-sized TDD tasks — `superpowers:writing-plans` already does that well. This
 standard is the seam between the two: read what the design decided, split what still isn't small
 enough, order what's left, and hand over one slice at a time without letting the handoff redraw
@@ -60,9 +60,9 @@ plan. Rule 1 decides whether the rest apply; rule 2 says how to read the groups 
 ### Ordering the slices — applies once slices are right-sized
 
 13. Order by dependency first: a slice another slice's code calls, reads, or is gated behind comes first, regardless of which the design described first.
-14. Where dependency order leaves a choice, the thinnest end-to-end path wins — the design's own rule 106, applied to a full sequence instead of one headline slice.
+14. Where dependency order leaves a choice, the thinnest end-to-end path wins — the design's own rule 119, applied to a full sequence instead of one headline slice.
 15. A slice with no dependency and no priority signal from the design goes last, not first — an unforced choice should not consume the first, most valuable slot.
-16. Record the ordered sequence and the reason for each slice's position; re-ordering later without a stated reason is the undocumented decision `system-design` rule 90 already forbids.
+16. Record the ordered sequence and the reason for each slice's position; re-ordering later without a stated reason is the undocumented decision `system-design` rule 102 already forbids.
 
 ### Detecting progress — applies on every run
 
