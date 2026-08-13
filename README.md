@@ -1,167 +1,93 @@
-# revai — Personal AI Agent Harness
+# revai — a clean-code harness for Claude Code
 
-**revai** (revolution of AI) is a reusable **agent harness**: a bundle of AI knowledge — skills,
-slash commands, workflows, subagents, and conventions — authored *once* and attached to *any*
-codebase to make AI-driven development more reliable.
+**revai** is a Claude Code plugin carrying exactly one thing: a language-agnostic clean-code
+standard, plus the machinery that makes an AI actually follow it.
 
-The **agent** is Claude Code doing the work; the **harness** is the context, capabilities,
-guardrails, and feedback loops built around it so the work actually holds up instead of just
-looking right. revai packages that harness as a Claude Code **plugin** — see "How it's delivered"
-below.
+The standard is canonical to *Clean Code* (Robert C. Martin) — 56 rules across names, functions,
+comments, formatting, objects and data structures, error handling, classes, and the four rules of
+simple design, with the Ch17 smells catalog as a review scan list.
 
-## How it's delivered
+## Why it's built this way
 
-revai is a Claude Code plugin that also acts as its own marketplace: you author skills, commands,
-and conventions once, here, and every attached codebase enables the plugin and pulls from that
-single source of truth. Improvements live in one place and propagate on demand — see "Keeping
-projects in sync".
+A skill that merely *exists* changes nothing. The common failure is a skill whose top level is
+exhortation ("this standard is absolute") with the real rules one hop away in reference files that
+nothing ever opens — so what lands in context is a mood, not a standard.
 
-## Attaching revai to a codebase
+revai fixes that with three layers over a single source of truth. The rules are authored **once**, in
+`skills/clean-code/SKILL.md`, inside an `HARD-RULES` comment fence. Everything else reads that file.
 
-```bash
-# once per machine — register revai as a marketplace
-/plugin marketplace add AymanKastali/revai          # from GitHub
-# (during local development: /plugin marketplace add ~/Documents/me/revai)
+| Layer | Mechanism | Fires when | Needs |
+| --- | --- | --- | --- |
+| **1 — always on** | `SessionStart` hook extracts the fenced rules and injects them as context | every session, every repo, plain chat included | nothing |
+| **2 — depth** | the `clean-code` skill: worked bad/good examples and the smells catalog | you're writing or reviewing code | skill invocation |
+| **3 — the gate** | `Stop` hook blocks the turn until `clean-code-review` has passed over the diff | the agent tries to finish after changing source files | nothing |
 
-/plugin install revai@revai                   # install the harness
-```
+Layer 1 means the rules are present without a slash command. Layer 3 means ignoring them can't end
+the turn. The card is *generated* from `SKILL.md` by `sed`, never maintained beside it, so the three
+layers cannot drift.
 
-Then, inside the target repo:
-
-```bash
-/revai:attach
-```
-
-`/revai:attach` enables the plugin for that repo (`.claude/settings.json`), detects its stack,
-records the verify commands (install/run/test/lint/format), and writes a project `CLAUDE.md` so the
-AI knows how to check its own work. It never overwrites files you already have.
-
-New repo or existing one — the steps are identical.
-
-## Keeping projects in sync
-
-Plugins are copied into a local cache, so changes here don't propagate automatically. After you
-push an improvement, pull it into a project with:
+## Install
 
 ```bash
-/plugin update revai@revai      # then start a fresh session, or /reload-plugins
+/plugin marketplace add AymanKastali/revai
+/plugin install revai@revai
 ```
 
-This is how every project stays on the single source of truth described above.
+Then enable it in whatever repo you want the standard applied to. There is no per-repo setup step, no
+config file to write, and nothing to add to that project's `CLAUDE.md`.
 
-## Bundled skills
+Pull improvements with `/plugin update revai@revai`, then `/reload-plugins` or start a fresh session.
 
-Once revai is installed, exactly **5 skills** surface automatically when their subject comes up —
-no setup per repo. Each is a concise index (`SKILL.md`) pointing to focused `reference/*.md` files —
-progressive disclosure, so only the concern actually in play gets read into context. They complement
-the other plugins rather than duplicate them — rules, a checklist, and (except for pure recognition
-catalogs) concrete Go/Python examples in every reference file.
+## The gate, concretely
 
-| Skill | Fires when you're… | What's inside |
-|---|---|---|
-| `best-practices` | Writing any code, or making any implementation choice, in `/revai:implement` or `/revai:decide` | Standard-solution-first meta-principle, plus a reference for each cross-cutting concern: `api-design`, `data-access-patterns`, `safe-schema-changes`, `config-and-secrets`, `error-handling-and-logging`, `resilience-and-timeouts`, `concurrency-and-context-safety`, `tdd`, `backend-testing`, `pr-sizing`, `event-driven-messaging`, `authn-and-authorization`, `observability`, `caching` |
-| `clean-code` | Naming or structuring anything — any function, variable, type, class, file, or module | A reference for each concern: `naming`, `functions` (size, arguments, side effects), `comments-and-formatting`, `objects-and-data-structures` (Law of Demeter), `error-handling` (code shape, not operations), `classes-and-cohesion`, `smells-and-heuristics` (a recognition catalog) — all strictly enforced (rationalization tables + red flags) |
-| `domain-driven-design` | Modelling a domain, drawing a service/module boundary, or designing a new system's/bounded context's architecture | The full toolkit, mandatory once it applies: `discovery-and-modeling-techniques` (EventStorming, domain storytelling), `strategic-design` (bounded contexts, ubiquitous language, context mapping), `tactical-patterns` (aggregates, value objects, domain services, factories, specifications, domain events), `event-sourcing`, `process-managers-and-integration` (sagas, outbox), `architecture-and-layering` (hexagonal, modular monolith, CQRS), `architecture-fit` (sequences all of the above into one design) |
-| `system-design` | Estimating scale, drawing a system's high-level shape, choosing a protocol/storage engine, or planning deployment/security/observability | The system-level mechanics between domain shape and code: `capacity-estimation`, `high-level-architecture-diagramming`, `api-contract-design`, `data-layer-architecture`, `communication-patterns`, `scalability-and-resilience`, `security-and-compliance`, `observability-strategy`, `infrastructure-and-cicd` |
-| `modular-monolith` | Building, enforcing, testing, or extracting from the modular-monolith shape once domain-driven-design's module/layer boundaries are laid out | `boundary-enforcement-and-fitness-functions`, `in-process-communication`, `data-isolation-and-persistence`, `observability-and-feature-flags`, `extraction-to-microservice` |
+On `Stop`, `hooks/clean-code-gate.sh`:
 
-## Deciding, then implementing (`decide` · `implement`)
+1. Collects changed files, filtering out docs, config, lockfiles, vendored and generated paths.
+2. Exits silently if no source files changed — zero cost on conversation and docs-only turns.
+3. Otherwise blocks with `exit 2`, instructing the agent to dispatch `clean-code-review`, fix every
+   HIGH finding, and record the diff hash in `.revai/reviewed`.
+4. Clears once that hash is recorded. Any further edit changes the hash and re-arms the gate.
+5. Relents after 3 attempts on one diff, so a genuine disagreement can't trap you in a loop.
 
-Every change this harness drives runs through exactly two commands, split along one axis: **is this
-a judgment call, or is it execution?**
+Add `.revai/` to a project's `.gitignore` — it holds only gate bookkeeping.
 
-```bash
-/revai:decide "a URL shortener with per-user quotas and analytics"
-/revai:decide "add idempotent refund endpoint to the billing module"
-/revai:decide "refunds over the daily cap are silently accepted"
-/revai:decide "extract the payout fee calc out of the order handler"
-```
+**Known limits, stated plainly.** The agent records its own `reviewed` marker, so the gate compels
+the review but does not prove it happened; the unfakeable alternative (the hook shelling out to
+`claude -p`) costs tokens on every code turn and is deferred. And Layer 1's card arrives as an early
+conversation turn, so a very long session can compact it away — Layer 3 is the backstop for exactly
+that, since a shell script cannot be compacted.
 
-`/revai:decide` covers **every** judgment call before code changes — a brand-new system's
-architecture, a feature's implementation plan, a bug's root cause, a refactor's bounded scope — and
-classifies which one it's looking at from how you describe it (asking exactly one clarifying
-question if it's genuinely ambiguous). It scales its own depth to the stakes: an architecture
-decision gets `superpowers:brainstorming` and `domain-driven-design`'s neutral fit judgment; a
-plan gets `writing-plans` and `best-practices`' pr-sizing check; a defect gets
-`systematic-debugging` and a named root cause; a reshape gets a bounded scope and a
-characterization-safety-net check. **It never touches the repo** — no code, no branch, ever, under
-any classification — so it works on a bare idea with no repo at all, and its one written artifact
-(`docs/design/<slug>.md`, a `writing-plans` doc, or `docs/decisions/<slug>.md`) can be handed to
-`/revai:implement` in a later session, even by someone else.
+## Severity
 
-```bash
-/revai:implement docs/decisions/refund-cap-bug.md
-/revai:implement "bump the retry cap in the payments client from 3 to 5"
-```
-
-`/revai:implement` takes that artifact — or an inline description trivial enough not to need one —
-and drives it to an open PR: branch (only after you approve, so declining leaves the repo
-untouched) → build/fix/reshape (TDD by default, `code-simplifier`-driven for a reshape) → self-review
-→ verify → `backend-review` → a final approval gate before the PR goes up. This is the **only**
-command that drives a change all the way to an open PR — `/revai:review` (below) can also patch a
-confident, local fix in place, but only after you approve it, and it never branches or ships a PR.
-
-Two gates, always: **Approve & branch** (before any repo mutation) and **Ship** (before the PR).
-Everything between runs automatically.
-
-## Everyday command (`review`)
-
-| Command | What it does |
-|---|---|
-| `/revai:review [target]` | Broadly reviews the code you generated (bugs, security, backend design, quality), reports ranked findings, **fixes what it's confident about once you approve**, re-verifies, and shows the diff. Defaults to your uncommitted changes. |
-
-## Review agent & guardrails
-
-Skills are advisory — these make them stick:
-
-- **`backend-review` agent** — dispatch it (e.g. "review the backend changes") to audit the current
-  diff against all the skills at once and report findings by severity. Read-only; it reports, it
-  doesn't edit.
-- **Secrets guardrail (hook)** — a `PreToolUse` hook blocks any `git commit` whose staged changes
-  add a private key, cloud/API token, or inline credential. Deterministic and unskippable by the
-  agent — it runs in every repo that enables revai.
-- **Branch-protection guardrail (hook)** — a `PreToolUse` hook blocks any `git commit`/`git push`
-  made directly on `main`/`master`, so a feature branch is unskippable even if `/revai:implement`'s
-  own Approve & branch gate is somehow bypassed.
-- **Verify-on-Stop (hook)** — a `Stop` hook runs the project's recorded verify commands (from
-  `.revai/verify.json`, written by `/revai:attach`) when the agent tries to finish, and **blocks
-  completion if a blocking check fails** — turning "evidence before assertions" into enforcement.
-  Tiered (test/lint block; build/format advisory), scoped to turns that changed code, and it relents
-  after a few attempts so a stuck build can't loop forever.
-
-## Maintaining the plugin (`/revai:doctor`)
-
-`/revai:doctor` audits the plugin repo itself — manifest integrity, malformed skills, dead
-`${CLAUDE_PLUGIN_ROOT}` references, README/skill-table drift, and skill content quality — then
-offers to fix the safe, mechanical issues behind a single gate. Run it after changing components.
-
-## Extending revai
-
-Add a capability, commit, push, then `/plugin update` where you want it:
-
-- **Skill** → `skills/<name>/SKILL.md` (plus optional supporting files in that folder).
-- **Slash command** → `commands/<name>.md` (becomes `/revai:<name>`).
-- **Subagent** → `agents/<name>.md`.
-- **Hook** → `hooks/hooks.json`.
-
-Bump `version` in `.claude-plugin/plugin.json` for stable releases.
-
-> Scope note: revai does **not** duplicate skills already provided by the `superpowers`,
-> `code-simplifier`, `security-guidance`, or `claude-md-management` plugins. It adds the personal,
-> project-attach, and verification layer on top of them.
+Only **HIGH** findings block: a misleading name, a unit with more than one responsibility, a leaked
+abstraction, a Law of Demeter violation, a returned or passed null, duplication at the third
+occurrence, and dead or commented-out code. MEDIUM and LOW are reported, never blocking.
 
 ## Layout
 
-```
+```text
 revai/
 ├── .claude-plugin/
-│   ├── plugin.json          # declares the "revai" plugin
-│   └── marketplace.json     # lists revai as installable (source ".")
-├── commands/                # attach (setup); decide (any judgment call); implement (plan → PR); review; doctor (self-audit)
-├── agents/                  # backend-review subagent
-├── hooks/                   # secrets guardrail + branch-protection guardrail + verify-on-Stop
-├── templates/               # files /revai:attach instantiates into a project
-├── skills/                  # best-practices, clean-code, domain-driven-design, system-design, modular-monolith (each with reference/)
-├── CLAUDE.md                # conventions for developing revai itself
+│   ├── plugin.json                 declares the plugin
+│   └── marketplace.json            lists revai as installable (source ".")
+├── skills/clean-code/SKILL.md      the single source of truth
+├── agents/clean-code-review.md     read-only reviewer
+├── hooks/
+│   ├── hooks.json
+│   ├── inject-hard-rules.sh        Layer 1
+│   └── clean-code-gate.sh          Layer 3
+├── CLAUDE.md                       conventions for developing revai itself
 └── README.md
 ```
+
+Four content files. No `commands/`, no `templates/`, and deliberately no `reference/` directory.
+
+## Scope
+
+Deliberately out, each its own future iteration: language-specific idioms and shipped linter configs
+(which would restore a machine-checkable half to the gate), testing practice (*Clean Code* Ch9),
+and the architecture and correctness material of Ch8, Ch11 and Ch13.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
