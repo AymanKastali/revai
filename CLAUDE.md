@@ -191,7 +191,7 @@ There is no build or test suite. Verification means:
 | Hooks parse | `bash -n hooks/*.sh` |
 | Hook paths resolve | `jq -r '.hooks[][].hooks[].command' hooks/hooks.json` — each file exists |
 | Gate is quiet | run `hooks/review-gate.sh` with only `*.md` changed — exit 0, no output |
-| Gate blocks | touch any source file, run it — exit 2, demand text names all three review agents |
+| Gate blocks | touch any source file, run it — exit 2, demand text names all four review agents |
 | Gate escalates | touch `x/domain/y.go`, run it — demand hard-requires `ddd-review` and lists the path |
 | Components load | `/reload-plugins`, then confirm every skill and every review agent appears |
 
