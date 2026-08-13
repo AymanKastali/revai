@@ -153,7 +153,9 @@ then:
    anything — every quality attribute measurable, every number sourced, every dependency in the failure
    table, the availability target surviving the arithmetic, every component traceable to a requirement.
 6. **Stops.** It reports the shape, the sizing headline, the three decisions that matter and the
-   riskiest assumption it made for you. It does not start building.
+   riskiest assumption it made for you, then offers to turn a chosen delivery slice into an
+   implementation plan via `superpowers:writing-plans` — still no code, just a plan document. It
+   does not start building.
 
 Defaults it applies unless a requirement overrides them, each recorded as a decision when overridden:
 one deployable with modules inside it, boring technology, a managed service before self-hosting before
