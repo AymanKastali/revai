@@ -9,7 +9,7 @@
     {
       "name": "revai",
       "source": ".",
-      "description": "Language-agnostic clean-code, engineering best-practice and modern domain-driven-design standards injected into every session and enforced by a review gate, plus a modern-Go style standard on invocation."
+      "description": "Stack-agnostic clean-code, engineering best-practice and modern domain-driven-design standards injected into every session and enforced by a review gate, plus modern-Go and Postgres standards on invocation."
     }
   ]
 }
