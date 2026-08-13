@@ -1,9 +1,16 @@
 {
   "name": "revai",
-  "description": "Language-agnostic clean-code and modern domain-driven-design standards, injected into every session and enforced by a review gate on every code turn.",
+  "description": "Language-agnostic clean-code, engineering best-practice and modern domain-driven-design standards, injected into every session and enforced by a review gate on every code turn.",
   "author": { "name": "Ayman Kastali", "email": "aymankastali@gmail.com" },
   "homepage": "https://github.com/AymanKastali/revai",
   "repository": "https://github.com/AymanKastali/revai",
   "license": "MIT",
-  "keywords": ["clean-code", "domain-driven-design", "code-quality", "code-review", "standards"]
+  "keywords": [
+    "clean-code",
+    "best-practices",
+    "domain-driven-design",
+    "code-quality",
+    "code-review",
+    "standards"
+  ]
 }

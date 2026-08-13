@@ -90,10 +90,12 @@ Review gate: you changed source files and have not reviewed this diff.
 
 Before finishing:
   1. Dispatch the \`clean-code-review\` agent on the current diff. Always required.
-  2. Dispatch the \`ddd-review\` agent. ${ddd_demand}
-  3. Fix every HIGH finding from both. MEDIUM and LOW are advisory — report them, don't ignore them
-     silently.
-  4. Record the reviewed diff so this gate clears:
+  2. Dispatch the \`best-practices-review\` agent on the current diff. Always required.
+  3. Dispatch the \`ddd-review\` agent. ${ddd_demand}
+     Steps 1-3 are independent: dispatch them in a single message so they run concurrently.
+  4. Fix every HIGH finding from all three. MEDIUM and LOW are advisory — report them, don't ignore
+     them silently.
+  5. Record the reviewed diff so this gate clears:
        mkdir -p ${STATE_DIR} && echo ${diff_hash} >> ${REVIEWED_FILE}
 
 Changed source files:

@@ -13,8 +13,9 @@ permissions:
 
 env:
   SKILL_MAX_LINES: 500
-  # Total rules across every skill's HARD-RULES fence: clean-code 56 + domain-driven-design 74.
-  EXPECTED_RULES: 130
+  # Total rules across every skill's HARD-RULES fence:
+  # clean-code 56 + best-practices 99 + domain-driven-design 74.
+  EXPECTED_RULES: 229
 
 jobs:
   validate:
