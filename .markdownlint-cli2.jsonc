@@ -1,0 +1,19 @@
+{
+  // Two defaults fight this repo's deliberate conventions, so they are off on purpose:
+  //
+  //   MD013 line-length — every rule inside a HARD-RULES fence is ONE line by convention, because
+  //   the fence is extracted verbatim and injected as context. Wrapping them would change what
+  //   every session sees.
+  //
+  //   MD029 ol-prefix — the rules in a fence run as a single continuous 1..N sequence broken up by
+  //   group headings, so markdownlint reads each group as a new list starting mid-count. CI checks
+  //   the numbering itself, which is the property that actually matters.
+  //
+  // Everything else is enforced. See CLAUDE.md § Conventions.
+  "config": {
+    "MD013": false,
+    "MD029": false
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["node_modules", "docs"]
+}

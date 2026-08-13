@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/clean-code-gate.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/review-gate.sh"
           }
         ]
       }

@@ -1,9 +1,9 @@
 {
   "name": "revai",
-  "description": "Personal AI agent harness: attach reusable skills, commands, and conventions to any codebase.",
+  "description": "Language-agnostic clean-code and modern domain-driven-design standards, injected into every session and enforced by a review gate on every code turn.",
   "author": { "name": "Ayman Kastali", "email": "aymankastali@gmail.com" },
   "homepage": "https://github.com/AymanKastali/revai",
   "repository": "https://github.com/AymanKastali/revai",
   "license": "MIT",
-  "keywords": ["harness", "skills", "workflows", "ai-driven-development"]
+  "keywords": ["clean-code", "domain-driven-design", "code-quality", "code-review", "standards"]
 }
