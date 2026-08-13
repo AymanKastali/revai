@@ -1,6 +1,6 @@
 {
   "name": "revai",
-  "description": "Language-agnostic clean-code, engineering best-practice and modern domain-driven-design standards injected into every session and enforced by a review gate, plus a modern-Go style standard on invocation.",
+  "description": "Stack-agnostic clean-code, engineering best-practice and modern domain-driven-design standards injected into every session and enforced by a review gate, plus modern-Go and Postgres standards on invocation.",
   "author": {
     "name": "Ayman Kastali",
     "email": "aymankastali@gmail.com"
@@ -14,6 +14,9 @@
     "domain-driven-design",
     "golang",
     "go",
+    "postgres",
+    "postgresql",
+    "sql",
     "code-quality",
     "code-review",
     "standards"

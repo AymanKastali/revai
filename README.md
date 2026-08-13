@@ -3,7 +3,7 @@
 **revai** is a Claude Code plugin carrying engineering standards, plus the machinery that makes an AI
 actually follow them.
 
-Three are language-agnostic and always in context:
+Three are stack-agnostic and always in context:
 
 | Standard | Rules | Canonical to |
 | --- | --- | --- |
@@ -11,17 +11,19 @@ Three are language-agnostic and always in context:
 | `best-practices` | 99 | The published canon — API guidelines (Zalando, Microsoft, Google), RFC 9457 and 3339, twelve-factor config, *Release It!* stability patterns, expand/contract migrations, OWASP defaults, SRE golden signals, at-least-once messaging, the test pyramid |
 | `domain-driven-design` | 74 | Modern DDD (Evans, Vernon, Khononov) — subdomains, bounded contexts, ubiquitous language, context mapping, aggregates, value objects, services, domain and integration events, hexagonal layering, sagas |
 
-One is language-specific, and is invoked rather than injected:
+Two are stack-specific, and are invoked rather than injected:
 
 | Standard | Rules | Canonical to |
 | --- | --- | --- |
 | `golang` | 125 | What the Go team publishes — `gofmt`, `go vet`, the Go Code Review Comments, Google's Go Style Guide, the `log/slog`, `iter`, `errors` and `testing/synctest` package docs, and the release notes from Go 1.18 through 1.26 that retired the idioms most Go code still carries |
+| `postgres` | 123 | What the PostgreSQL project publishes — the manual on locking, isolation, indexes and `SECURITY DEFINER`, the wiki's *Don't Do This* page, and the release notes from Postgres 10 through 18 that retired the workarounds most SQL still carries |
 
 Each ships an anti-pattern scan list too, with citable codes: the Ch17 smells and heuristics (55
-rows), a 90-row best-practice list, a 45-row DDD list and a 98-row Go list. `best-practices` also
-ships the table of answers you are not allowed to reinvent — 22 recurring concerns, each with its
-established solution named — and `golang` ships the legacy-to-modern table: 30 idioms that were
-correct once, each with the current answer and the release that introduced it.
+rows), a 90-row best-practice list, a 45-row DDD list, an 85-row Go list and a 79-row Postgres list.
+`best-practices` also ships the table of answers you are not allowed to reinvent — 22 recurring
+concerns, each with its established solution named — and `golang` and `postgres` each ship a
+legacy-to-modern table: 30 forms that were correct once, each with the current answer and the release
+that introduced it.
 
 Every `SKILL.md` stays inside the six frontmatter fields of the [Agent Skills](https://agentskills.io)
 spec, so the skills load unchanged in Claude Code, on claude.ai, and through the API. CI enforces that,
@@ -48,22 +50,25 @@ Layer 1 means the rules are present without a slash command. Layer 3 means ignor
 the turn. The cards are *generated* from each `SKILL.md` by `sed`, never maintained beside them, so
 the three layers cannot drift.
 
-`golang` is deliberately **Layer 2 only**. Layer 1 costs tokens in every session and every repo, which
-is the right trade for a standard that governs any line of code in any language and the wrong one for
-Go rules landing in a Python repo. It is reached the way any skill is reached — by its description —
-and it keeps its fence, so injecting it later is a one-line change.
+`golang` and `postgres` are deliberately **Layer 2 only**. Layer 1 costs tokens in every session and
+every repo, which is the right trade for a standard that governs any line of code in any stack and the
+wrong one for Go rules landing in a Python repo or Postgres rules in a repo with no database. They are
+reached the way any skill is reached — by their descriptions — and they keep their fences, so injecting
+one later is a one-line change.
 
 ## Scope: the standards behave differently on purpose
 
 They divide by question, not by topic: `clean-code` governs **how the code reads**, `best-practices`
-governs **what you build it with**, `domain-driven-design` governs **how the domain is modelled**, and
-`golang` governs **how Go itself is written**. A finding belongs to exactly one of them.
+governs **what you build it with**, `domain-driven-design` governs **how the domain is modelled**,
+`golang` governs **how Go itself is written**, and `postgres` governs **how Postgres itself is used**.
+A finding belongs to exactly one of them.
 
-That split is what keeps `golang` from becoming a second copy of everything. `best-practices` rule 46
-requires a timeout on every outbound call; `golang` rule 61 says the Go form is a `context.Context`
-first parameter. The property is stated once, in the agnostic fence; the language skill only names its
-shape — which release introduced it, what the standard library calls it, and what the compiler and
-`go vet` will and won't catch for you.
+That split is what keeps the stack skills from becoming a second copy of everything.
+`best-practices` rule 46 requires a timeout on every outbound call; `golang` rule 61 says the Go form
+is a `context.Context` first parameter, and `postgres` rule 77 says the Postgres form is
+`statement_timeout` and `lock_timeout` set on the role. The property is stated once, in the agnostic
+fence; the stack skill only names its shape — which release introduced it, what the platform calls it,
+and what the toolchain will and won't catch for you.
 
 `clean-code` applies to every line of code in any language. `best-practices` gates each of its ten
 groups on a named concern — a change with no HTTP interface answers to no interface rule, a pure
@@ -156,7 +161,8 @@ revai/
 │   ├── clean-code/SKILL.md                  56 rules — source of truth, injected
 │   ├── best-practices/SKILL.md              99 rules — source of truth, injected
 │   ├── domain-driven-design/SKILL.md        74 rules — source of truth, injected
-│   └── golang/SKILL.md                     125 rules — source of truth, invoked
+│   ├── golang/SKILL.md                     125 rules — source of truth, invoked
+│   └── postgres/SKILL.md                   123 rules — source of truth, invoked
 ├── agents/
 │   ├── clean-code-review.md                 read-only reviewer
 │   ├── best-practices-review.md             read-only reviewer, reinvention check first
@@ -173,9 +179,10 @@ No `commands/`, no `templates/`, and deliberately no `reference/` directory.
 
 ## Deferred
 
-Each its own future iteration: a `go-review` agent and a Layer 3 demand gated on `*.go` paths, shipped
-linter configs (which would restore a machine-checkable half to the gate), language skills beyond Go,
-modular-monolith boundary enforcement, and system-design material. Testing is no longer deferred —
+Each its own future iteration: review agents and Layer 3 demands for the stack standards, gated on
+`*.go` and `*.sql`/migration paths; shipped linter configs (which would restore a machine-checkable
+half to the gate, `golangci-lint` and a migration linter alike); stack skills beyond Go and Postgres;
+modular-monolith boundary enforcement; and system-design material. Testing is no longer deferred —
 `best-practices` rules 88–99 and `golang` rules 112–125 carry it.
 
 ## License
