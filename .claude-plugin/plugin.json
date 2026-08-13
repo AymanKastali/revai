@@ -1,7 +1,10 @@
 {
   "name": "revai",
-  "description": "Language-agnostic clean-code, engineering best-practice and modern domain-driven-design standards, injected into every session and enforced by a review gate on every code turn.",
-  "author": { "name": "Ayman Kastali", "email": "aymankastali@gmail.com" },
+  "description": "Language-agnostic clean-code, engineering best-practice and modern domain-driven-design standards injected into every session and enforced by a review gate, plus a modern-Go style standard on invocation.",
+  "author": {
+    "name": "Ayman Kastali",
+    "email": "aymankastali@gmail.com"
+  },
   "homepage": "https://github.com/AymanKastali/revai",
   "repository": "https://github.com/AymanKastali/revai",
   "license": "MIT",
@@ -9,6 +12,8 @@
     "clean-code",
     "best-practices",
     "domain-driven-design",
+    "golang",
+    "go",
     "code-quality",
     "code-review",
     "standards"

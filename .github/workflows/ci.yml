@@ -190,7 +190,7 @@ jobs:
           done
           exit $fail
 
-      - name: Rule card extracts every rule from every skill
+      - name: Rule card extracts every rule from every injected skill
         run: |
           set -euo pipefail
           chmod +x hooks/*.sh
@@ -200,16 +200,26 @@ jobs:
             echo "::error::card holds ${count} rules, expected ${EXPECTED_RULES}"
             exit 1
           fi
-          # a silent extraction failure would still exit 0, so require every skill's tag to be present
+          # A silent extraction failure would still exit 0, so require every injected skill's tag.
+          # The list comes from the hook's own STANDARDS array, not from skills/*/: a language-specific
+          # skill is Layer 2 only and is deliberately absent from the card. See CLAUDE.md § Layers.
           fail=0
-          for d in skills/*/; do
-            tag=$(basename "$d")
+          tags=$(sed -n "/^readonly STANDARDS=(/,/^)/s/^ *'[a-z0-9-]*:\([a-z0-9-]*\)'.*/\1/p" \
+            hooks/inject-hard-rules.sh)
+          # Guard the guard: if the array is ever reformatted past what that sed matches, the loop
+          # below would pass vacuously. Assert we actually parsed the standards first.
+          injected=$(printf '%s\n' "$tags" | grep -c . || true)
+          if [ "$injected" -lt 3 ]; then
+            echo "::error::parsed ${injected} tags from the STANDARDS array, expected at least 3"
+            exit 1
+          fi
+          for tag in $tags; do
             printf '%s\n' "$card" | grep -q "<${tag}>" || {
               echo "::error::card is missing the <${tag}> block"
               fail=1
             }
           done
-          [ "$fail" -eq 0 ] && echo "✓ card extracts ${count} rules from every skill"
+          [ "$fail" -eq 0 ] && echo "✓ card extracts ${count} rules from all ${injected} injected skills"
           exit $fail
 
       - name: Hooks parse and are executable
