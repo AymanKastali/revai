@@ -190,6 +190,41 @@ jobs:
           done
           exit $fail
 
+      - name: Commands are well-formed and carry no rules of their own
+        run: |
+          set -euo pipefail
+          # A command is the deliberate entry point to a procedure standard: it sequences a SKILL.md
+          # and never restates a rule, or the fence stops being the single source of truth.
+          # See CLAUDE.md § Structure rules.
+          fail=0
+          for cmd in commands/*.md; do
+            [ -e "$cmd" ] || continue
+            bad=0
+            fm=$(awk 'NR==1 && $0=="---" { inside=1; next } inside && $0=="---" { exit } inside' "$cmd")
+            if ! printf '%s\n' "$fm" | grep -q '^description: .'; then
+              echo "::error::${cmd}: needs a non-empty description in its frontmatter"
+              bad=1
+            fi
+            if grep -q 'HARD-RULES' "$cmd"; then
+              echo "::error::${cmd}: must not carry a HARD-RULES fence — it sequences a skill"
+              bad=1
+            fi
+            # Every skill a command points at must exist, or the procedure reads nothing.
+            while read -r skill; do
+              [ -n "$skill" ] || continue
+              if [ ! -f "skills/${skill}/SKILL.md" ]; then
+                echo "::error::${cmd}: references skills/${skill}/SKILL.md which does not exist"
+                bad=1
+              fi
+            done < <(grep -oE 'skills/[a-z0-9-]+/SKILL\.md' "$cmd" | cut -d/ -f2 | sort -u)
+            if [ "$bad" -eq 0 ]; then
+              echo "✓ ${cmd}: described, ruleless, skill references resolve"
+            else
+              fail=1
+            fi
+          done
+          exit $fail
+
       - name: Rule card extracts every rule from every injected skill
         run: |
           set -euo pipefail
