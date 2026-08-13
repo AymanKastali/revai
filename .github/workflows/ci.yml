@@ -1,9 +1,7 @@
 name: ci
 
-# The repo IS the marketplace: merging to main publishes instantly (consumers
-# pull via git). So CI's job is to GUARD what gets published, not to publish it.
-# Deep semantic audits stay in `/revai:doctor`; this covers the deterministic
-# subset that must never break.
+# The repo IS the marketplace: merging to main publishes instantly (consumers pull via git). So
+# CI's job is to GUARD what gets published, not to publish it.
 
 on:
   pull_request:
@@ -12,6 +10,11 @@ on:
 
 permissions:
   contents: read
+
+env:
+  SKILL_FILE: skills/clean-code/SKILL.md
+  SKILL_MAX_LINES: 500
+  EXPECTED_RULES: 56
 
 jobs:
   validate:
@@ -23,7 +26,8 @@ jobs:
         run: |
           jq . .claude-plugin/plugin.json > /dev/null
           jq . .claude-plugin/marketplace.json > /dev/null
-          echo "✓ plugin.json and marketplace.json parse"
+          jq . hooks/hooks.json > /dev/null
+          echo "✓ plugin.json, marketplace.json and hooks.json parse"
 
       - name: Plugin structure rules
         run: |
@@ -48,6 +52,12 @@ jobs:
             fi
           done
 
+          # the reference/ indirection this rewrite removed must not come back
+          if find skills -type d -name reference | grep -q .; then
+            echo "::error::skills/*/reference/ is forbidden — SKILL.md must stay self-contained"
+            fail=1
+          fi
+
           # every marketplace source path resolves
           while read -r src; do
             if [ ! -e "$src" ]; then
@@ -59,15 +69,83 @@ jobs:
           [ "$fail" -eq 0 ] && echo "✓ structure OK"
           exit $fail
 
-      - name: README skill-table drift (informational)
+      - name: HARD-RULES fence is intact and ordered
         run: |
-          for d in skills/*/; do
-            [ -e "$d" ] || continue
-            name=$(basename "$d")
-            if ! grep -q "$name" README.md; then
-              echo "::warning::Skill '${name}' is not mentioned in README.md — possible skill-table drift"
-            fi
+          set -euo pipefail
+          start=$(grep -n '<!-- HARD-RULES:START -->' "$SKILL_FILE" | cut -d: -f1)
+          end=$(grep -n '<!-- HARD-RULES:END -->' "$SKILL_FILE" | cut -d: -f1)
+          if [ -z "$start" ] || [ -z "$end" ]; then
+            echo "::error::HARD-RULES fence markers missing from ${SKILL_FILE}"
+            exit 1
+          fi
+          if [ "$start" -ge "$end" ]; then
+            echo "::error::HARD-RULES:START (line ${start}) must precede END (line ${end})"
+            exit 1
+          fi
+          echo "✓ fence spans lines ${start}–${end}"
+
+      - name: Rule card extracts with every rule
+        run: |
+          set -euo pipefail
+          chmod +x hooks/*.sh
+          card=$(./hooks/inject-hard-rules.sh)
+          count=$(printf '%s\n' "$card" | grep -cE '^[0-9]+\. ' || true)
+          if [ "$count" -ne "$EXPECTED_RULES" ]; then
+            echo "::error::card holds ${count} rules, expected ${EXPECTED_RULES}"
+            exit 1
+          fi
+          echo "✓ card extracts ${count} rules"
+
+      - name: SKILL.md within its line budget
+        run: |
+          set -euo pipefail
+          lines=$(wc -l < "$SKILL_FILE")
+          if [ "$lines" -gt "$SKILL_MAX_LINES" ]; then
+            echo "::error::${SKILL_FILE} is ${lines} lines, budget is ${SKILL_MAX_LINES}"
+            exit 1
+          fi
+          echo "✓ ${SKILL_FILE} is ${lines}/${SKILL_MAX_LINES} lines"
+
+      - name: Hooks parse and are executable
+        run: |
+          set -euo pipefail
+          fail=0
+          for h in hooks/*.sh; do
+            bash -n "$h" || { echo "::error::${h} is not valid bash"; fail=1; }
+            [ -x "$h" ] || { echo "::error::${h} is not executable"; fail=1; }
           done
+          [ "$fail" -eq 0 ] && echo "✓ hooks parse and are executable"
+          exit $fail
+
+      - name: Gate is silent when no source files changed
+        run: |
+          set -euo pipefail
+          chmod +x hooks/*.sh
+          echo "docs only" >> README.md
+          if ./hooks/clean-code-gate.sh; then
+            echo "✓ gate exits 0 on a docs-only diff"
+          else
+            echo "::error::gate blocked a docs-only diff"
+            exit 1
+          fi
+          git checkout -- README.md
+
+      - name: Gate blocks when source files changed
+        run: |
+          set -euo pipefail
+          chmod +x hooks/*.sh
+          printf 'package main\n' > scratch_gate_check.go
+          set +e
+          ./hooks/clean-code-gate.sh 2>/dev/null
+          code=$?
+          set -e
+          rm -f scratch_gate_check.go
+          rm -rf .revai
+          if [ "$code" -ne 2 ]; then
+            echo "::error::gate exited ${code} on a source diff, expected 2"
+            exit 1
+          fi
+          echo "✓ gate blocks a source diff with exit 2"
 
       - uses: actions/setup-node@v4
         with:
