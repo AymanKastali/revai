@@ -1,8 +1,12 @@
 {
   "name": "revai",
   "owner": { "name": "Ayman Kastali", "email": "aymankastali@gmail.com" },
-  "description": "Ayman's personal AI agent harness.",
+  "description": "Ayman's personal code-standard harness for Claude Code.",
   "plugins": [
-    { "name": "revai", "source": ".", "description": "Personal AI agent harness: attach reusable skills, commands, and conventions to any codebase." }
+    {
+      "name": "revai",
+      "source": ".",
+      "description": "Language-agnostic clean-code and modern domain-driven-design standards, injected into every session and enforced by a review gate on every code turn."
+    }
   ]
 }

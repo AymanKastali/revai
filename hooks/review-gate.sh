@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Layer 3 of the clean-code harness: refuse to end a turn that changed source files until the
-# clean-code-review agent has passed over the diff.
+# Layer 3 of the revai harness: refuse to end a turn that changed source files until the review
+# agents have passed over the diff.
 #
 # A shell hook cannot dispatch a subagent, so this gate DEMANDS the review rather than running it:
 # it blocks with instructions, and clears once the reviewed diff hash is recorded.
@@ -29,6 +29,13 @@ changed_source_files() {
     grep -vE '\.(md|markdown|txt|json|ya?ml|toml|ini|cfg|lock|sum|svg|png|jpg)$' |
     grep -vE '(^|/)(vendor|node_modules|third_party|dist|build|target|\.git|\.revai)/' |
     grep -vE '(_pb2?\.py|\.pb\.go|_generated\.|\.gen\.|\.min\.)'
+}
+
+# Paths that look like domain modelling, so the demand can name them instead of leaving the agent to
+# guess whether ddd-review applies. A heuristic on purpose: ddd-review decides applicability itself.
+domain_like_files() {
+  printf '%s\n' "$1" |
+    grep -iE '(^|/)(domain|aggregates?|entities|value[-_]?objects?|application|use[-_]?cases?|adapters|ports|contexts?)/|(aggregate|repositor|value[-_]object|domain[-_]event|invariant|specification)'
 }
 
 # Hash the names and contents of exactly the files being gated, so any further edit to them
@@ -61,7 +68,7 @@ fi
 
 attempts="$(recorded_attempts "$diff_hash")"
 if (( attempts >= MAX_ATTEMPTS )); then
-  echo "revai: clean-code gate relented after ${MAX_ATTEMPTS} attempts on this diff" >&2
+  echo "revai: review gate relented after ${MAX_ATTEMPTS} attempts on this diff" >&2
   exit 0
 fi
 
@@ -69,13 +76,24 @@ mkdir -p "$STATE_DIR"
 # Only this diff's counter is kept, so the file cannot grow without bound.
 printf '%s %s\n' "$diff_hash" "$(( attempts + 1 ))" > "$ATTEMPTS_FILE"
 
+domain_files="$(domain_like_files "$files" || true)"
+if [[ -n "$domain_files" ]]; then
+  ddd_demand="Required — these changed paths are domain modelling:
+${domain_files}"
+else
+  ddd_demand='Required unless the diff plainly models no business rules — a script, config or pure
+     glue. When in doubt dispatch it: its first step is a one-line "not applicable" verdict.'
+fi
+
 cat >&2 <<EOF
-Clean-code gate: you changed source files and have not reviewed this diff.
+Review gate: you changed source files and have not reviewed this diff.
 
 Before finishing:
-  1. Dispatch the \`clean-code-review\` agent on the current diff.
-  2. Fix every HIGH finding. MEDIUM and LOW are advisory — report them, don't ignore them silently.
-  3. Record the reviewed diff so this gate clears:
+  1. Dispatch the \`clean-code-review\` agent on the current diff. Always required.
+  2. Dispatch the \`ddd-review\` agent. ${ddd_demand}
+  3. Fix every HIGH finding from both. MEDIUM and LOW are advisory — report them, don't ignore them
+     silently.
+  4. Record the reviewed diff so this gate clears:
        mkdir -p ${STATE_DIR} && echo ${diff_hash} >> ${REVIEWED_FILE}
 
 Changed source files:

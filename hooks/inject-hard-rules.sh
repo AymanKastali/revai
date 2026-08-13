@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# Layer 1 of the clean-code harness: put the rules in context at the start of every session.
+# Layer 1 of the revai harness: put every standard's rules in context at the start of every session.
 #
-# The card is extracted from SKILL.md at runtime rather than duplicated here, so SKILL.md stays the
-# single source of truth and the two can never drift apart.
+# Each card is extracted from its own SKILL.md at runtime rather than duplicated here, so every
+# SKILL.md stays the single source of truth for its standard and the two can never drift apart.
 #
 # A broken hook must never cost the user a session: every failure path warns on stderr and exits 0.
 
@@ -11,6 +11,12 @@ set -uo pipefail
 
 readonly FENCE_START='<!-- HARD-RULES:START -->'
 readonly FENCE_END='<!-- HARD-RULES:END -->'
+
+# Standards to inject, in order, as "skill-directory:xml-tag".
+readonly STANDARDS=(
+  'clean-code:clean-code'
+  'domain-driven-design:domain-driven-design'
+)
 
 plugin_root() {
   if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
@@ -20,30 +26,55 @@ plugin_root() {
   cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd
 }
 
-skill_file="$(plugin_root)/skills/clean-code/SKILL.md"
+# Prints the fenced rules of one skill, or nothing if they cannot be read.
+extract_card() {
+  local skill="$1" file="$2" card
 
-if [[ ! -r "$skill_file" ]]; then
-  echo "revai: cannot read ${skill_file} — clean-code rules not injected" >&2
-  exit 0
-fi
+  if [[ ! -r "$file" ]]; then
+    echo "revai: cannot read ${file} — ${skill} rules not injected" >&2
+    return 1
+  fi
 
-# sed picks the fenced block, then drops the two fence lines themselves.
-card="$(sed -n "\|${FENCE_START}|,\|${FENCE_END}|p" "$skill_file" | sed '1d;$d')"
+  # sed picks the fenced block, then drops the two fence lines themselves.
+  card="$(sed -n "\|${FENCE_START}|,\|${FENCE_END}|p" "$file" | sed '1d;$d')"
 
-if [[ -z "${card//[[:space:]]/}" ]]; then
-  echo "revai: HARD-RULES fence missing or empty in ${skill_file}" >&2
+  if [[ -z "${card//[[:space:]]/}" ]]; then
+    echo "revai: HARD-RULES fence missing or empty in ${file}" >&2
+    return 1
+  fi
+
+  printf '%s\n' "$card"
+}
+
+root="$(plugin_root)"
+cards=''
+skill_names=''
+
+for standard in "${STANDARDS[@]}"; do
+  skill="${standard%%:*}"
+  tag="${standard##*:}"
+  card="$(extract_card "$skill" "${root}/skills/${skill}/SKILL.md")" || continue
+  cards+="<${tag}>"$'\n'"${card}"$'\n'"</${tag}>"$'\n\n'
+  skill_names+="${skill_names:+, }\`revai:${skill}\`"
+done
+
+if [[ -z "$cards" ]]; then
+  echo 'revai: no standards could be injected' >&2
   exit 0
 fi
 
 cat <<EOF
-<clean-code-standard>
-The rules below are in force for every piece of code you write or change in this session, in any
+<revai-standards>
+The standards below are in force for every piece of code you write or change in this session, in any
 language. They are not suggestions. Before you finish a turn that touched source files, a gate will
-require that the clean-code-review agent has passed over your diff.
+require that the matching review agent has passed over your diff.
 
-For depth on any rule — worked bad/good examples and the Ch17 smells catalog — invoke the
-\`revai:clean-code\` skill.
+Each standard states its own scope. \`clean-code\` applies to every line you write;
+\`domain-driven-design\` applies only where its own first rules say it does — read them before using
+any pattern from it, and say so when it does not apply.
 
-${card}
-</clean-code-standard>
+For depth on any rule — worked examples, decision tables and the anti-pattern catalogues — invoke
+${skill_names}.
+
+${cards}</revai-standards>
 EOF
