@@ -1,6 +1,6 @@
 # revai — developing the harness itself
 
-This repo IS a Claude Code plugin (and its own marketplace). It carries engineering standards — three
+This repo IS a Claude Code plugin (and its own marketplace). It carries engineering standards — four
 stack-agnostic, plus one per stack technology (`golang`, `postgres`) — and the machinery that makes an
 AI follow them. See `README.md` for the user-facing overview.
 
@@ -65,7 +65,7 @@ name in `hooks/review-gate.sh`, and CI asserts that every agent the gate names a
 Layer 1 costs tokens in every session, in every repo, including plain chat. That is the right trade
 for a standard that applies to every line of code in any stack, and the wrong one for a standard that
 applies to one: Go rules injected into a Python repo, or Postgres rules into a repo with no database,
-are pure noise, and the card is already ~7k tokens.
+are pure noise, and the card is already ~12k tokens.
 
 So **stack-specific skills are Layer 2 only**. They carry no entry in `STANDARDS` and are reached
 the way any skill is reached — by their `description`, which is why that description must name its
@@ -101,17 +101,23 @@ that does not always apply says so inside its own fence, as its first rules.
 - A standard that is not universally applicable must say so **inside its own fence**, as its first
   rules — not by being left out of Layer 1. Two shapes exist: `domain-driven-design` rules 1–3 gate
   the whole standard on one up-front classification; `best-practices` rule 1 gates each group on the
-  concern named in its heading. Pick whichever matches how the standard actually varies. A
+  concern named in its heading. Pick whichever matches how the standard actually varies, or both where
+  both are true — `modular-monolith` rule 1 gates the whole standard on the system being one deployable
+  with more than one capability, and rule 2 then gates each group on its heading's concern. A
   stack-specific standard is the one exception to the "not by being left out" half (see § Layers),
   and it still gates itself in its own fence: `golang` rule 1 on the change containing Go and
   `postgres` rule 1 on it containing schema, SQL or a migration, rule 2 in each on the group's concern.
 - Standards divide by **question**, not by topic, so a finding belongs to exactly one of them:
   `clean-code` owns how the code reads, `best-practices` owns what it is built with,
-  `domain-driven-design` owns how the domain is modelled, and a stack standard owns how that one
-  technology is used — `golang` how Go itself is written, `postgres` how Postgres itself is used.
+  `domain-driven-design` owns how the domain is modelled, `modular-monolith` owns how one deployable is
+  partitioned, and a stack standard owns how that one technology is used — `golang` how Go itself is
+  written, `postgres` how Postgres itself is used.
   Before adding a rule, check that no other fence already answers its question — the outbox, for
   example, is DDD rule 61, so `best-practices` rule 82 states the general dual-write hazard instead of
-  restating it.
+  restating it, and `modular-monolith` rule 58 points at both rather than describing an outbox again.
+  The DDD edge is the one most easily blurred: DDD owns how a bounded context is found and what lives
+  inside it, `modular-monolith` owns what crosses the boundary once it exists — the graph, the surface,
+  storage ownership, in-process integration, wiring and the extraction seam.
 - A stack standard names its technology's **form** of a property another standard mandates; it never
   restates the property. `best-practices` rule 46 requires a timeout on every outbound call; `golang`
   rule 61 says the Go form is a `context.Context` first parameter, and `postgres` rule 77 says the
@@ -147,7 +153,7 @@ There is no build or test suite. Verification means:
 | Manifests parse | `jq . .claude-plugin/plugin.json .claude-plugin/marketplace.json hooks/hooks.json` |
 | Fences intact | `grep -n 'HARD-RULES:\(START\|END\)' skills/*/SKILL.md` |
 | Cards extract | `./hooks/inject-hard-rules.sh` — one tagged block per **injected** skill, exit 0 |
-| Rule count | `./hooks/inject-hard-rules.sh \| grep -cE '^[0-9]+\. '` — must equal `EXPECTED_RULES` (229) |
+| Rule count | `./hooks/inject-hard-rules.sh \| grep -cE '^[0-9]+\. '` — must equal `EXPECTED_RULES` (324) |
 | Layer 2 only | no `<golang>` or `<postgres>` block in the card, and both absent from the hook's `STANDARDS` array |
 | Numbering | rules in each fence run `1..N` — CI's awk check, or eyeball the tail of each group |
 | Spec conformance | CI's "Skills conform to the Agent Skills spec" step — name/description limits, spec-only frontmatter, `## Contents` present, agent name equals filename |
