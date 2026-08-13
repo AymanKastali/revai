@@ -1,6 +1,6 @@
 ---
 name: domain-driven-design
-description: The modern domain-driven design standard — subdomain classification, bounded contexts, ubiquitous language, context mapping, aggregates and Vernon's four rules, value objects, domain vs application services, domain vs integration events, hexagonal layering, sagas. Use whenever modelling a business domain, naming or shaping an aggregate, entity, value object, repository, service, event or bounded context, deciding where a business rule lives, or structuring a backend around business capabilities.
+description: Applies the modern domain-driven design standard — subdomain classification, bounded contexts, ubiquitous language, context mapping, aggregates and Vernon's four rules, value objects, domain vs application services, domain vs integration events, hexagonal layering, sagas. Use when modelling a business domain, naming or shaping an aggregate, entity, value object, repository, service, event or bounded context, deciding where a business rule lives, or structuring a backend around business capabilities.
 ---
 
 # Modern domain-driven design
@@ -12,6 +12,22 @@ patterns below only pay off inside a boundary you can name.
 So the first rules are about whether to apply the rest at all. Bolting aggregates and repositories
 onto a domain nobody analysed produces pattern-driven design: all the ceremony, none of the benefit,
 and it is the single most common way DDD fails.
+
+## Contents
+
+- **Domain-driven design rules** — 74 rules in ten groups: applicability, ubiquitous language,
+  bounded contexts, context mapping, value objects, entities and aggregates, services and
+  repositories, domain events, architecture and layering, consistency and long-running processes.
+  Rules 1–3 decide whether the rest apply at all. Injected every session, so they may already be in
+  your context.
+- **Choosing by subdomain** — the core/supporting/generic decision table behind rules 1–3. Read it
+  before using any tactical pattern.
+- **Integration patterns** — the eight context-mapping relationships, selected on team communication
+  and control over the other system.
+- **Depth** — worked bad/good pairs for the rules that get misread without one.
+- **Anti-pattern scan list** — 45 rows, coded by group (`S` strategic, `L` language, `V` value
+  objects, `A` aggregates, `R` repositories and services, `E` events, `H` architecture, `P` process),
+  to work down while reviewing.
 
 <!-- HARD-RULES:START -->
 ## Domain-driven design rules

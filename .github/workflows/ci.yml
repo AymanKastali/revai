@@ -109,6 +109,87 @@ jobs:
           done
           exit $fail
 
+      - name: Skills conform to the Agent Skills spec
+        run: |
+          set -euo pipefail
+          # Constraints from the Agent Skills spec and Anthropic's authoring guide:
+          #   name        — 1-64 chars, [a-z0-9-] only, no XML, no reserved word, matches its dir
+          #   description — non-empty, <= 1024 chars, no XML, states what it does AND when to use it
+          #   frontmatter — only the spec's six fields, so these skills also load unchanged on
+          #                 claude.ai and through the API, not just in Claude Code
+          # Plus this repo's own rule: a SKILL.md over 100 lines carries a Contents section, so a
+          # partial read still shows its full scope.
+          fail=0
+          for skill in skills/*/SKILL.md; do
+            dir=$(basename "$(dirname "$skill")")
+            bad=0
+            fm=$(awk 'NR==1 && $0=="---" { inside=1; next } inside && $0=="---" { exit } inside' "$skill")
+            name=$(printf '%s\n' "$fm" | sed -n 's/^name: *//p')
+            desc=$(printf '%s\n' "$fm" | sed -n 's/^description: *//p')
+
+            if [ "$name" != "$dir" ]; then
+              echo "::error::${skill}: name '${name}' must equal its directory '${dir}'"
+              bad=1
+            fi
+            if ! printf '%s' "$name" | grep -qE '^[a-z0-9-]{1,64}$'; then
+              echo "::error::${skill}: name '${name}' must be 1-64 chars of [a-z0-9-]"
+              bad=1
+            fi
+            if printf '%s' "$name" | grep -qiE 'anthropic|claude'; then
+              echo "::error::${skill}: name '${name}' contains a reserved word"
+              bad=1
+            fi
+            if [ -z "$desc" ]; then
+              echo "::error::${skill}: description is empty, or is not a single line"
+              bad=1
+            elif [ "${#desc}" -gt 1024 ]; then
+              echo "::error::${skill}: description is ${#desc} chars, spec maximum is 1024"
+              bad=1
+            fi
+            case "${name}${desc}" in
+              *"<"*|*">"*)
+                echo "::error::${skill}: name and description must not contain XML tags"
+                bad=1
+                ;;
+            esac
+            # Discovery depends on the description naming its triggers, not just its subject.
+            if ! printf '%s' "$desc" | grep -q 'Use when'; then
+              echo "::error::${skill}: description needs a 'Use when ...' clause for skill discovery"
+              bad=1
+            fi
+            while read -r key; do
+              case "$key" in
+                name|description|allowed-tools|compatibility|license|metadata) ;;
+                '') ;;
+                *)
+                  echo "::error::${skill}: frontmatter key '${key}' is outside the spec's six fields"
+                  bad=1
+                  ;;
+              esac
+            done < <(printf '%s\n' "$fm" | sed -n 's/^\([a-zA-Z][a-zA-Z-]*\):.*/\1/p')
+            if [ "$(wc -l < "$skill")" -gt 100 ] && ! grep -qx '## Contents' "$skill"; then
+              echo "::error::${skill}: over 100 lines, so it needs a '## Contents' section"
+              bad=1
+            fi
+
+            if [ "$bad" -eq 0 ]; then
+              echo "✓ ${skill}: spec-conformant (name, ${#desc}-char description, Contents present)"
+            else
+              fail=1
+            fi
+          done
+
+          # Every review agent's name must match its filename, or the gate demands something absent.
+          for agent in agents/*.md; do
+            want=$(basename "$agent" .md)
+            got=$(sed -n 's/^name: *//p' "$agent" | head -1)
+            if [ "$want" != "$got" ]; then
+              echo "::error::${agent}: name '${got}' must equal its filename '${want}'"
+              fail=1
+            fi
+          done
+          exit $fail
+
       - name: Rule card extracts every rule from every skill
         run: |
           set -euo pipefail
