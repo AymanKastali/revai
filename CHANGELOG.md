@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `.claude-plugin/marketplace.json`, making this repository its own single-plugin
+  marketplace so the plugin can be installed with
+  `/plugin marketplace add AymanKastali/revai`.
+- `README.md` with install instructions and a skill index.
 - `find-skills` skill, vendored from [vercel-labs/skills](https://github.com/vercel-labs/skills)
   under MIT. Discovers and installs skills from the open agent skills ecosystem
   via the `npx skills` CLI.
@@ -22,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `domain-driven-design` skill, vendored from [wondelai/skills](https://github.com/wondelai/skills)
   under MIT. Ubiquitous language, bounded contexts, aggregates, domain events,
   repositories, and strategic design, with six reference documents.
+
+### Removed
+
+- The empty `.mcp.json` and the inert `hooks/hooks.json`. Both were placeholders
+  with no entries; Claude Code discovers them by convention, so an empty file is
+  only a chance to fail validation. They come back when there is something to put
+  in them.
+- The `version` field from the plugin manifest. Releases are tracked here and by
+  git tags rather than in the manifest.
 
 ## [0.1.0] - 2026-08-14
 

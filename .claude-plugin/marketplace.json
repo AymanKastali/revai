@@ -1,0 +1,27 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "revai",
+  "description": "Backend software guidance skills for Claude Code",
+  "owner": {
+    "name": "Ayman Kastali",
+    "email": "aymankastali.backend@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "revai",
+      "description": "Help, support, and guidance for writing backend software solutions",
+      "source": "./",
+      "license": "MIT",
+      "keywords": [
+        "backend",
+        "guidance",
+        "code-review",
+        "architecture"
+      ],
+      "author": {
+        "name": "Ayman Kastali",
+        "email": "aymankastali.backend@gmail.com"
+      }
+    }
+  ]
+}
