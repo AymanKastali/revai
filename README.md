@@ -19,11 +19,12 @@ Two are design-time standards, each a procedure carried entirely inside its own 
 | `system-design` | 123 | 97 | The design canon — Google's design-doc practice (goals, non-goals, alternatives considered, cross-cutting concerns), the SRE workbook on SLIs, SLOs and error budgets, SEI quality-attribute scenarios, Little's law and back-of-envelope sizing, the C4 model's labelled container view, AWS's reliability design principles and blast-radius containment, STRIDE threat modelling over trust boundaries, *Designing Data-Intensive Applications* on consistency, replication and partitioning, McKinley's innovation tokens, Ford and Parsons' fitness functions, MADR decision records, Conway's law and cognitive load, and the strangler-fig transition |
 | `implementation-planning` | 27 | 26 | The seam between `system-design`'s own delivery-slicing rules (118–122) and `superpowers:writing-plans`' scope-check and file-structure discipline — this repo's own answer to keeping a plan's boundaries consistent with the design it implements, not an external canon |
 
-Two are stack-specific, and are invoked rather than injected:
+Three are stack-specific, and are invoked rather than injected:
 
 | Standard | Rules | Scan list | Canonical to |
 | --- | --- | --- | --- |
 | `golang` | 125 | 85 | What the Go team publishes — `gofmt`, `go vet`, the Go Code Review Comments, Google's Go Style Guide, the `log/slog`, `iter`, `errors` and `testing/synctest` package docs, and the release notes from Go 1.18 through 1.26 that retired the idioms most Go code still carries |
+| `go-project-layout` | 66 | 69 | The Go form of `domain-driven-design`'s hexagonal layering and `modular-monolith`'s public surface and storage ownership — Go's positional `internal/` rule as the boundary mechanism, the official module layout, and `depguard` as the check behind the rest. This repo's adopted structure, not a survey of options |
 | `postgres` | 123 | 79 | What the PostgreSQL project publishes — the manual on locking, isolation, indexes and `SECURITY DEFINER`, the wiki's *Don't Do This* page, and the release notes from Postgres 10 through 18 that retired the workarounds most SQL still carries |
 
 The `Scan list` column is each standard's anti-pattern list, with citable codes — `clean-code`'s is
@@ -35,8 +36,10 @@ what each one costs and what to do instead; `system-design` adds the design-docu
 detailed-design deep dive, and the rest), a table mapping the dominant requirement to the shape it
 forces, the arithmetic behind every estimate and what each number decides, and 12 design shortcuts
 with their price; `implementation-planning` adds a worked module-boundary split and the exact shape of
-a one-slice handoff; and `golang` and `postgres` each add a legacy-to-modern table: 30 forms that were
-correct once, each with the current answer and the release that introduced it.
+a one-slice handoff; `golang` and `postgres` each add a legacy-to-modern table: 30 forms that were
+correct once, each with the current answer and the release that introduced it; and
+`go-project-layout` adds the annotated reference tree itself, with every directory keyed to the rule
+that puts it there.
 
 Every `SKILL.md` stays inside the six frontmatter fields of the [Agent Skills](https://agentskills.io)
 spec, so the skills load unchanged in Claude Code, on claude.ai, and through the API. CI enforces that,
@@ -63,11 +66,11 @@ Layer 1 means the rules are present without a slash command. Layer 3 means ignor
 the turn. The cards are *generated* from each `SKILL.md` by `sed`, never maintained beside them, so
 the three layers cannot drift.
 
-`golang` and `postgres` are deliberately **Layer 2 only**. Layer 1 costs tokens in every session and
-every repo, which is the right trade for a standard that governs any line of code in any stack and the
-wrong one for Go rules landing in a Python repo or Postgres rules in a repo with no database. They are
-reached the way any skill is reached — by their descriptions — and they keep their fences, so injecting
-one later is a one-line change.
+`golang`, `go-project-layout` and `postgres` are deliberately **Layer 2 only**. Layer 1 costs tokens
+in every session and every repo, which is the right trade for a standard that governs any line of code
+in any stack and the wrong one for Go rules landing in a Python repo or Postgres rules in a repo with
+no database. They are reached the way any skill is reached — by their descriptions — and they keep
+their fences, so injecting one later is a one-line change.
 
 `system-design` and `implementation-planning` are Layer 2 for a different reason: their rules govern
 a design act and the document or plan it produces, not the code being typed, so injecting them into a
@@ -81,8 +84,8 @@ They divide by question, not by topic: `clean-code` governs **how the code reads
 governs **what you build it with**, `domain-driven-design` governs **how the domain is modelled**,
 `modular-monolith` governs **how one deployable is partitioned**, `system-design` governs **what is
 being built and whether its shape meets requirements someone can check**, `golang` governs **how Go
-itself is written**, and `postgres` governs **how Postgres itself is used**. A finding belongs to
-exactly one of them.
+itself is written**, `go-project-layout` governs **where a Go file goes**, and `postgres` governs
+**how Postgres itself is used**. A finding belongs to exactly one of them.
 
 That split is what keeps the stack skills from becoming a second copy of everything.
 `best-practices` rule 46 requires a timeout on every outbound call; `golang` rule 61 says the Go form
@@ -211,7 +214,7 @@ On `Stop`, `hooks/review-gate.sh`:
 2. Exits silently if no source files changed — zero cost on conversation and docs-only turns.
 3. Otherwise blocks with `exit 2`, demanding `clean-code-review`, `best-practices-review` and
    `modular-monolith-review` always, and `ddd-review` too. When a changed path looks like domain
-   modelling (`domain/`, `application/`, `*repositor*`, `*aggregate*` and friends) the gate names
+   modelling (`domain/`, `infra/`, `port/`, `*repositor*`, `*aggregate*` and friends) the gate names
    those paths and hard-requires the fourth; otherwise it says to use judgment. All four are
    independent, so it asks for them in one message.
 4. Requires every HIGH finding from all four reviews fixed, then clears once the diff hash is recorded
@@ -279,6 +282,7 @@ revai/
 │   ├── system-design/SKILL.md              123 rules + its own procedure — source of truth, invoked
 │   ├── implementation-planning/SKILL.md     27 rules + its own procedure — source of truth, invoked
 │   ├── golang/SKILL.md                     125 rules — source of truth, invoked
+│   ├── go-project-layout/SKILL.md           66 rules + the adopted tree — source of truth, invoked
 │   └── postgres/SKILL.md                   123 rules — source of truth, invoked
 ├── agents/
 │   ├── clean-code-review.md                 read-only reviewer

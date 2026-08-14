@@ -13,10 +13,15 @@ permissions:
 
 env:
   SKILL_MAX_LINES: 500
-  # system-design and implementation-planning carry a procedure (former commands/*.md content)
-  # on top of their standard, so they get more room than a rules-only skill. See CLAUDE.md's
-  # "commands are gone" note under § Structure rules.
-  PROCEDURE_SKILL_MAX_LINES: 650
+  # Skills granted the raised budget, each for a reason recorded in CLAUDE.md § Conventions.
+  # system-design and implementation-planning carry a procedure on top of their standard;
+  # go-project-layout carries a reference tree that IS the deliverable and cannot be trimmed to
+  # examples. Splitting any of them into reference files is the failure this rewrite removed, so
+  # the budget moves instead of the rules. This list is deliberately NOT PROCEDURE_SKILLS: room
+  # and having a procedure are two different questions, and conflating them once meant a skill
+  # could not be given room without being told to grow a procedure it has no use for.
+  LARGE_SKILL_MAX_LINES: 650
+  LARGE_SKILLS: "system-design implementation-planning go-project-layout"
   PROCEDURE_SKILLS: "system-design implementation-planning"
   # Total rules across every *injected* skill's HARD-RULES fence:
   # clean-code 56 + best-practices 99 + domain-driven-design 74 + modular-monolith 95.
@@ -109,8 +114,8 @@ jobs:
 
             name=$(basename "$(dirname "$skill")")
             budget="$SKILL_MAX_LINES"
-            case " $PROCEDURE_SKILLS " in
-              *" $name "*) budget="$PROCEDURE_SKILL_MAX_LINES" ;;
+            case " $LARGE_SKILLS " in
+              *" $name "*) budget="$LARGE_SKILL_MAX_LINES" ;;
             esac
 
             lines=$(wc -l < "$skill")
@@ -122,6 +127,15 @@ jobs:
             if [ "$bad" -eq 0 ]; then
               echo "✓ ${skill}: fence ${start}–${end}, ${lines}/${budget} lines"
             else
+              fail=1
+            fi
+          done
+
+          # A typo in LARGE_SKILLS is silent: the skill just gets the default budget back, and the
+          # failure shows up as a line-count error nobody connects to a misspelling here.
+          for name in $LARGE_SKILLS; do
+            if [ ! -f "skills/${name}/SKILL.md" ]; then
+              echo "::error::LARGE_SKILLS names '${name}', but skills/${name}/SKILL.md does not exist"
               fail=1
             fi
           done
@@ -220,7 +234,6 @@ jobs:
           for name in $PROCEDURE_SKILLS; do
             skill="skills/${name}/SKILL.md"
             bad=0
-            # Guards the budget lookup too: a typo here silently grants the default 500 instead.
             if [ ! -f "$skill" ]; then
               echo "::error::PROCEDURE_SKILLS names '${name}', but ${skill} does not exist"
               fail=1
@@ -521,25 +534,53 @@ jobs:
           fi
           echo "✓ gate blocks a source diff with exit 2"
 
-      - name: Gate names ddd-review as required for a domain path
+      - name: Gate names ddd-review as required for every layered path
         run: |
           set -euo pipefail
+          # The escalation regex IS the gate's behaviour, so every segment it claims to match is
+          # asserted here — one case per alternative. Before this step existed the regex was edited
+          # three times with nothing failing on a mistake. The negative cases matter as much: `app`
+          # is deliberately excluded (see the comment in the hook), so a Next.js tree must NOT
+          # escalate, and neither must an ordinary source directory.
           chmod +x hooks/*.sh
-          mkdir -p scratch_ctx/domain
-          printf 'package domain\n' > scratch_ctx/domain/order.go
-          demand=$(./hooks/review-gate.sh 2>&1 >/dev/null || true)
-          rm -rf scratch_ctx .revai
-          # In-shell match, for the same reason as the card step above.
-          case "$demand" in
-            *'Required — these changed paths are domain modelling'*)
-              echo "✓ gate hard-requires ddd-review for a domain/ path"
-              ;;
-            *)
-              echo "::error::gate did not require ddd-review for a domain/ path"
-              printf '%s\n' "$demand"
-              exit 1
-              ;;
-          esac
+          hard='Required — these changed paths sit inside a DDD-layered context'
+          fail=0
+
+          check() { # <path> <expect: yes|no>
+            mkdir -p "scratch_ctx/$(dirname "$1")"
+            printf 'package p\n' > "scratch_ctx/$1"
+            demand=$(./hooks/review-gate.sh 2>&1 >/dev/null || true)
+            rm -rf scratch_ctx .revai
+            case "$demand" in
+              *"$hard"*) got=yes ;;
+              *)         got=no  ;;
+            esac
+            if [ "$got" = "$2" ]; then
+              echo "✓ scratch_ctx/$1 -> escalates=${got}"
+            else
+              echo "::error::scratch_ctx/$1 escalates=${got}, expected ${2}"
+              fail=1
+            fi
+          }
+
+          for seg in domain aggregate aggregates entity entities value_objects application \
+                     use_cases usecase adapter adapters infra infrastructure port ports \
+                     context contexts; do
+            check "${seg}/x.go" yes
+          done
+          check 'order/internal/domain/order/order.go' yes
+          check 'internal/context/order/internal/app/command/place_order.go' yes   # via context/
+          # Name tokens, isolated: `x/` is not a layered directory, so only the filename can match.
+          # Without the isolation, `aggregate` passing above proves nothing about DDD_NAME_TOKENS.
+          for tok in aggregate repositor value_object domain_event invariant specification; do
+            check "x/${tok}.go" yes
+          done
+          check 'x/order_repository.go' yes                                        # the realistic one
+          check 'app/routes/home.go' no                                            # deliberate: Next.js
+          check 'util/strings.go' no
+
+          [ "$fail" -eq 0 ] || exit 1
+          echo "✓ every layered path escalates, and the excluded ones do not"
 
       - uses: actions/setup-node@v4
         with:

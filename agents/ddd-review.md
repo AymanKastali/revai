@@ -82,7 +82,7 @@ Assign severity by the rule violated, not by how much you dislike the design.
 - A public setter or `setStatus`-style state change on an aggregate (rule 42, A2)
 - Framework, ORM, HTTP, IO or clock machinery inside an aggregate or anywhere in the domain layer
   (rules 44, 64, A7, H2)
-- An inward dependency violated — `domain/` importing `application/` or `adapters/` (rule 63, H1)
+- An inward dependency violated — `domain/` importing `app/` or `infra/` (rule 63, H1)
 - A domain service performing IO or calling a repository, or a business rule inside an application
   service (rules 48, 50, R5, R6)
 - Storage language or UI paging leaking through a repository interface (rule 52, R2, R3)

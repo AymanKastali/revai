@@ -1,6 +1,6 @@
 ---
 name: golang
-description: Applies the modern Go style standard — write Go the way the Go team, the standard library and the toolchain say to, using the current release's idioms rather than the ones a 2018 blog post taught. Use when writing, reviewing or refactoring Go code, choosing a Go package layout, wiring errors or context, starting a goroutine, defining an interface or generic, reaching for a dependency the standard library already covers, or writing a Go test or benchmark.
+description: Applies the modern Go style standard — write Go the way the Go team, the standard library and the toolchain say to, using the current release's idioms rather than the ones a 2018 blog post taught. Use when writing, reviewing or refactoring Go code, naming a package, wiring errors or context, starting a goroutine, defining an interface or generic, reaching for a dependency the standard library already covers, or writing a Go test or benchmark.
 ---
 
 # Modern Go style
@@ -13,7 +13,8 @@ notes that retired the idioms most Go code still carries.
 
 Scope: this standard governs **how Go itself is written**. What to build a thing out of belongs to
 `best-practices`; how the code reads belongs to `clean-code`; how the domain is modelled belongs to
-`domain-driven-design`. Where those mandate a property, the rules here name Go's form of it —
+`domain-driven-design`; where a file goes once the binary holds more than one bounded context belongs
+to `go-project-layout`. Where those mandate a property, the rules here name Go's form of it —
 `best-practices` requires a timeout, this standard says it is a `context` passed as the first argument.
 
 ## Contents
@@ -70,7 +71,7 @@ targets an older release, the rule is advisory until it is raised.
 21. Names omit their own type: `users`, not `userSlice`; `count`, not `numUsers`; `limit`, not `limitInt`.
 22. Sentinel errors are `ErrThing`/`errThing`; error types are `ThingError`. Interfaces are named for behaviour, `-er` where it reads naturally, and never `IThing`.
 23. Code shared inside the module but not part of its API lives under `internal/`. Commands live in `cmd/<name>/`.
-24. Follow the official module layout: flat at the root until a package genuinely needs nesting. Do not import the unofficial `pkg/`-and-`api/` scaffold; empty directories are not architecture.
+24. Follow the official module layout: flat at the root until a package genuinely needs nesting. Do not import the unofficial `pkg/`-and-`api/` scaffold; empty directories are not architecture. Once the binary holds more than one bounded context, `go-project-layout` governs where every file goes.
 25. Exactly one file per package carries the package comment, immediately above `package`, starting `Package <name> …`.
 26. Every exported identifier has a doc comment: a full sentence starting with the identifier's name. Boolean functions read `reports whether`.
 27. Document a zero value that means something, and document concurrency safety whenever it is not obvious — read-only is assumed safe, mutating is assumed unsafe.
