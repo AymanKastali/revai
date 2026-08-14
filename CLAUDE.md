@@ -173,8 +173,9 @@ it governs a deliberate act that produces its own artifact rather than lines of 
   context, `postgres` how Postgres itself is used. `go-project-layout` is the one stack standard whose
   question is physical rather than syntactic, and its edge is drawn the same way as the rest: it never
   restates why a boundary exists (`domain-driven-design`, `modular-monolith`), only which directory,
-  package name and filename make that boundary true in Go — and where the compiler enforces it for
-  free. `system-design` is the newest edge and the one
+  package name and filename make that boundary true in Go — and, because Go's `internal/` is
+  positional and stops nothing between two contexts inside one module, which `depguard` rule is the
+  boundary rather than a note about it. `system-design` is the newest edge and the one
   most at risk of absorbing the others: it owns requirements, sizing, failure enumeration, trust
   boundaries, cost, the decision record and the design document, and it cites the others for boundaries
   (`domain-driven-design`), what crosses them (`modular-monolith`) and which library, protocol or

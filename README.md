@@ -24,7 +24,7 @@ Three are stack-specific, and are invoked rather than injected:
 | Standard | Rules | Scan list | Canonical to |
 | --- | --- | --- | --- |
 | `golang` | 125 | 85 | What the Go team publishes — `gofmt`, `go vet`, the Go Code Review Comments, Google's Go Style Guide, the `log/slog`, `iter`, `errors` and `testing/synctest` package docs, and the release notes from Go 1.18 through 1.26 that retired the idioms most Go code still carries |
-| `go-project-layout` | 66 | 69 | The Go form of `domain-driven-design`'s hexagonal layering and `modular-monolith`'s public surface and storage ownership — Go's positional `internal/` rule as the boundary mechanism, the official module layout, and `depguard` as the check behind the rest. This repo's adopted structure, not a survey of options |
+| `go-project-layout` | 66 | 69 | The Go form of `domain-driven-design`'s hexagonal layering and `modular-monolith`'s public surface and storage ownership — a flat context tree, the official module layout, and `depguard` as the boundary itself rather than a note about one, since Go's `internal/` is positional and stops nothing between two contexts. This repo's adopted structure, not a survey of options |
 | `postgres` | 123 | 79 | What the PostgreSQL project publishes — the manual on locking, isolation, indexes and `SECURITY DEFINER`, the wiki's *Don't Do This* page, and the release notes from Postgres 10 through 18 that retired the workarounds most SQL still carries |
 
 The `Scan list` column is each standard's anti-pattern list, with citable codes — `clean-code`'s is

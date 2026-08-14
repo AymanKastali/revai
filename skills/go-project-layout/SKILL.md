@@ -1,6 +1,6 @@
 ---
 name: go-project-layout
-description: Applies the Go project layout standard — the physical file and package structure of a Go modular monolith: one directory per bounded context under internal/context/, a surface package at its root with everything else behind a nested internal/ that the compiler enforces, domain/ app/ infra/ inside it, one Postgres schema and its own migrations per context, and internal/platform/ for generic infrastructure only. Use when starting a Go service or monolith, adding or naming a bounded context, deciding which directory or package a Go file belongs in, laying out aggregates, use cases, ports or adapters, placing migrations against a shared database, wiring a composition root in cmd/, sharing code between Go contexts, or enforcing the import graph with depguard.
+description: Applies the Go project layout standard — the physical file and package structure of a Go modular monolith: one directory per bounded context under internal/context/, a surface package at its root with domain/ app/ infra/ sitting beside it, depguard holding the boundary the positional internal/ rule cannot, one Postgres schema and its own migrations per context, and internal/platform/ for generic infrastructure only. Use when starting a Go service or monolith, adding or naming a bounded context, deciding which directory or package a Go file belongs in, laying out aggregates, use cases, ports or adapters, placing migrations against a shared database, wiring a composition root in cmd/, sharing code between Go contexts, or enforcing the import graph with depguard.
 ---
 
 # Go project layout
@@ -9,15 +9,16 @@ description: Applies the Go project layout standard — the physical file and pa
 `modular-monolith` says every module exposes one entry point, that its internals are unreachable
 rather than merely undocumented, and that it owns its storage. Both are properties. This standard is
 their Go **form**: the directories, package names and filenames that make those properties true of a
-Go binary, and in particular the one arrangement where the Go compiler enforces a context boundary
-for free instead of leaving it to a lint rule and good intentions.
+Go binary, and the enforcement that keeps them true once the tree is flat enough to read.
 
 Scope: this standard governs **where a Go file goes**. How Go itself is written belongs to `golang`;
 how the domain is modelled belongs to `domain-driven-design`; how one deployable is partitioned
 belongs to `modular-monolith`; how Postgres is used belongs to `postgres`. Where those mandate a
-property, the rules here name its Go shape — `modular-monolith` rule 31 requires the strongest
-unreachability mechanism the language offers, and this standard says that mechanism is a second
-`internal/` directory inside each context.
+property, the rules here name its Go shape — `modular-monolith` rule 31 requires that a module's
+internals be unreachable, and Go's `internal/` is positional, so one at the repository root stops
+only code outside the module and nothing between contexts. Rules 60 and 61 are therefore load-bearing
+rather than advisory: `depguard` is the mechanism, and a boundary with no rule behind it is a naming
+convention.
 
 ## Contents
 
@@ -28,9 +29,10 @@ unreachability mechanism the language offers, and this standard says that mechan
   the concern in its heading, and rule 18 gates the whole domain layer on the context's subdomain.
 - **The reference layout** — the annotated tree this standard describes, top to bottom. It is the
   adopted structure, not one option among several.
-- **Depth** — worked bad/good pairs for the rules that get misread without one: the boundary the
-  compiler keeps, one context calling another and who writes the outbox, one Postgres instance with a
-  schema per context, what survives the extraction test, and where a context starts.
+- **Depth** — worked bad/good pairs for the rules that get misread without one: the boundary
+  `depguard` keeps and the config that is it, one context calling another and who writes the outbox,
+  one Postgres instance with a schema per context, what survives the extraction test, and where a
+  context starts.
 - **Anti-pattern scan list** — 69 rows, coded by group (`R` root, `B` boundary, `L` layers, `D`
   domain, `A` application, `I` infrastructure, `S` storage, `X` integration, `P` platform, `T` tests,
   `G` growth), to work down while reviewing.
@@ -53,7 +55,7 @@ most expensive mistake this layout can be used to make.
 ### The repository root — always applies
 
 3. Two directories at the root carry Go: `cmd/` and `internal/`. No `pkg/`, no `api/`, no `src/` — `golang` rule 24.
-4. `cmd/<binary>/main.go` is the composition root: it reads process configuration, builds the platform dependencies, calls each context's single constructor with that context's raw config, binds each declared port to the facade that satisfies it, and mounts what each constructor returns. One line per context — it never names a package beneath a context root, because rule 9 makes that impossible anyway.
+4. `cmd/<binary>/main.go` is the composition root: it reads process configuration, builds the platform dependencies, calls each context's single constructor with that context's raw config, binds each declared port to the facade that satisfies it, and mounts what each constructor returns. One line per context — it never names a package beneath a context root, because rule 17 gives it exactly one constructor to call and rule 60 is what holds it to that.
 5. `internal/` holds exactly two directories: `context/` and `platform/`. The level earns its place by separating what the business owns from what any binary would want, and every question about a file starts with which of the two it is.
 6. One directory per bounded context sits under `internal/context/`, named for the capability in the ubiquitous language and singular — `internal/context/order/`, never `internal/context/orders/`. The container is `context/` and never `module/`: in Go a module is what `go.mod` declares, and reusing the word makes every sentence about either one ambiguous.
 7. `internal/platform/` holds generic technical infrastructure and nothing else. `internal/shared/` does not exist.
@@ -61,35 +63,35 @@ most expensive mistake this layout can be used to make.
 ### The context boundary — always applies
 
 8. A context's surface is the package at the context's own root — `internal/context/order/`, `package order`. It names every command, query, result, integration event and error a caller may use.
-9. Everything else in the context lives under a second `internal/`: `internal/context/order/internal/`. The Go compiler then refuses every import of it from another context, which is the mechanism `modular-monolith` rule 31 asks for, at no cost.
+9. Everything else in the context sits beside the surface as directories of `internal/context/order/` — the three layers of rule 15, and `migrations/`, which holds SQL rather than Go. No context imports any of them from another context, and because Go's `internal/` is positional that unreachability is rule 60's `depguard` config rather than the compiler's — `modular-monolith` rule 31 in the form Go actually supports.
 10. The surface exposes use cases as methods on one facade type, not a package of loose functions and not a getter per field — `modular-monolith` rules 30 and 34.
 11. Surface signatures speak in types the context owns. Never a domain aggregate, a persistence row, an ORM type, or an `http.Request` or `http.ResponseWriter` — `modular-monolith` rule 33.
 12. A caller depends on an interface it declares in its own `app/port/`, satisfied by the other context's facade. The two are joined in `cmd/`, so neither names the other in its own package.
-13. A context names another context in exactly two adapter packages — its own `infra/adapters/outbound/gateway/` for a call it makes, and its own `infra/adapters/inbound/event/` for an integration event it consumes — and nowhere else. `app/` names no context, rule 9 already stops any reach beneath a surface, and both edges are listed in `depguard`'s allow-list, which is what makes the module graph reviewable instead of implicit.
-14. Integration event types are declared in a leaf package, `internal/event/`, that imports nothing and is imported by both `app/` and the surface, which re-exports them as aliases — `type Paid = event.Paid`. The consumer reads `order.Paid` with no stutter, and the use case that must write one into its own transaction can construct it without importing the surface that imports it. The aggregate's domain event of the same reading is a different package that no file holding this one can see, because rule 17 keeps the surface out of `domain/`.
+13. A context names another context in exactly two adapter packages — its own `infra/adapters/outbound/gateway/` for a call it makes, and its own `infra/adapters/inbound/event/` for an integration event it consumes — and nowhere else. `app/` names no context, rule 60's `depguard` config is what stops any reach beneath another surface, and both edges are listed in its allow-list, which is what makes the module graph reviewable instead of implicit.
+14. Integration events are the application layer's published output, so they live in `app/events/`, one file per event named for it — `app/events/paid.go`, `package events`, importing the standard library only. That is a package inside a layer, not a fourth layer: rule 15's three are the only ones. The surface re-exports them as aliases — `type Paid = events.Paid` — so the consumer reads `order.Paid` with no stutter, and `app/command/` can construct one for its own transaction without importing the surface that imports it.
 
 ### The three layers inside a context — always applies
 
-15. Three directories sit under `internal/context/<name>/internal/`: `domain/`, `app/`, `infra/`. These are the Go spellings of `domain-driven-design` rule 67's layers.
+15. Three directories sit under `internal/context/<name>/`, beside the surface's own files: `domain/`, `app/`, `infra/`. These are the Go spellings of `domain-driven-design` rule 67's layers.
 16. Imports run one way — `infra` to `app` to `domain`. `domain` imports neither of the others, and `depguard` is what makes that true rather than the diagram.
-17. The surface's facade file imports `app/` and `internal/event/` only, so changing an aggregate never changes what a caller compiles against. Its one companion is `new.go` at the context root — still `package order` — which imports `infra/` to build this context's adapters and returns the facade with its route registration: rule 9 makes the context root the only place that can assemble the context, and rule 4 is what calls it. It is not named `wire.go`, which rule 36 already spends on a different job one directory down.
+17. The surface's facade file imports `app/` and nothing below it, so changing an aggregate never changes what a caller compiles against. Its one companion is `new.go` at the context root — still `package order` — which imports `infra/` to build this context's adapters and returns the facade with its route registration. The context root is the only file set permitted to import `infra/`, which makes `new.go` the single assembly point, and rule 4 is what calls it. It is not named `wire.go`, which rule 36 already spends on a different job one directory down.
 
 ### The domain layer — when the change touches the model
 
 18. This group applies to a context classified **core** under `domain-driven-design` rules 1–3, and the classification is stated before any package below is created. A supporting context keeps the script in `app/`, keeps only the row types and value objects that script needs in `domain/`, and has no aggregate package, no repository port and no events package. A generic subdomain is an adapter under `infra/adapters/outbound/`, not a directory under `internal/context/` at all.
 19. One package per aggregate root, named for the root: `domain/order/`, `domain/shipment/`. Only the root, its identifier and its value objects are exported; child entities are unexported, or exported for reading with every mutator a method on the root — otherwise the package boundary is not the consistency boundary.
-20. Inside an aggregate package, names drop the package prefix — `order.ID`, `order.Status`, `order.Line`, `order.Repository`, `order.ErrAlreadyPaid`. `order.Order` for the root is the one accepted stutter. When the context and its principal aggregate share a name, the surface keeps the bare name and the aggregate package is imported under an alias naming its layer: `orderdomain "…/internal/domain/order"`.
+20. Inside an aggregate package, names drop the package prefix — `order.ID`, `order.Status`, `order.Line`, `order.Repository`, `order.ErrAlreadyPaid`. `order.Order` for the root is the one accepted stutter. When the context and its principal aggregate share a name, the surface keeps the bare name and the aggregate package is imported under an alias naming its layer: `orderdomain "…/context/order/domain/order"`.
 21. One file per type for the root, its child entities and its value objects. The events, the port and the sentinels are grouped in `events.go`, `repository.go` and `errors.go`, and rebuilding an aggregate from stored state is an exported function in `reconstitute.go` that skips the creation rules — `domain-driven-design` rule 55.
 22. One aggregate references another by its identifier value object only — `order.ID` held inside `shipment`, never `*order.Order`. A reference in both directions is an import cycle as well as a design smell: put it on the side that owns the relationship, or move the identifier under rule 27.
 23. The repository port is declared in the aggregate's own package, in that aggregate's own types — `domain-driven-design` rule 65.
-24. Domain events live in the aggregate package and stay inside the context, named so the qualified identifier reads as the past-tense fact — `order.Placed`, `order.Paid`. Rule 14's package holds the integration events, and `domain-driven-design` rule 60 is the translation between them, written by hand in `app/`.
+24. Domain events live in the aggregate package and stay inside the context, named so the qualified identifier reads as the past-tense fact — `order.Placed`, `order.Paid`. Rule 14's `app/events/` holds the integration events, and `domain-driven-design` rule 60 is the translation between them, written by hand in `app/`.
 25. A domain package imports the standard library and other domain packages of the same context. Nothing else — no `database/sql`, no `net/http`, no `log/slog`, no third party. `time` and `crypto/rand` may be used for their types and never for `time.Now()` or identity generation: the instant and the id are arguments — `domain-driven-design` rule 44.
 26. A rule spanning two aggregates imports both, so it sits in a package above them, named for the workflow and never for a layer — `domain/fulfillment/can_dispatch.go`. Only a decision that reads two aggregates and mutates neither belongs there: a rule one root owns stays on that root, and a rule that must hold across two roots at every instant means the boundary is wrong.
 27. Value objects more than one aggregate shares are files in `domain/` itself, `package domain` — `domain.Money`, `domain.Quantity`. This is the deliberate exception to rule 26's ban on layer-named packages: the aggregate packages import it and it imports none of them, so it must sit below them, and the alternatives — a package per value object, or a `shared/` bucket — are a directory per file and an unnamed grab bag respectively.
 
 ### The application layer — when the change touches a use case
 
-28. Three packages under `app/`: `command/`, `query/`, `port/`. No `inbound/` or `outbound/` level — the first two are inbound by construction and `port/` is outbound by construction, so the extra directory only lengthens the path.
+28. Four packages under `app/`: `command/`, `query/`, `port/` and rule 14's `events/`. No `inbound/` or `outbound/` level — the first two are inbound by construction and `port/` is outbound by construction, so the extra directory only lengthens the path.
 29. One file per use case, named for it, holding both the request type and its handler: `app/command/place_order.go`. A handler receives its dependencies; it constructs none of them.
 30. `app/port/` declares the outbound interfaces this context needs — a payment capability, a carrier, the outbox — in this context's vocabulary. No port names a vendor.
 31. A use case is reached by a trigger, never written as one. An HTTP request, a queue message and a domain event are three triggers for the same `app/command/` handler, so none of them gets a package inside `app/` — rule 37 is where all three live.
@@ -136,125 +138,127 @@ most expensive mistake this layout can be used to make.
 57. A context's surface carries a test in `package order_test` at the context root, exercising the facade exactly as a caller would and through nothing else.
 58. Adapter tests run against the real technology rather than a mock of it, with fixtures in `testdata/`.
 59. No context imports another context's fakes, fixtures or test helpers — `modular-monolith` rule 29.
-60. `.golangci.yml` carries `depguard` rules encoding the layer direction, the gateway-only context graph of rule 13, and a standard-library-only allow-list for `internal/event/`. CI additionally checks that every schema name appearing in a context's migrations and queries is that context's own — with one shared database, a cross-schema read otherwise compiles, passes lint and ships. A boundary the build does not check is a paragraph, not a boundary.
-61. An architecture test that asserts the import graph is the second line of defence, not the first. The nested `internal/` fails at compile time and `depguard` fails at lint time, which is cheaper and earlier.
+60. `.golangci.yml` carries `depguard` rules encoding four things: no package may import anything beneath another context's root, the two seams of rule 13 are the allow-list of exceptions, imports inside a context run `infra` to `app` to `domain`, and `app/events/` may import the standard library only. CI additionally checks that every schema name appearing in a context's migrations and queries is that context's own — with one shared database, a cross-schema read otherwise compiles, passes lint and ships. A boundary the build does not check is a paragraph, not a boundary.
+61. Rule 60 is the boundary, not a reminder of it. Go's `internal/` is positional, so the one at the repository root stops code outside the module and nothing between contexts; there is no compile error to fall back on, which makes a missing `depguard` rule a missing boundary. An architecture test asserting the import graph is the second line of defence behind it, and the review checks rule 60's config the way it checks any other source file.
 
 ### Growth — when the change adds a package or a directory
 
-62. A context starts flat: the surface at `internal/context/order/`, and `internal/context/order/internal/{domain,app,infra}/` with no sub-packages at all.
+62. A context starts flat: the surface at `internal/context/order/`, and `internal/context/order/{domain,app,infra}/` with no sub-packages at all.
 63. `domain/` splits into per-aggregate packages when the context holds its second aggregate, not before.
-64. `app/` splits into `command/`, `query/` and `port/` when it holds more use cases than one file can hold clearly.
+64. `app/` splits into `command/`, `query/` and `port/` when it holds more use cases than one file can hold clearly. `events/` is not part of that split — it arrives with the context's first integration event, whatever `app/` looks like at the time, because rule 14's cycle is there from the first one.
 65. `infra/adapters/outbound/` splits by technology when it speaks to a second one.
 66. An empty directory is not a boundary — `golang` rule 24. Create the package when the file that belongs in it exists.
 <!-- HARD-RULES:END -->
 
 ## The reference layout
 
-This is the adopted structure. `order` is shown in full; every other context has the same five parts
-— a surface package, its integration events, its errors, its migrations, and one `internal/`.
+This is the adopted structure. `order` is shown in full; every other context has the same shape — a
+surface package at its root, and `domain/`, `app/`, `infra/` and `migrations/` beside it.
 
 ```text
 my-monolith/
 ├── cmd/
 │   └── api/
-│       └── main.go                     composition root: config, pools, wiring, routes (rule 4)
+│       └── main.go                 composition root: config, pools, wiring, routes (rule 4)
 │
 ├── internal/
-│   ├── context/                        everything the business owns (rule 5)
-│   │   ├── order/                      BOUNDED CONTEXT — core subdomain (18)
-│   │   │   ├── order.go                SURFACE — package order. The facade, and the only import (8, 10)
-│   │   │   ├── new.go                  package order — builds this context's adapters for cmd/ (17)
-│   │   │   ├── events.go               integration events, re-exported as aliases (14)
-│   │   │   ├── errors.go               the errors a caller may match on
-│   │   │   ├── order_test.go           package order_test — the facade, exercised as a caller (57)
-│   │   │   ├── migrations/             this context's schema, embedded from order.go (44)
+│   ├── context/                    everything the business owns (rule 5)
+│   │   ├── order/                  BOUNDED CONTEXT — core subdomain (18)
+│   │   │   ├── order.go            SURFACE — package order. The facade, and the only import (8, 10)
+│   │   │   ├── new.go              package order — builds this context's adapters for cmd/ (17)
+│   │   │   ├── events.go           integration events, re-exported as aliases (14)
+│   │   │   ├── errors.go           the errors a caller may match on
+│   │   │   ├── order_test.go       package order_test — the facade, exercised as a caller (57)
+│   │   │   ├── migrations/         this context's schema, embedded from order.go (44)
 │   │   │   │   └── 0001_order.sql
-│   │   │   └── internal/               ← the compiler refuses every import from another context (9)
-│   │   │       ├── event/              integration event structs — imports nothing (14)
-│   │   │       │   └── event.go
-│   │   │       ├── domain/             package domain — the value objects the aggregates share (27)
-│   │   │       │   ├── money.go        Money, Currency
-│   │   │       │   ├── quantity.go     Quantity
-│   │   │       │   ├── order/          AGGREGATE — package order, imports domain (19)
-│   │   │       │   │   ├── order.go    root: Order
-│   │   │       │   │   ├── line.go     child entity: line — unexported (19)
-│   │   │       │   │   ├── id.go       value object: ID — not OrderID (20)
-│   │   │       │   │   ├── status.go   value object: Status
-│   │   │       │   │   ├── events.go   domain events: Placed, Paid — internal to this context (24)
-│   │   │       │   │   ├── repository.go    port: Repository, in this aggregate's own types (23)
-│   │   │       │   │   ├── reconstitute.go  rebuild from stored state, no creation rules (21)
-│   │   │       │   │   └── errors.go   sentinels: ErrAlreadyPaid
-│   │   │       │   ├── shipment/       AGGREGATE — same file set; holds order.ID, never *Order (22)
-│   │   │       │   │   └── …
-│   │   │       │   └── fulfillment/    reads both aggregates, mutates neither (26)
-│   │   │       │       ├── can_dispatch.go
-│   │   │       │       └── split_shipment.go
-│   │   │       ├── app/
-│   │   │       │   ├── command/        one file per write use case (29)
-│   │   │       │   │   ├── place_order.go
-│   │   │       │   │   └── dispatch_shipment.go
-│   │   │       │   ├── query/          one file per read use case (32)
-│   │   │       │   │   ├── get_order.go
-│   │   │       │   │   └── track_shipment.go
-│   │   │       │   └── port/           outbound interfaces, in this context's vocabulary (30)
-│   │   │       │       ├── payment.go
-│   │   │       │       ├── carrier.go
-│   │   │       │       └── outbox.go   written inside the use case's transaction (34)
-│   │   │       └── infra/              adapters, and this context's config beside them (35)
-│   │   │           ├── adapters/
-│   │   │           │   ├── inbound/
-│   │   │           │   │   ├── http/
-│   │   │           │   │   │   ├── order.go     handlers
-│   │   │           │   │   │   ├── shipment.go
-│   │   │           │   │   │   └── wire.go      request and response types — not dto.go (36)
-│   │   │           │   │   └── event/           every trigger that is not a request (37)
-│   │   │           │   │       ├── kafka.go             external transport consumer
-│   │   │           │   │       └── on_order_paid.go     in-process subscription
-│   │   │           │   └── outbound/
-│   │   │           │       ├── postgres/   repositories, outbox, rows and mapping (38)
-│   │   │           │       │   ├── order_repo.go
-│   │   │           │       │   ├── shipment_repo.go
-│   │   │           │       │   ├── outbox.go   writes order.outbox in the caller's tx (50)
-│   │   │           │       │   ├── row.go      persistence types — not models.go (39)
-│   │   │           │       │   └── mapper.go   row to aggregate and back, unexported
-│   │   │           │       ├── gateway/    a port backed by another context's facade (40)
-│   │   │           │       │   └── payment.go
-│   │   │           │       └── client/     a port backed by a foreign system (40)
-│   │   │           │           └── carrier.go
-│   │   │           └── config/         this context's typed config, validated (42)
-│   │   │               └── config.go
+│   │   │   ├── domain/             package domain — the value objects the aggregates share (27)
+│   │   │   │   ├── money.go        Money, Currency
+│   │   │   │   ├── quantity.go     Quantity
+│   │   │   │   ├── order/          AGGREGATE — package order, imports domain (19)
+│   │   │   │   │   ├── order.go    root: Order
+│   │   │   │   │   ├── line.go     child entity: line — unexported (19)
+│   │   │   │   │   ├── id.go       value object: ID — not OrderID (20)
+│   │   │   │   │   ├── status.go   value object: Status
+│   │   │   │   │   ├── events.go   domain events: Placed, Paid — internal to this context (24)
+│   │   │   │   │   ├── repository.go    port: Repository, in this aggregate's own types (23)
+│   │   │   │   │   ├── reconstitute.go  rebuild from stored state, no creation rules (21)
+│   │   │   │   │   └── errors.go   sentinels: ErrAlreadyPaid
+│   │   │   │   ├── shipment/       AGGREGATE — same file set; holds order.ID, never *Order (22)
+│   │   │   │   │   └── …
+│   │   │   │   └── fulfillment/    reads both aggregates, mutates neither (26)
+│   │   │   │       ├── can_dispatch.go
+│   │   │   │       └── split_shipment.go
+│   │   │   ├── app/
+│   │   │   │   ├── events/         package events — one file per integration event (14)
+│   │   │   │   │   ├── placed.go
+│   │   │   │   │   └── paid.go
+│   │   │   │   ├── command/        one file per write use case (29)
+│   │   │   │   │   ├── place_order.go
+│   │   │   │   │   └── dispatch_shipment.go
+│   │   │   │   ├── query/          one file per read use case (32)
+│   │   │   │   │   ├── get_order.go
+│   │   │   │   │   └── track_shipment.go
+│   │   │   │   └── port/           outbound interfaces, in this context's vocabulary (30)
+│   │   │   │       ├── payment.go
+│   │   │   │       ├── carrier.go
+│   │   │   │       └── outbox.go   written inside the use case's transaction (34)
+│   │   │   └── infra/              adapters, and this context's config beside them (35)
+│   │   │       ├── adapters/
+│   │   │       │   ├── inbound/
+│   │   │       │   │   ├── http/
+│   │   │       │   │   │   ├── order.go     handlers
+│   │   │       │   │   │   ├── shipment.go
+│   │   │       │   │   │   └── wire.go      request and response types — not dto.go (36)
+│   │   │       │   │   └── event/           every trigger that is not a request (37)
+│   │   │       │   │       ├── kafka.go             external transport consumer
+│   │   │       │   │       └── on_order_paid.go     in-process subscription
+│   │   │       │   └── outbound/
+│   │   │       │       ├── postgres/   repositories, outbox, rows and mapping (38)
+│   │   │       │       │   ├── order_repo.go
+│   │   │       │       │   ├── shipment_repo.go
+│   │   │       │       │   ├── outbox.go   writes order.outbox in the caller's tx (50)
+│   │   │       │       │   ├── row.go      persistence types — not models.go (39)
+│   │   │       │       │   └── mapper.go   row to aggregate and back, unexported
+│   │   │       │       ├── gateway/    a port backed by another context's facade (40)
+│   │   │       │       │   └── payment.go
+│   │   │       │       └── client/     a port backed by a foreign system (40)
+│   │   │       │           └── carrier.go
+│   │   │       └── config/         this context's typed config, validated (42)
+│   │   │           └── config.go
 │   │   │
-│   │   ├── payment/                    same five parts
+│   │   ├── payment/                same shape
 │   │   │   ├── payment.go
 │   │   │   ├── events.go
 │   │   │   ├── migrations/
-│   │   │   └── internal/
+│   │   │   ├── domain/
+│   │   │   ├── app/
+│   │   │   └── infra/
 │   │   │
 │   │   └── inventory/
 │   │       └── …
 │   │
-│   └── platform/                       generic technical infrastructure only (7, 52)
-│       ├── postgres/                   pool, transaction helper, migration runner (47)
-│       ├── outbox/                     the generic relay; each table lives in its owner's schema (50)
-│       ├── eventbus/                   in-process dispatch, within one context (51)
+│   └── platform/                   generic technical infrastructure only (7, 52)
+│       ├── postgres/               pool, transaction helper, migration runner (47)
+│       ├── outbox/                 the generic relay; each table lives in its owner's schema (50)
+│       ├── eventbus/               in-process dispatch, within one context (51)
 │       ├── id/
 │       └── clock/
 │
-├── .golangci.yml                       depguard: the layer direction and the context graph (60)
+├── .golangci.yml                   depguard: the whole boundary lives here (60, 61)
 ├── go.mod
 └── go.sum
 ```
 
 ## Depth
 
-### Rule 9 — the boundary the compiler keeps
+### Rules 9, 60-61 — the boundary `depguard` keeps
 
 Go's `internal/` rule is positional: a package under `a/b/internal/…` is importable only by packages
-rooted at `a/b/`. One `internal/` at the repository root therefore stops the outside world and
-nothing else — every context can still reach into every other context's model.
+rooted at `a/b/`. The one at the repository root therefore stops code *outside* the module and
+nothing else — between two contexts inside it, every import compiles.
 
 ```go
-// Bad — internal/ at the root only. Nothing below fails to compile.
+// Bad — and it compiles. Nothing in Go objects to this.
 package gateway // internal/context/order/infra/adapters/outbound/gateway
 
 import "my-monolith/internal/context/payment/domain/payment" // payment's aggregate, order's code
@@ -265,35 +269,50 @@ func (g *Gateway) Charge(ctx context.Context, id string, cents int64) error {
 }
 ```
 
-Nesting a second `internal/` inside each context moves the same rule down one level, and the boundary
-becomes a compile error rather than a review comment:
+So the boundary is a lint rule, and the config is where it actually lives. Rule 60 is a deny on every
+context's subtree with rule 13's two seams as the only exceptions:
 
-```go
-// Good — payment's model lives at internal/context/payment/internal/domain/payment.
-package gateway // internal/context/order/internal/infra/adapters/outbound/gateway
-
-import "my-monolith/internal/context/payment" // the surface, and the only thing that compiles
-
-// use of package payment/internal/domain/payment not allowed
+```yaml
+# .golangci.yml — the whole context boundary, and the only thing enforcing it
+linters-settings:
+  depguard:
+    rules:
+      order-internals:                                  # who may see order's insides
+        files: ["!**/internal/context/order/**"]
+        deny:
+          - pkg: my-monolith/internal/context/order/domain
+            desc: import the order surface, not its model — go-project-layout rule 9
+          - pkg: my-monolith/internal/context/order/app
+            desc: import the order surface — rule 9
+          - pkg: my-monolith/internal/context/order/infra
+            desc: order assembles itself in new.go — rule 17
+      order-names-payment:                              # rule 13's two seams, and nothing else
+        files:
+          - "!**/internal/context/order/infra/adapters/outbound/gateway/**"
+          - "!**/internal/context/order/infra/adapters/inbound/event/**"
+        deny:
+          - pkg: my-monolith/internal/context/payment
+            desc: only the gateway calls payment, only inbound/event consumes it — rule 13
 ```
 
-`depguard` still has work to do — it is what stops `order` importing `payment`'s *surface* anywhere
-but `cmd/` (rule 13). But the expensive violation, the one that reaches into a model, is now
-impossible rather than merely discouraged.
+One block per context, generated or hand-written, reviewed like any other source file. That is the
+cost of a flat tree: the rule is a paragraph of YAML someone has to keep true, rather than something
+the compiler refuses to build. Rule 61 is why it is worth paying attention to — delete the block and
+nothing fails until the day someone tries to extract `order` and finds `payment` inside it.
 
 ### Rules 14, 34, 48-50 — one context calling another, and who writes the outbox
 
 The caller names a capability, not a context. Nothing in `order` mentions `payment`.
 
 ```go
-// internal/context/order/internal/app/port/payment.go — order's vocabulary, order's types
+// internal/context/order/app/port/payment.go — order's vocabulary, order's types
 package port
 
 type Payments interface {
     Authorize(ctx context.Context, of order.ID, amount domain.Money) (AuthorizationID, error)
 }
 
-// internal/context/order/internal/infra/adapters/outbound/gateway/payment.go
+// internal/context/order/infra/adapters/outbound/gateway/payment.go
 // The one package in `order` allowed to name `payment` — rule 13, and the edge depguard lists.
 package gateway
 
@@ -309,27 +328,28 @@ orders, orderRoutes := order.New(orderPool, orderCfg, order.Deps{Payments: payme
 When the call does not need an answer now it is an event instead, and rule 14 is what makes that
 compile. The integration event cannot be declared on the surface: the surface imports `app/`, so
 `app/` importing the surface to construct one is a cycle — and `app/` is exactly where the open
-transaction lives. So the struct is declared in a leaf package both can import, and the surface
-re-exports it:
+transaction lives. It gets no directory of its own either; there are three layers. So it is declared
+in `app/events/`, which `app/command/` and the surface can both import without either importing the
+other, and the surface re-exports it:
 
 ```go
-// internal/context/order/internal/event/event.go — imports nothing
-package event
+// internal/context/order/app/events/paid.go — package events, standard library only (14)
+package events
 
 type Paid struct { OrderID string; Cents int64; PaidAt time.Time }
 
 // internal/context/order/events.go — the consumer writes order.Paid, with no stutter (rule 14)
 package order
 
-type Paid = event.Paid
+type Paid = events.Paid
 
-// internal/context/order/internal/app/command/pay_order.go — one transaction, both writes
+// internal/context/order/app/command/pay_order.go — one transaction, both writes
 func (h *PayOrder) Handle(ctx context.Context, cmd PayOrderCommand) error {
     return h.tx.Do(ctx, func(ctx context.Context) error {
         o, err := h.orders.Load(ctx, cmd.ID)
         ...
         if err := h.orders.Save(ctx, o); err != nil { return err }
-        return h.outbox.Put(ctx, event.Paid{...}) // rule 34 — same tx, no dual write
+        return h.outbox.Put(ctx, events.Paid{...}) // rule 34 — same tx, no dual write
     })
 }
 ```
@@ -414,28 +434,29 @@ at all: rule 18 stops it at a script in `app/` over row types in `domain/`, with
 no repository port and no events.
 
 ```text
-internal/context/notification/          core subdomain, not yet grown (18, 62)
+internal/context/notification/   core subdomain, not yet grown (18, 62)
 ├── notification.go              surface: the facade, its commands, its results
-├── events.go                    integration events, aliased from internal/event
+├── new.go                       builds this context's adapters for cmd/ (17)
+├── events.go                    integration events, aliased from app/events/ (14)
 ├── migrations/0001_notification.sql
-└── internal/
-    ├── event/event.go
-    ├── domain/                  package domain — one aggregate, no sub-package yet (63)
-    │   ├── notification.go
-    │   └── errors.go
-    ├── app/                     package app — two use cases, no sub-package yet (64)
-    │   ├── send.go
-    │   └── port.go
-    └── infra/
-        ├── adapters/inbound/http.go
-        ├── adapters/outbound/postgres.go
-        └── config/config.go
+├── domain/                      package domain — one aggregate, no sub-package yet (63)
+│   ├── notification.go
+│   └── errors.go
+├── app/                         package app — two use cases, no sub-package yet (64)
+│   ├── events/paid.go           one file per integration event (14)
+│   ├── send.go
+│   └── port.go
+└── infra/
+    ├── adapters/inbound/http.go
+    ├── adapters/outbound/postgres.go
+    └── config/config.go
 ```
 
-Every boundary that matters is already there: the surface, the nested `internal/`, the three layers,
-the migrations, the schema. What is absent is the nesting, and rule 66 is why — the directories
-arrive with the second aggregate and the sixth use case, at which point the split is a rename rather
-than a prediction.
+Every boundary that matters is already there: the surface, the three layers, the migrations, the
+schema — and the `depguard` block naming this context, which is written when the directory is, not
+when someone first violates it. What is absent is the sub-package nesting, and rule 66 is why: the
+directories arrive with the second aggregate and the sixth use case, at which point the split is a
+rename rather than a prediction.
 
 ## Anti-pattern scan list
 
@@ -449,7 +470,7 @@ A review scan list, not rules. Work down it when auditing a Go tree.
 | R4 | A context directory named for a layer or a technology rather than a capability |
 | R5 | A root directory no context owns and `internal/platform/` does not cover |
 | B1 | A context with no surface package, so callers import whatever they need |
-| B2 | A context's internals beside the surface rather than under a nested `internal/` |
+| B2 | A context's `domain/`, `app/` or `infra/` imported from outside that context |
 | B3 | A domain aggregate, a persistence row, an ORM type or an `http` type in a surface signature |
 | B4 | One context naming another outside its own `outbound/gateway/` or `inbound/event/` |
 | B5 | A surface exposing a getter per field rather than a use case |
