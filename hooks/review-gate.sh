@@ -38,11 +38,21 @@ changed_source_files() {
     grep -vE '(_pb2?\.py|\.pb\.go|_generated\.|\.gen\.|\.min\.)'
 }
 
-# Paths that look like domain modelling, so the demand can name them instead of leaving the agent to
-# guess whether ddd-review applies. A heuristic on purpose: ddd-review decides applicability itself.
-domain_like_files() {
-  printf '%s\n' "$1" |
-    grep -iE '(^|/)(domain|aggregates?|entities|value[-_]?objects?|application|use[-_]?cases?|adapters|ports|contexts?)/|(aggregate|repositor|value[-_]object|domain[-_]event|invariant|specification)'
+# Paths that sit inside a DDD-layered context, so the demand can name them instead of leaving the
+# agent to guess whether ddd-review applies. A heuristic on purpose: ddd-review decides applicability
+# itself, and half of what matches here — infra/, adapters/, ports/ — is by definition NOT the domain
+# layer. It is dispatched on them because DDD rules 63-67 govern the layering those directories are.
+#
+# `app` is deliberately absent. It is the use-case layer under domain-driven-design rule 67, but a
+# bare `app/` segment is also every Next.js route and every Rails tree, and the false positive costs
+# a full review pass on each. Under the adopted layout (go-project-layout rule 6) `context/` already
+# matches the whole subtree, so nothing is lost there; only a flat hexagonal tree slips through, and
+# it slips through to the softer "use judgment" demand rather than to nothing.
+readonly DDD_LAYER_DIRS='domain|aggregates?|entit(y|ies)|value[-_]?objects?|application|use[-_]?cases?|adapters?|infra(structure)?|ports?|contexts?'
+readonly DDD_NAME_TOKENS='aggregate|repositor|value[-_]object|domain[-_]event|invariant|specification'
+
+ddd_layered_files() {
+  printf '%s\n' "$1" | grep -iE "(^|/)(${DDD_LAYER_DIRS})/|(${DDD_NAME_TOKENS})"
 }
 
 # Hash the names and contents of exactly the files being gated, so any further edit to them
@@ -83,10 +93,10 @@ mkdir -p "$STATE_DIR"
 # Only this diff's counter is kept, so the file cannot grow without bound.
 printf '%s %s\n' "$diff_hash" "$(( attempts + 1 ))" > "$ATTEMPTS_FILE"
 
-domain_files="$(domain_like_files "$files" || true)"
-if [[ -n "$domain_files" ]]; then
-  ddd_demand="Required — these changed paths are domain modelling:
-${domain_files}"
+layered_files="$(ddd_layered_files "$files" || true)"
+if [[ -n "$layered_files" ]]; then
+  ddd_demand="Required — these changed paths sit inside a DDD-layered context:
+${layered_files}"
 else
   ddd_demand='Required unless the diff plainly models no business rules — a script, config or pure
      glue. When in doubt dispatch it: its first step is a one-line "not applicable" verdict.'

@@ -2,7 +2,8 @@
 
 This repo IS a Claude Code plugin (and its own marketplace). It carries engineering standards — four
 stack-agnostic and injected into every session, two procedure standards invoked as skills
-(`system-design`, `implementation-planning`), plus one per stack technology (`golang`, `postgres`) —
+(`system-design`, `implementation-planning`), plus three stack-specific (`golang`,
+`go-project-layout`, `postgres`) —
 and the machinery that makes an AI follow them. See `README.md` for the user-facing overview.
 
 ## The one rule that matters here
@@ -35,9 +36,12 @@ Editing a fence changes what every session sees. Keep the markers intact and in 
   invoked the skill to get, so putting it one hop further away buys nothing at the point of use. The
   `## Contents` section is the mitigation the same guidance prescribes for long files. Do not
   "fix" this by reintroducing reference files; if a `SKILL.md` genuinely cannot fit in 500 lines,
-  raise it with the repo owner instead of splitting it — `system-design` and
-  `implementation-planning` did exactly that, and now carry the higher
-  `PROCEDURE_SKILL_MAX_LINES` (650) budget in `.github/workflows/ci.yml` instead of the default.
+  raise it with the repo owner instead of splitting it — `system-design`, `implementation-planning`
+  and `go-project-layout` did exactly that, and are named in `LARGE_SKILLS` in
+  `.github/workflows/ci.yml`, which grants them `LARGE_SKILL_MAX_LINES` (650) instead of the default.
+  `LARGE_SKILLS` is deliberately not `PROCEDURE_SKILLS`: needing room and carrying a procedure are
+  two different questions, and while the first two skills answer yes to both, `go-project-layout`
+  answers yes only to the first — its reference tree is the deliverable, not an example to cut.
 - **There is deliberately no `commands/` directory.** A standard whose value is a **procedure**
   rather than a set of constraints on code being written (`system-design`, `implementation-planning`)
   does not get a separate entry point that sequences a rules-only skill from outside it — the
@@ -72,8 +76,10 @@ injected.
 
 For a procedure standard, steps 1 and 4 plus a `## Procedure` section in that same `SKILL.md`, after
 the fence, sequencing the standard end to end. `EXPECTED_RULES` does not move either way. If the
-merged file won't fit the default 500-line budget, add its skill name to `PROCEDURE_SKILLS` in
-`.github/workflows/ci.yml` rather than splitting it into a second file.
+merged file won't fit the default 500-line budget, add its skill name to `LARGE_SKILLS` in
+`.github/workflows/ci.yml` rather than splitting it into a second file. `PROCEDURE_SKILLS` is a
+separate list and is what makes the `## Procedure` section mandatory; a skill only needing room goes
+in `LARGE_SKILLS` alone.
 
 Then decide whether the standard needs its own review agent. If it does, the gate must demand it by
 name in `hooks/review-gate.sh`, and CI asserts that every agent the gate names actually exists.
@@ -128,8 +134,8 @@ it governs a deliberate act that produces its own artifact rather than lines of 
   `## Depth`, then `## Anti-pattern scan list`. Same for the review agents. A procedure standard adds
   exactly one more, `## Procedure`, below its fence and above `## Depth`; CI checks that it is there,
   that it is listed in `## Contents`, and that no rules-only skill has grown one.
-- Every `SKILL.md` has a hard budget of **500 lines**, or **650** for a procedure standard listed in
-  CI's `PROCEDURE_SKILLS`. Past that, cut examples — never move rules out.
+- Every `SKILL.md` has a hard budget of **500 lines**, or **650** for a skill listed in CI's
+  `LARGE_SKILLS`. Past that, cut examples — never move rules out.
 - Rules inside a fence are numbered `1..N` with no gaps or duplicates; CI enforces it. Renumber the
   whole group rather than inserting `12a`.
 - Every rule in the fence is one line. Depth, examples, decision tables and scan lists go below it.
@@ -155,6 +161,7 @@ it governs a deliberate act that produces its own artifact rather than lines of 
   with more than one capability, and rule 2 then gates each group on its heading's concern. A
   stack-specific or procedure standard is the exception to the "not by being left out" half (see
   § Layers), and it still gates itself in its own fence: `golang` rule 1 on the change containing Go,
+  `go-project-layout` rule 1 on the codebase being a Go binary with more than one bounded context,
   `postgres` rule 1 on it containing schema, SQL or a migration, `system-design` rule 1 on the change
   deciding a system's shape, and rule 2 in each on the group's concern.
 - Standards divide by **question**, not by topic, so a finding belongs to exactly one of them:
@@ -162,7 +169,12 @@ it governs a deliberate act that produces its own artifact rather than lines of 
   `domain-driven-design` owns how the domain is modelled, `modular-monolith` owns how one deployable is
   partitioned, `system-design` owns what is being built and whether its shape meets requirements
   someone can check, and a stack standard owns how that one technology is used — `golang` how Go itself
-  is written, `postgres` how Postgres itself is used. `system-design` is the newest edge and the one
+  is written, `go-project-layout` where a Go file goes once the binary holds more than one bounded
+  context, `postgres` how Postgres itself is used. `go-project-layout` is the one stack standard whose
+  question is physical rather than syntactic, and its edge is drawn the same way as the rest: it never
+  restates why a boundary exists (`domain-driven-design`, `modular-monolith`), only which directory,
+  package name and filename make that boundary true in Go — and where the compiler enforces it for
+  free. `system-design` is the newest edge and the one
   most at risk of absorbing the others: it owns requirements, sizing, failure enumeration, trust
   boundaries, cost, the decision record and the design document, and it cites the others for boundaries
   (`domain-driven-design`), what crosses them (`modular-monolith`) and which library, protocol or
@@ -209,7 +221,7 @@ There is no build or test suite. Verification means:
 | Fences intact | `grep -n 'HARD-RULES:\(START\|END\)' skills/*/SKILL.md` |
 | Cards extract | `./hooks/inject-hard-rules.sh` — one tagged block per **injected** skill, exit 0 |
 | Rule count | `./hooks/inject-hard-rules.sh \| grep -cE '^[0-9]+\. '` — must equal `EXPECTED_RULES` (324) |
-| Layer 2 only | no `<golang>`, `<postgres>`, `<system-design>` or `<implementation-planning>` block in the card, and all four absent from the hook's `STANDARDS` array |
+| Layer 2 only | no `<golang>`, `<go-project-layout>`, `<postgres>`, `<system-design>` or `<implementation-planning>` block in the card, and all five absent from the hook's `STANDARDS` array |
 | No `commands/` | `[ ! -d commands ]` — the directory must not exist; CI's "Plugin structure rules" step asserts the same |
 | Procedure skills load | `/reload-plugins`, then confirm `system-design` and `implementation-planning` are both listed with their descriptions, and that `/revai:system-design <an idea>` still reaches the procedure with its argument — that slash form is the explicit entry point the README documents now that `commands/` is gone |
 | Procedure sections exist | `grep -nx '## Procedure' skills/*/SKILL.md` — exactly the two `PROCEDURE_SKILLS`, each below its fence; CI's "Procedure standards carry their own procedure" step asserts that, plus the `## Contents` entry and that neither is injected |
@@ -219,7 +231,7 @@ There is no build or test suite. Verification means:
 | Section refs resolve | CI's "References to a design section resolve against system-design's outline" step — every `section N (Title)` in `implementation-planning` and README is row `N` of the outline, and no bare `section N` exists |
 | Spec conformance | CI's "Skills conform to the Agent Skills spec" step — name/description limits, spec-only frontmatter, `## Contents` present, agent name equals filename |
 | Card unaffected | `./hooks/inject-hard-rules.sh \| sha1sum` before and after editing anything outside a fence — it must not change |
-| Budgets held | `wc -l skills/*/SKILL.md` — each must be ≤ 500, except `system-design` and `implementation-planning` (`PROCEDURE_SKILLS`), which get ≤ 650 (`PROCEDURE_SKILL_MAX_LINES`) |
+| Budgets held | `wc -l skills/*/SKILL.md` — each must be ≤ 500, except the three in `LARGE_SKILLS` (`system-design`, `implementation-planning`, `go-project-layout`), which get ≤ 650 (`LARGE_SKILL_MAX_LINES`) |
 | Hooks parse | `bash -n hooks/*.sh` |
 | Hook paths resolve | `jq -r '.hooks[][].hooks[].command' hooks/hooks.json` — each file exists |
 | Gate is quiet | run `hooks/review-gate.sh` with only docs or config changed — exit 0, no output. Config means an extension in the filter *and* any dotfile basename: `.gitignore` has no extension and `.jsonc` is not `.json`, so both once demanded four reviews of a file holding no code |

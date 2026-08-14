@@ -127,7 +127,7 @@ remaining rules apply — check them before you use a single pattern below.
 64. The domain layer contains no framework, ORM, HTTP, serialization, DI-container or logging-library type. Language primitives and domain types only.
 65. Ports are interfaces declared by the inner layers in the domain's own vocabulary. Adapters live outside and implement them.
 66. The persistence model may differ from the domain model. Map at the boundary rather than deforming an aggregate to fit a table.
-67. Inside a context: `domain/` (aggregates, entities, value objects, events, ports, domain services), `application/` (use cases), `adapters/` (inbound and outbound). Nothing in `domain/` imports from `application/` or `adapters/`.
+67. Inside a context: `domain/` (aggregates, entities, value objects, events, domain services, and each aggregate root's repository port), `app/` (use cases and the outbound ports they need), `infra/` (inbound and outbound adapters, and this context's config). Nothing in `domain/` imports from `app/` or `infra/`.
 68. Enforce boundaries mechanically wherever the language allows — package visibility, module exports, import lint rules. A boundary nobody checks is a boundary nobody keeps.
 
 ### Consistency and long-running processes
@@ -374,12 +374,12 @@ Good — contexts on top, layers inside, so a boundary violation is an import yo
 src/
   ordering/
     domain/          Order, OrderLine, Money, OrderConfirmed, OrderRepository (port)
-    application/     ConfirmOrder, CancelOrder
-    adapters/        http/, persistence/, messaging/
+    app/             ConfirmOrder, CancelOrder
+    infra/           adapters/inbound/, adapters/outbound/, config/
   shipping/
     domain/          Shipment, TrackingNumber, ShipmentDelivered
-    application/     DispatchShipment
-    adapters/
+    app/             DispatchShipment
+    infra/
   billing/
     ...
 ```
@@ -396,7 +396,7 @@ A review scan list, not rules. Work down it when auditing a domain model.
 | S1 | Tactical patterns applied with no subdomain classification stated |
 | S2 | Full domain model built for a supporting or generic subdomain |
 | S3 | Bounded context split to mirror a database, a layer, or an org chart |
-| S4 | Two contexts sharing a database, a schema, or a persistence type |
+| S4 | Two contexts sharing a schema or a persistence type, or one database with no schema and role separation between them |
 | S5 | A domain type reused verbatim across a context boundary |
 | S6 | Foreign model consumed with no anticorruption layer |
 | S7 | Internal aggregate exposed directly as an API or event contract |
