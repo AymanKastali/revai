@@ -1,0 +1,16 @@
+{
+  "name": "revai",
+  "description": "Help, support, and guidance for writing backend software solutions",
+  "version": "0.1.0",
+  "author": {
+    "name": "Ayman Kastali",
+    "email": "ayman@kptac.com"
+  },
+  "license": "MIT",
+  "keywords": [
+    "backend",
+    "guidance",
+    "code-review",
+    "architecture"
+  ]
+}
